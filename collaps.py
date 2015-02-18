@@ -10,8 +10,8 @@
 from datetime import datetime
 import re
 import sys
-from hyperfineanalysis.spectrum import Spectrum
-import hyperfineanalysis.utilities as utilities
+from satlas.spectrum import Spectrum
+import satlas.utilities as utilities
 import lmfit as lm
 import numpy as np
 from scipy.optimize import root

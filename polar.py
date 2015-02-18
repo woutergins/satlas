@@ -6,10 +6,10 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-from hyperfineanalysis.profiles import Lorentzian
-from hyperfineanalysis.wigner import wigner_3j as W3J
-from hyperfineanalysis.wigner import wigner_6j as W6J
-import hyperfineanalysis.utilities as util
+from satlas.profiles import Lorentzian
+from satlas.wigner import wigner_3j as W3J
+from satlas.wigner import wigner_6j as W6J
+import satlas.utilities as util
 import numpy as np
 from scipy import integrate
 

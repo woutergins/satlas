@@ -10,50 +10,11 @@
 """
 import numpy as np
 import lmfit as lm
-import hyperfineanalysis.profiles as p
-import hyperfineanalysis.loglikelihood as llh
+import satlas.profiles as p
+import satlas.loglikelihood as llh
 import emcee as mcmc
-import hyperfineanalysis.triangle as tri
-from hyperfineanalysis.wigner import wigner_6j as W6J
-
-
-def multiThreadedWalking(obj, x, y, walkers=50, nsteps=2000):
-    x, y, _ = obj.sanitizeFitInput(x, y)
-    params = obj.paramsFromVar()
-    obj.MLEFit = obj.paramsFromVar()
-    var_names = []
-    vars = []
-    for key in params.keys():
-        if params[key].vary:
-            var_names.append(key)
-            vars.append(params[key].value)
-    ndim = len(vars)
-    pos = [vars + 1e-4 * np.random.randn(ndim) for i in range(walkers)]
-    x, y, _ = obj.sanitizeFitInput(x, y)
-
-    def lnprobList(fvars, x, y, params, groupParams):
-        for val, n in zip(fvars, var_names):
-            params[n].value = val
-        groupParams.params = params
-        groupParams.update_constraints()
-        params = groupParams.params
-        return obj.lnprob(params, x, y)
-
-    groupParams = lm.Minimizer(lambda *args, **kwargs: 1, params)
-    sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                   args=(x, y, params, groupParams))
-    print('Starting walk...')
-    sampler.run_mcmc(pos, nsteps)
-    print('Done.')
-    burn = nsteps / 10
-    samples = sampler.chain[:, burn:, :].reshape((-1, ndim))
-    val = samples.mean(axis=0)
-    err = samples.std(axis=0, ddof=1)
-    for n, v, e in zip(var_names, val, err):
-        params[n].value = v
-        params[n].stderr = e
-
-    obj.MLEFit = params
+import satlas.triangle as tri
+from satlas.wigner import wigner_6j as W6J
 
 
 class Spectrum(object):
