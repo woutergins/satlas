@@ -1,0 +1,18 @@
+*************************************************************************
+:mod:`relaxation` -- Implementation of spin-lattice relaxation algorithms
+*************************************************************************
+
+At the moment, the :mod:`Relaxation` module allows for the evaluation of a spin-lattice relaxing system with a given spin temperature, lattice temperature, spin-lattice relaxation time and half-life. A callable function can also be given which is evaluated in time, and represents the implantation or generation of nuclei in the spin-lattice system. The relaxation process is being modeled by using Korringa :cite:`Shaw1989` relaxation.
+
+Usage examples
+==============
+
+In the following example, the simulator is set to a lattice temperature higher than the spin temperature. The dependency on the spin-lattice relaxation is shown by different contour lines, and the effect of the pulse delay is also demonstrated.
+
+.. plot:: pyplots/RelaxationExample.py
+    :include-source:
+
+Code documentation
+==================
+.. automodule:: satlas.relaxation
+    :members:

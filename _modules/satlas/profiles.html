@@ -1,0 +1,696 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>satlas.profiles &mdash; SATLAS 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="SATLAS 1.0.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> SATLAS</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../utilities.html"><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../utilities.html#module-satlas.utilities">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../profiles.html#usage-example">Usage example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../profiles.html#module-satlas.profiles">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../spectrum.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../spectrum.html#module-satlas.spectrum">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../relaxation.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../relaxation.html#module-satlas.relaxation">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../polar.html#module-satlas.polar">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../collaps.html"><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../collaps.html#module-collaps">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">SATLAS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>satlas.profiles</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for satlas.profiles</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: profiles</span>
+<span class="sd">    :platform: Windows</span>
+<span class="sd">    :synopsis: Implementation of classes for different lineshapes,</span>
+<span class="sd">     creating callables for easy and intuitive calculations.</span>
+
+<span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@fys.kuleuven.be&gt;</span>
+<span class="sd">.. moduleauthor:: Ruben de Groote &lt;ruben.degroote@fys.kuleuven.be&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">wofz</span>
+
+
+<span class="k">class</span> <span class="nc">Profile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Profile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span> <span class="o">=</span> <span class="n">ampIsArea</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fwhm</span><span class="p">)</span> <span class="k">if</span> <span class="n">fwhm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span> <span class="k">if</span> <span class="n">mu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">=</span> <span class="n">amp</span> <span class="k">if</span> <span class="n">amp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="s">&#39;FWHM: {}, mu: {}, amp: {}&#39;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="n">factor</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">/</span> <span class="n">factor</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">*</span> <span class="n">vals</span>
+
+
+<div class="viewcode-block" id="Gaussian"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.Gaussian">[docs]</a><span class="k">class</span> <span class="nc">Gaussian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized Gaussian profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: float</span>
+<span class="sd">    Full Width At Half Maximum, defaults to 1.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">Gaussian</span>
+<span class="sd">    Callable instance, evaluates the Gaussian profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">    The used formula is taken from the MathWorld webpage</span>
+<span class="sd">    http://mathworld.wolfram.com/GaussianFunction.html:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            G(x;\mu, \sigma) &amp;= \frac{\exp\left(-\frac{1}{2}\left(\frac{x-\mu}</span>
+<span class="sd">            {\sigma}\right)^2\right)}{\sqrt{2\pi}\sigma}</span>
+
+<span class="sd">            FWHM &amp;= s\sqrt{2\ln\left(2\right)}\sigma&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Gaussian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                       <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">expPart</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">normPart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Gaussian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">expPart</span> <span class="o">/</span> <span class="n">normPart</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Lorentzian"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.Lorentzian">[docs]</a><span class="k">class</span> <span class="nc">Lorentzian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized Lorentzian profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">    fwhm: float</span>
+<span class="sd">        Full Width At Half Maximum, defaults to 1.</span>
+<span class="sd">    mu: float</span>
+<span class="sd">        Location of the center, defaults to 0.</span>
+<span class="sd">    amp: float</span>
+<span class="sd">        Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">Lorentzian</span>
+<span class="sd">    Callable instance, evaluates the Lorentzian profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">The formula used is taken from the MathWorld webpage</span>
+<span class="sd">http://mathworld.wolfram.com/LorentzianFunction.html:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \mathcal{L}\left(x; \mu, \gamma\right) &amp;= \frac{\gamma}</span>
+<span class="sd">        {\pi\left(\left(x-\mu\right)^2+\gamma^2\right)}</span>
+
+<span class="sd">        FWHM &amp;= 2\gamma&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Lorentzian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                         <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">topPart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="n">bottomPart</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Lorentzian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">topPart</span> <span class="o">/</span> <span class="n">bottomPart</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Voigt"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.Voigt">[docs]</a><span class="k">class</span> <span class="nc">Voigt</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized Voigt profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: list of 2 floats</span>
+<span class="sd">    Full Width At Half Maximum of the components, defaults to 1.</span>
+<span class="sd">    Ordered as Gaussian, then Lorentzian.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Attributes</span>
+<span class="sd">----------</span>
+<span class="sd">totalfwhm: float</span>
+<span class="sd">    Approximation of the width based on the underlying widths.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">Voigt</span>
+<span class="sd">    Callable instance, evaluates the Voigt profile in the arguments supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">The formula used is taken from the Wikipedia webpage</span>
+<span class="sd">http://en.wikipedia.org/wiki/Voigt_profile, with :math:`w(z)` the Faddeeva</span>
+<span class="sd">function, and the values supplied as FWHM are appropriately transformed to</span>
+<span class="sd">:math:`\sigma` and :math:`\gamma`:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        V\left(x;\mu, \sigma, \gamma\right) &amp;= \frac{\Re\left[w\left(z\right)</span>
+<span class="sd">        \right]}{\sigma\sqrt{2\pi}}</span>
+
+<span class="sd">        z&amp;=\frac{x+i\gamma}{\sigma\sqrt{2\pi}}&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhmNorm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Voigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                    <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhmNorm</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">top</span> <span class="o">=</span> <span class="n">wofz</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">real</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="n">top</span>
+        <span class="n">G</span><span class="p">,</span> <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalfwhm</span> <span class="o">=</span> <span class="mf">0.5346</span> <span class="o">*</span> <span class="n">L</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.2166</span> <span class="o">*</span> <span class="n">L</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">G</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">wofz</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">real</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Voigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">top</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Irrational"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.Irrational">[docs]</a><span class="k">class</span> <span class="nc">Irrational</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized Irrational profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: float</span>
+<span class="sd">    Full Width At Half Maximum, defaults to 1.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">Irrational</span>
+<span class="sd">    Callable instance, evaluates the irrational profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">The used formula is taken from T. Ida et al. :cite:`Ida2000`,</span>
+<span class="sd">code inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \mathcal{I}\left(x; \mu, g\right) &amp;= \frac{g}{2}\left[1+\left(\frac{x-</span>
+<span class="sd">        \mu}{g}\right)^2\right]^{-3/2}</span>
+
+<span class="sd">        FWHM &amp;= \sqrt{2^{2/3}-1}g&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Irrational</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                         <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Irrational</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HyperbolicSquared"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.HyperbolicSquared">[docs]</a><span class="k">class</span> <span class="nc">HyperbolicSquared</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized HyperbolicSquared profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: float</span>
+<span class="sd">    Full Width At Half Maximum, defaults to 1.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">Hyperbolic</span>
+<span class="sd">    Callable instance, evaluates the hyperbolic profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">The used formula is taken from T. Ida et al. :cite:`Ida2000`, code inspired by the PhD thesis of</span>
+<span class="sd">Deyan Yordanov :cite:`Yordanov2007`.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        H\left(x;\mu, g\right) &amp;= \frac{1}{2g}\cosh^{-2}\left(\frac{x-\mu}{g}</span>
+<span class="sd">        \right)</span>
+
+<span class="sd">        FWHM &amp;= 2g\ln\left(\sqrt{2}+1\right)&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HyperbolicSquared</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                                <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">coshPart</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">simplePart</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">HyperbolicSquared</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">coshPart</span> <span class="o">/</span> <span class="n">simplePart</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PseudoVoigt"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.PseudoVoigt">[docs]</a><span class="k">class</span> <span class="nc">PseudoVoigt</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized PseudoVoigt profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: float</span>
+<span class="sd">    Full Width At Half Maximum, defaults to 1.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">PseudoVoigt</span>
+<span class="sd">    Callable instance, evaluates the pseudovoigt profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">The formula used is taken from the webpage</span>
+<span class="sd">http://en.wikipedia.org/wiki/Voigt_profile#Pseudo-Voigt_Approximation, and the</span>
+<span class="sd">supplied FWHM is appropriately transformed for the Gaussian and Lorentzian</span>
+<span class="sd">lineshapes:</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}</span>
+<span class="sd">        (x; \gamma, \mu) + (1-\eta) G(x; \sigma, \mu)&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="n">Lorentzian</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">Gaussian</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="k">if</span> <span class="n">eta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mf">0.5</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PseudoVoigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                          <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n</span>
+
+    <span class="nd">@n.setter</span>
+    <span class="k">def</span> <span class="nf">n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">+=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">PseudoVoigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ExtendedVoigt"><a class="viewcode-back" href="../../profiles.html#satlas.profiles.ExtendedVoigt">[docs]</a><span class="k">class</span> <span class="nc">ExtendedVoigt</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+
+    <span class="sd">r&quot;&quot;&quot;A callable normalized extended Voigt profile.</span>
+
+<span class="sd">Parameters</span>
+<span class="sd">----------</span>
+<span class="sd">fwhm: list of 2 floats</span>
+<span class="sd">    Full Width At Half Maximum, defaults to 1, ordered as Gaussian and</span>
+<span class="sd">    Lorentzian width.</span>
+<span class="sd">mu: float</span>
+<span class="sd">    Location of the center, defaults to 0.</span>
+<span class="sd">amp: float</span>
+<span class="sd">    Amplitude of the profile, defaults to 1.</span>
+
+<span class="sd">Attributes</span>
+<span class="sd">----------</span>
+<span class="sd">totalfwhm: float</span>
+<span class="sd">    Approximation of the total width, based on the underlying widths.</span>
+
+<span class="sd">Returns</span>
+<span class="sd">-------</span>
+<span class="sd">ExtendedVoigt</span>
+<span class="sd">    Callable instance, evaluates the extended Voigt profile in the arguments</span>
+<span class="sd">    supplied.</span>
+
+<span class="sd">Note</span>
+<span class="sd">----</span>
+<span class="sd">Formula taken from T. Ida et al. :cite:`Ida2000`, code</span>
+<span class="sd">inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.</span>
+
+<span class="sd">This class uses a weighted sum of the Gaussian,</span>
+<span class="sd">Lorentzian, Irrational and HyperbolicSquared profiles.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ExtendedVoigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span>
+                                            <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span>
+
+    <span class="nd">@fwhm.setter</span>
+    <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">]</span>
+        <span class="n">G</span><span class="p">,</span> <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fwhm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalfwhm</span> <span class="o">=</span> <span class="mf">0.5346</span> <span class="o">*</span> <span class="n">L</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.2166</span> <span class="o">*</span> <span class="n">L</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">G</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setParams</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">setParams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">2.95553</span><span class="p">,</span> <span class="mf">8.48252</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.48291</span><span class="p">,</span>
+             <span class="mf">4.74052</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.24984</span><span class="p">,</span> <span class="mf">0.15021</span><span class="p">,</span> <span class="mf">0.66</span><span class="p">])</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="mf">3.19974</span><span class="p">,</span> <span class="o">-</span><span class="mf">16.50453</span><span class="p">,</span> <span class="mf">29.14158</span><span class="p">,</span>
+             <span class="o">-</span><span class="mf">23.45651</span><span class="p">,</span> <span class="mf">10.30003</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.25693</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.42179</span><span class="p">])</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">17.80614</span><span class="p">,</span> <span class="mf">57.92559</span><span class="p">,</span> <span class="o">-</span><span class="mf">73.61822</span><span class="p">,</span>
+             <span class="mf">47.06071</span><span class="p">,</span> <span class="o">-</span><span class="mf">15.36331</span><span class="p">,</span>  <span class="mf">1.43021</span><span class="p">,</span> <span class="mf">1.19913</span><span class="p">])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">1.26571</span><span class="p">,</span> <span class="mf">4.05475</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.55466</span><span class="p">,</span>
+             <span class="mf">2.76622</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.68688</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.47745</span><span class="p">,</span> <span class="mf">1.10186</span><span class="p">])</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="mf">3.7029</span><span class="p">,</span> <span class="o">-</span><span class="mf">21.18862</span><span class="p">,</span> <span class="mf">34.96491</span><span class="p">,</span>
+             <span class="o">-</span><span class="mf">24.10743</span><span class="p">,</span> <span class="mf">9.3155</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.38927</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.30165</span><span class="p">])</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="mf">9.76947</span><span class="p">,</span> <span class="o">-</span><span class="mf">24.12407</span><span class="p">,</span> <span class="mf">22.10544</span><span class="p">,</span>
+             <span class="o">-</span><span class="mf">11.09215</span><span class="p">,</span> <span class="mf">3.23653</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.14107</span><span class="p">,</span> <span class="mf">0.25437</span><span class="p">])</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">10.02142</span><span class="p">,</span> <span class="mf">32.83023</span><span class="p">,</span> <span class="o">-</span><span class="mf">39.71134</span><span class="p">,</span>
+             <span class="mf">23.59717</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.21815</span><span class="p">,</span> <span class="mf">1.50429</span><span class="p">,</span> <span class="mf">1.01579</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">/</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wG</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wG</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wG</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wL</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wI</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wH</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wH</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nH</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">Gaussian</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wG</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="n">Lorentzian</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wL</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">Irrational</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wI</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">HyperbolicSquared</span><span class="p">(</span><span class="n">fwhm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wH</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhmV</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">**</span> <span class="mi">5</span> <span class="o">+</span>
+                      <span class="mf">2.69269</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">+</span>
+                      <span class="mf">2.42843</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+                      <span class="mf">4.47163</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span>
+                      <span class="mf">0.07842</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhmG</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span> <span class="o">+</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">fwhmL</span> <span class="o">**</span> <span class="mi">5</span>
+                      <span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ampIsArea</span><span class="p">:</span>
+            <span class="n">Gauss</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nH</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">Lorentz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">Irrat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">Hyper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nH</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">Gauss</span> <span class="o">+</span> <span class="n">Lorentz</span> <span class="o">+</span> <span class="n">Irrat</span> <span class="o">+</span> <span class="n">Hyper</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_normFactor</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">Gauss</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nH</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">Lorentz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nL</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">Irrat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nI</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">Hyper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nH</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">Gauss</span> <span class="o">+</span> <span class="n">Lorentz</span> <span class="o">+</span> <span class="n">Irrat</span> <span class="o">+</span> <span class="n">Hyper</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ExtendedVoigt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Wouter Gins.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

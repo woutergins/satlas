@@ -1,0 +1,576 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>collaps – API for interfacing with COLLAPS data &mdash; SATLAS 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="SATLAS 1.0.0 documentation" href="index.html"/>
+        <link rel="next" title="References" href="references.html"/>
+        <link rel="prev" title="polar – Polarization simulations" href="polar.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> SATLAS</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="utilities.html"><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-satlas.utilities">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="profiles.html#usage-example">Usage example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiles.html#module-satlas.profiles">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spectrum.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spectrum.html#module-satlas.spectrum">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="relaxation.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relaxation.html#module-satlas.relaxation">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="polar.html#module-satlas.polar">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-collaps">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SATLAS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/collaps.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="collaps-api-for-interfacing-with-collaps-data">
+<h1><a class="reference internal" href="#module-collaps" title="collaps: Implementation of classes and functions for easy interfacing and analysis of COLLAPS data (Windows)"><tt class="xref py py-mod docutils literal"><span class="pre">collaps</span></tt></a> &#8211; API for interfacing with COLLAPS data<a class="headerlink" href="#collaps-api-for-interfacing-with-collaps-data" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-collaps" title="collaps: Implementation of classes and functions for easy interfacing and analysis of COLLAPS data (Windows)"><tt class="xref py py-mod docutils literal"><span class="pre">collaps</span></tt></a> module is designed to interface with the results from the COLLAPS setup at ISOLDE, CERN. The class <tt class="xref py py-class docutils literal"><span class="pre">MCPParser</span></tt> provides a universal parser for reading in the measurements made by the MCP-program. This parser outputs an instance of the class <tt class="xref py py-class docutils literal"><span class="pre">Measurement</span></tt>, providing a unified interface in Python to the data. If a Kepco-scan is made, the calibration fit is made automatically, and the parameters are available as attributes of the tracks in the <tt class="xref py py-class docutils literal"><span class="pre">Measurement</span></tt> instance.</p>
+<p>Furthermore, several functions have been included for easier data analysis and prediction. The functions <tt class="xref py py-func docutils literal"><span class="pre">beta()</span></tt> and <tt class="xref py py-func docutils literal"><span class="pre">dopplerfactor()</span></tt> calculate the relativistic factors for the COLLAPS setup, which is needed to calculate the correct laser frequency. <tt class="xref py py-func docutils literal"><span class="pre">voltageshift()</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">predictspectrum()</span></tt> and <tt class="xref py py-func docutils literal"><span class="pre">interactiveMode()</span></tt> have more of a use in the prediction of spectra; their use is documented in the docstrings of the code.</p>
+<div class="section" id="module-collaps">
+<span id="code-documentation"></span><h2>Code documentation<a class="headerlink" href="#module-collaps" title="Permalink to this headline">¶</a></h2>
+<p><em>Module author: Wouter Gins &lt;<a class="reference external" href="mailto:wouter&#46;gins&#37;&#52;&#48;gmail&#46;com">wouter<span>&#46;</span>gins<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt;</em></p>
+<div class="section" id="reading-mcp-files">
+<h3>Reading MCP files<a class="headerlink" href="#reading-mcp-files" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="satlas.collaps.MCPParser">
+<em class="property">class </em><tt class="descclassname">satlas.collaps.</tt><tt class="descname">MCPParser</tt><a class="reference internal" href="_modules/satlas/collaps.html#MCPParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.MCPParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parser for MCP files as recorded by the COLLAPS experiment
+at ISOLDE, CERN.</p>
+<dl class="method">
+<dt id="satlas.collaps.MCPParser.feed">
+<tt class="descname">feed</tt><big>(</big><em>dataString</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#MCPParser.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.MCPParser.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the input string and convert to different objects for use in
+the creation of a <tt class="xref py py-class docutils literal"><span class="pre">Measurement</span></tt> object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataString</strong> (<em>string</em>) &#8211; String to be parsed.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Object representing the measurement as described by the input
+string.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">Measurement</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.collaps.MCPParser.feedFile">
+<tt class="descname">feedFile</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#MCPParser.feedFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.MCPParser.feedFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the entire file as a single string, then call <tt class="xref py py-meth docutils literal"><span class="pre">feed()</span></tt>
+with this string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>string</em>) &#8211; Name of the file to be read, including extension.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Measurement object representing the scan.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">Measurement</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="satlas.collaps.Measurement">
+<em class="property">class </em><tt class="descclassname">satlas.collaps.</tt><tt class="descname">Measurement</tt><a class="reference internal" href="_modules/satlas/collaps.html#Measurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.Measurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Representation of a measurement as saved in an MCP-file.</p>
+<dl class="attribute">
+<dt id="collaps.Measurement.x">
+<tt class="descname">x</tt><a class="headerlink" href="#collaps.Measurement.x" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>NumPy array</em></p>
+<p>Line voltage.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="collaps.Measurement.y">
+<tt class="descname">y</tt><a class="headerlink" href="#collaps.Measurement.y" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>NumPy array</em></p>
+<p>Counts of the scalar with the highest attribute.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="collaps.Measurement.ySeperate">
+<tt class="descname">ySeperate</tt><a class="headerlink" href="#collaps.Measurement.ySeperate" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dictionary of NumPy arrays</em></p>
+<p>The counts for the different scalars are saved in this
+dictionary, with the channel number as the key.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="collaps.Measurement.premaVoltage">
+<tt class="descname">premaVoltage</tt><a class="headerlink" href="#collaps.Measurement.premaVoltage" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>NumPy array.</em></p>
+<p>An array of all the recorded premavoltages for the run.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="collaps.Measurement.tracks">
+<tt class="descname">tracks</tt><a class="headerlink" href="#collaps.Measurement.tracks" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>List of Track-objects.</em></p>
+<p>The different tracks are saved in this list.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="collaps.Measurement.timeStamp">
+<tt class="descname">timeStamp</tt><a class="headerlink" href="#collaps.Measurement.timeStamp" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Datetime object</em></p>
+<p>Contains the timestamp of when the run was taken.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="analysis-and-prediction-tools">
+<h3>Analysis and prediction tools<a class="headerlink" href="#analysis-and-prediction-tools" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="satlas.collaps.beta">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">beta</tt><big>(</big><em>mass</em>, <em>V</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#beta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.beta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the beta-factor for a mass in amu
+and applied voltage in Volt.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mass</strong> (<em>float</em>) &#8211; Mass in amu.</li>
+<li><strong>V</strong> (<em>float</em>) &#8211; voltage in volt.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Relativistic beta-factor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.dopplerfactor">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">dopplerfactor</tt><big>(</big><em>mass</em>, <em>V</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#dopplerfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.dopplerfactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Doppler shift of the laser frequency for a
+given mass in amu and voltage in V.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mass</strong> (<em>float</em>) &#8211; Mass in amu.</li>
+<li><strong>V</strong> (<em>float</em>) &#8211; Voltage in volt.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Doppler factor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.dopplerwidth">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">dopplerwidth</tt><big>(</big><em>mass</em>, <em>dE</em>, <em>V</em>, <em>freq</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#dopplerwidth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.dopplerwidth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the estimated Doppler width of the transition, given
+the mass, acceleration voltage and initial energy spread.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mass</strong> (<em>float</em>) &#8211; Mass in amu.</li>
+<li><strong>dE</strong> (<em>float</em>) &#8211; Energy spread in eV.</li>
+<li><strong>V</strong> (<em>float</em>) &#8211; Acceleration voltage.</li>
+<li><strong>freq</strong> (<em>float</em>) &#8211; Optical transition frequency.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Estimated Doppler width.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Formula found in the master thesis of Hanne Heylen <a class="reference internal" href="references.html#heylen2012" id="id1">[Hey12]</a>.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.voltageshift">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">voltageshift</tt><big>(</big><em>mass</em>, <em>transitionFreq</em>, <em>laserFreq</em>, <em>origVoltage=30000.0</em>, <em>isotopeshift=0.0</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#voltageshift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.voltageshift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates what voltage has to be applied in order to get the
+resonance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mass</strong> (<em>float</em>) &#8211; Mass of the isotope in amu.</li>
+<li><strong>transitionFreq</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance) &#8211; Frequency of the transition. Can be a value (in MHz), or an
+instance of the <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class.</li>
+<li><strong>laserFreq</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance) &#8211; Frequency that the laser is tuned to. Can be a value (in MHz), or an
+instance of the <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>origVoltage</strong> (<em>float, optional</em>) &#8211;
+Original applied voltage in volt. Defaults to 30kV.</li>
+<li><strong>isotopeshift</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance) &#8211;
+Value of the isotope shift. Can be a value (in MHz), or an
+instance of the <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class. Defaults to 0.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The first value is the new value of the total applied voltage needed,
+the second is the shift compared to the original voltage. Note that a
+negative value means an increase in kinetic energy is needed. The value
+of <tt class="xref py py-attr docutils literal"><span class="pre">shift</span></tt> is what the Fluke should be set to, including
+polarity!</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.predictspectrum">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">predictspectrum</tt><big>(</big><em>mass</em>, <em>I</em>, <em>J</em>, <em>ABC</em>, <em>isotopeshift</em>, <em>lifetime</em>, <em>transitionFreq</em>, <em>laserFreq</em>, <em>fixedVoltage</em>, <em>kepcoFactor=50.0</em>, <em>channels=10000</em>, <em>plot=False</em>, <em>show=True</em>, <em>name=None</em>, <em>useMatplotLib=False</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#predictspectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.predictspectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Based on the parameters given, return the guess for what the spectrum
+will look like. Warns if the needed line voltage exceeds the capabilities.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mass</strong> (<em>float</em>) &#8211; Mass of the isotope.</li>
+<li><strong>I</strong> (<em>integer or half-integer</em>) &#8211; Nuclear spin.</li>
+<li><strong>J</strong> (<em>list of integers or half-integers</em>) &#8211; Electronic spin, ordered as [J <sub>lower</sub>, J <sub>upper</sub>].</li>
+<li><strong>ABC</strong> (<em>list of floats</em>) &#8211; Values for the hyperfine constants, ordered as [A <sub>lower</sub>,
+A <sub>upper</sub>, B <sub>lower</sub>, B <sub>upper</sub>, C <sub>lower</sub>,
+C <sub>upper</sub>].</li>
+<li><strong>isotopeshift</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance) &#8211; Isotope shift of the transition frequency, in MHz or
+<tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class.</li>
+<li><strong>lifetime</strong> (<em>float</em>) &#8211; Lifetime of the excited state, in seconds.</li>
+<li><strong>transitionFreq</strong> (float or <cite>Energy</cite> instance) &#8211; Frequency of the fine structure transition, in MHz or
+<tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class.</li>
+<li><strong>laserFreq</strong> (float or <cite>Energy</cite> instance) &#8211; Frequency that the laser is set to, in MHz or
+<tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class.</li>
+<li><strong>fixedVoltage</strong> (<em>float</em>) &#8211; Applied voltage in volt.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>kepcoFactor</strong> (<em>float, optional</em>) &#8211;
+Kepco amplification factor, defaults to 50.0.</li>
+<li><strong>channels</strong> (<em>int, optional</em>) &#8211;
+Number of points on x-axis for evaluation, defaults to 10000.</li>
+<li><strong>plot</strong> (<em>boolean, optional</em>) &#8211;
+If True, a plot of the simulated spectrum will be shown. If the
+voltage excedes the limits of the possible linevoltages
+(meaning -10 &lt; voltages &lt; 10 evaluates as <tt class="xref py py-class docutils literal"><span class="pre">False</span></tt> somewhere),
+the plot is drawn in red, otherwise in black. Defaults to
+<tt class="xref py py-class docutils literal"><span class="pre">False</span></tt>.</li>
+<li><strong>show</strong> (<em>boolean, optional</em>) &#8211;
+If <tt class="xref py py-class docutils literal"><span class="pre">True</span></tt>, immediately show a plot of the simulated spectrum.
+Has no effect is <tt class="xref py py-attr docutils literal"><span class="pre">plot</span></tt> is <tt class="xref py py-class docutils literal"><span class="pre">False</span></tt>. Defaults to
+<tt class="xref py py-class docutils literal"><span class="pre">True</span></tt>.</li>
+<li><strong>name</strong> (<em>string, optional</em>) &#8211;
+Isotope name. Displayed in the plot title. Defaults to <tt class="xref py py-class docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>useMatplotLib</strong> (<em>boolean, optional</em>) &#8211;
+Use MatplotLib as the graphical engine, otherwise use PyQtGraph.
+Defaults to <tt class="xref py py-class docutils literal"><span class="pre">False</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>Linevoltage</strong> (<em>NumPy array of linevoltages.</em>)</li>
+<li><strong>Response</strong> (<em>NumPy array of response to Linevoltage.</em>)</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.fullprediction">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">fullprediction</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#fullprediction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.fullprediction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses the file given, making an estimate of how the spectrum will
+look like based on the parameters given. The format of the file should look
+like this:</p>
+<div class="highlight-python"><div class="highlight"><pre>[General]
+TransitionFrequency : float
+TransitionFrequencyUnit : string
+LaserFrequency : float
+LaserFrequencyUnit : string
+Lifetime : float
+ISOLDEVoltage : float
+
+[IsotopeName1]
+I : integer or half-integer
+mass : mass in amu
+Jlower : integer or half-integer
+Jupper : integer or half-integer
+Alower : float
+Aupper : float
+Blower : float
+Bupper : float
+Isotopeshift : float
+IsotopeshiftUnit : string
+</pre></div>
+</div>
+<p>For each section formatted such as <cite>[IsotopeName1]</cite>, a spectrum is estimated.
+Also given will be the premavoltage needed for each isotope.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>string</em>) &#8211; Name of the file which contains all the data.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.collaps.interactiveMode">
+<tt class="descclassname">satlas.collaps.</tt><tt class="descname">interactiveMode</tt><big>(</big><em>I</em>, <em>J</em>, <em>ABC</em>, <em>f</em>, <em>filename=None</em>, <em>mass=None</em>, <em>transitionFreq=None</em>, <em>laserFreq=None</em>, <em>scalar=46</em>, <em>kepco=50.0</em><big>)</big><a class="reference internal" href="_modules/satlas/collaps.html#interactiveMode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.collaps.interactiveMode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the information contained in I, J, AB and f (see the documentation
+of Spectrum for these parameters), a GUI is built with sliders for the most
+important parameters.</p>
+<p>If the optional values filename, mass, transitionFreq and laserFreq are
+given, the .mcp file is loaded, converted to frequency, the laser
+frequency is subtracted and is displayed in the back of the spectrum. If
+this is so, a fit can be performed with the currently selected values.</p>
+<p>Uses PyQtGraph to build the GUI.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>I</strong> (<em>integer or half-integer</em>) &#8211; Nuclear spin.</li>
+<li><strong>J</strong> (<em>list of integers or half-integers</em>) &#8211; Electronic spin, ordered as [J <sub>lower</sub>, J <sub>upper</sub>].</li>
+<li><strong>ABC</strong> (<em>list of floats</em>) &#8211; Values for the hyperfine constants, ordered as [A <sub>lower</sub>,
+A <sub>upper</sub>, B <sub>lower</sub>, B <sub>upper</sub>, C <sub>lower</sub>,
+C <sub>upper</sub>].</li>
+<li><strong>f</strong> (<em>float</em>) &#8211; Central frequency of the spectrum.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> (<em>string, optional</em>) &#8211;
+If this is different from <tt class="xref py py-class docutils literal"><span class="pre">None</span></tt>, the file is loaded and
+displayed in the background.</li>
+<li><strong>transitionFreq</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance, optional) &#8211;
+Frequency of the fine structure transition, in MHz or
+<tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class. Used to convert the voltage in the
+file to frequency.</li>
+<li><strong>laserFreq</strong> (float or <tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> instance, optional) &#8211;
+Frequency that the laser is set to, in MHz or
+<tt class="xref py py-class docutils literal"><span class="pre">Energy</span></tt> class. Used to convert the voltage in the
+file to frequency.</li>
+<li><strong>scalar</strong> (<em>float, optional</em>) &#8211;
+Select the scalar in the file. Defaults to 46.</li>
+<li><strong>kepco</strong> (<em>float, optional</em>) &#8211;
+Kepco amplification factor, defaults to 50.0.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="references.html" class="btn btn-neutral float-right" title="References"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="polar.html" class="btn btn-neutral" title="polar – Polarization simulations"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Wouter Gins.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

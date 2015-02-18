@@ -1,0 +1,28 @@
+***********************************************
+:mod:`profiles` -- Implementation of lineshapes
+***********************************************
+
+The module :mod:`profiles` is a grouping of different lineshapes used in the fitting of hyperfine spectra. The classes create callable instances of the profile, with the parameters given as intuitive keywords, so the user doesn't have to focus on the correct implementation of the formula.
+The different lineshapes included are:
+
+* Gaussian
+* Lorentzian
+* Voigt
+* Extended Voigt, consisting of a combination of Gaussian, Lorentzian and
+    * Hyperbolic
+    * Irrational
+* Pseudo-Voigt
+
+.. note:: The parameter **amp** is used as either the height of the peak or the area underneath the curve, depending on the boolean **ampIsArea**. This boolean can be supplied as a keyword to every profile. Standard behaviour is using the height as the amplitude instead of the area.
+
+Usage example
+=============
+For the correct syntax and use of the profiles, while also showcasing the difference between using the amplitude as an area or as peak height, is illustrated in the following codeblock. The resulting plot, so the difference can be seen, is also included.
+
+.. plot:: pyplots/ProfileExamples.py
+    :include-source:
+
+Code documentation
+==================
+.. automodule:: satlas.profiles
+    :members:

@@ -1,0 +1,415 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>utilities – Collection of handy functions &mdash; SATLAS 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="SATLAS 1.0.0 documentation" href="index.html"/>
+        <link rel="next" title="profiles – Implementation of lineshapes" href="profiles.html"/>
+        <link rel="prev" title="SATLAS – Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> SATLAS</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href=""><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-satlas.utilities">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="profiles.html#usage-example">Usage example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiles.html#module-satlas.profiles">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spectrum.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spectrum.html#module-satlas.spectrum">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="relaxation.html#usage-examples">Usage examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relaxation.html#module-satlas.relaxation">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="polar.html#module-satlas.polar">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="collaps.html"><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="collaps.html#module-collaps">Code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">SATLAS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/utilities.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="utilities-collection-of-handy-functions">
+<h1><a class="reference internal" href="#module-utilities" title="utilities: Implementation of various functions that ease the work, but do not belong in one of the other modules. (Windows)"><tt class="xref py py-mod docutils literal"><span class="pre">utilities</span></tt></a> &#8211; Collection of handy functions<a class="headerlink" href="#utilities-collection-of-handy-functions" title="Permalink to this headline">¶</a></h1>
+<p>A collection of classes and functions for a variety of purposes, which doesn&#8217;t fit in one of the other modules. This combines ease-of-use classes for energy conversion and fine-structure level representation, a class for modeling a release curve, as well as functions for working with an ND-array of callable objects, a rounding function and a function to loop over all entry indexes in a multidimensional matrix.</p>
+<div class="section" id="module-satlas.utilities">
+<span id="code-documentation"></span><h2>Code documentation<a class="headerlink" href="#module-satlas.utilities" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-utilities"></span><p><em>Module author: Wouter Gins &lt;<a class="reference external" href="mailto:wouter&#46;gins&#37;&#52;&#48;fys&#46;kuleuven&#46;be">wouter<span>&#46;</span>gins<span>&#64;</span>fys<span>&#46;</span>kuleuven<span>&#46;</span>be</a>&gt;</em></p>
+<dl class="class">
+<dt id="satlas.utilities.Energy">
+<em class="property">class </em><tt class="descclassname">satlas.utilities.</tt><tt class="descname">Energy</tt><big>(</big><em>value</em>, <em>unit='cm-1'</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#Energy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.Energy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ease-of-use class to represent energy and frequencies.
+Uses automatic conversion to a series of units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value</strong> (<em>float</em>) &#8211; Value of the energy or frequency to be converted/worked with.</li>
+<li><strong>unit</strong> (<em>string, {cm-1, MHz, eV, nm}</em>) &#8211; String denoting the unit for the given value. Default value is inverse
+centimeters (cm-1).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="satlas.utilities.Energy.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>unit</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#Energy.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.Energy.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the value to the given unit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unit</strong> (<em>string</em>) &#8211; Requested unit, must be &#8216;cm-1&#8217;, &#8216;MHz&#8217;, &#8216;eV&#8217; or &#8216;nm&#8217;.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Converted value.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="satlas.utilities.Level">
+<em class="property">class </em><tt class="descclassname">satlas.utilities.</tt><tt class="descname">Level</tt><big>(</big><em>energy</em>, <em>hyp_par</em>, <em>L</em>, <em>S</em>, <em>J</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#Level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.Level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ease-of-use class for representing a level.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>energy</strong> (<em>float</em>) &#8211; Fine structure energy in eV.</li>
+<li><strong>hyp_par</strong> (<em>list of 2 floats</em>) &#8211; Hyperfine parameters [A, B] in MHz.</li>
+<li><strong>S, J</strong> (<em>L,</em>) &#8211; Spin quantum numbers.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="satlas.utilities.ReleaseCurve">
+<em class="property">class </em><tt class="descclassname">satlas.utilities.</tt><tt class="descname">ReleaseCurve</tt><big>(</big><em>amp=40000000.0</em>, <em>a=0.9</em>, <em>tr=0.078</em>, <em>tf=0.396</em>, <em>ts=1.905</em>, <em>pulses=3</em>, <em>delay=10.0</em>, <em>cont=True</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a callable object for the standard release curve. Formula
+based on J.P. Ramos et al. <a class="reference internal" href="references.html#ramos2014" id="id1">[RGM+14]</a>. Input parameters are initialized to an 35Ar release
+curve.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>amp</strong> (<em>float,</em>) &#8211; Influences the height of the curve, roughly the maximum of the
+release rate. Is also an attribute. Default: 4E7</li>
+<li><strong>a</strong> (<em>float between 0 and 1</em>) &#8211; Weighting of the different exponentials in the formula. Is also an
+attribute. Default: 0.9</li>
+<li><strong>tr</strong> (<em>float</em>) &#8211; Time constant parameter in seconds. The attribute is saved as the
+corresponding l-parameter. Default: 78 ms</li>
+<li><strong>tf</strong> (<em>float</em>) &#8211; Time constant parameter in seconds. The attribute is saved as the
+corresponding l-parameter. Default: 396 ms</li>
+<li><strong>ts</strong> (<em>float</em>) &#8211; Time constant parameter in seconds. The attribute is saved as the
+corresponding l-parameter. Default: 1905 ms</li>
+<li><strong>pulses</strong> (<em>integer</em>) &#8211; Number of pulses seperated by the delay parameter. Has no effect if the
+<tt class="xref py py-attr docutils literal"><span class="pre">cont</span></tt> parameter is True. Is also an attribute. Default: 3</li>
+<li><strong>delay</strong> (<em>float</em>) &#8211; Seconds between pulses. Is also an attribute. Default: 10.0 s</li>
+<li><strong>cont</strong> (<em>bool</em>) &#8211; Continuously generate pulses seperated by the delay parameter if True,
+else create the number of pulses given in the pulses parameter. Is also
+an attribute. Default: True</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The l-parameters are related to the t-parameters through
+<img class="math" src="_images/math/3cdf0531a40373e312186e14ee03061a80d00190.png" alt="l = \frac{\ln(2)}{t}"/>. The release curve is modeled as:</p>
+<div class="last math">
+<p><img src="_images/math/5c7e52853b70c93bb196a4fa17830ff474505c25.png" alt="RC\left(t\right) = a\left(1-\exp\left(-l_rt\right)\right)
+\left(a\exp\left(-l_ft\right)+(1-a)\exp\left(-l_st\right)\right)"/></p>
+</div></div>
+<dl class="method">
+<dt id="satlas.utilities.ReleaseCurve.FitToData">
+<tt class="descname">FitToData</tt><big>(</big><em>t</em>, <em>y</em>, <em>yerr</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.FitToData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.FitToData" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a release curve is measured as a function of time, this should
+fit the parameters to the given curve y(t) with errors yerr.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>t</strong> (<em>array_like</em>) &#8211; Timevector of the measurements.</li>
+<li><strong>y</strong> (<em>array_like</em>) &#8211; Counts corresponding to t.</li>
+<li><strong>yerr</strong> (<em>array_like</em>) &#8211; Counting errors of y.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This method has not been tested!</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.utilities.ReleaseCurve.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the evaluation of the formula, taking the pulses
+and delays into account.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> (<em>array_like</em>) &#8211; Times for which the yield is requested.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.utilities.callNDArray">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">callNDArray</tt><big>(</big><em>arr</em>, <em>arg</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#callNDArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.callNDArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes over each subarray in the first dimension,
+and calls the corresponding argument. Returns the values itself
+if the entry is not callable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arr</strong> (<em>NumPy array</em>) &#8211; Array containing a mix of callable and not-callable entries.</li>
+<li><strong>arg</strong> (<em>misc</em>) &#8211; Argument to be passed to each callable entry.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Array with the callable entries replaced by the returned value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">NumPy array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.utilities.round2SignifFigs">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">round2SignifFigs</tt><big>(</big><em>vals</em>, <em>n</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#round2SignifFigs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.round2SignifFigs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Code copied from
+<a class="reference external" href="http://stackoverflow.com/questions/18915378/rounding-to-significant-figures-in-numpy">http://stackoverflow.com/questions/18915378/rounding-to-significant-figures-in-numpy</a>
+Goes over the list or array of vals given, and rounds
+them to the number of significant digits (n) given.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>vals</strong> (<em>array_like</em>) &#8211; Values to be rounded.</li>
+<li><strong>n</strong> (<em>integer</em>) &#8211; Number of significant digits to round to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Does not accept: inf, nan, complex</p>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.2366e22</span><span class="p">,</span> <span class="mf">1.2544444e-15</span><span class="p">,</span> <span class="mf">0.001222</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">round2SignifFigs</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([  0.00e+00,  -1.24e+22,   1.25e-15,   1.22e-03])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.utilities.state_number_enumerate">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">state_number_enumerate</tt><big>(</big><em>dims</em>, <em>state=None</em>, <em>idx=0</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#state_number_enumerate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.state_number_enumerate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the indices for the different entries in
+a multi-dimensional array. Code copied from the QuTiP package.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape</strong> (<em>tuple</em>) &#8211; Describes the shape of the multi-dimensional array.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple with each entry being a tuple containing the indices.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="profiles.html" class="btn btn-neutral float-right" title="profiles – Implementation of lineshapes"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="SATLAS – Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Wouter Gins.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
