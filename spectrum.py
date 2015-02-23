@@ -34,6 +34,8 @@ class Spectrum(object):
     def __init__(self):
         super(Spectrum, self).__init__()
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'df']
+        self.showSelected = True
+        self.showAll = False
 
     def sanitizeFitInput(self, x, y, yerr=None):
         return x, y, yerr
@@ -124,10 +126,9 @@ class Spectrum(object):
             return None
 
     def walk(self, x, y, showLikeli=False, showWalks=False, showTriangle=False,
-             nsteps=2000, walkers=20):
+             nsteps=2000, walkers=20, burnin=10.0):
         """Performs a random walk in the parameter space to determine the
-        distribution for the best fit of the parameters. A burn-in period of
-        10% of the steps is used.
+        distribution for the best fit of the parameters.
 
         A message is printed before and after the walk.
 
@@ -152,6 +153,9 @@ class Spectrum(object):
             Number of steps to be taken, defaults to 2000.
         walkers: int, optional
             Number of walkers to be used, defaults to 20.
+        burnin: float, optional
+            Burn-in to be used for the walk. Expressed in percentage,
+            defaults to 10.0.
 
         Returns
         -------
@@ -175,20 +179,26 @@ class Spectrum(object):
 
         def lnprobList(fvars, x, y, params, groupParams):
             for val, n in zip(fvars, var_names):
-                params[n].value = val
-            groupParams.params = params
-            groupParams.update_constraints()
-            params = groupParams.params
-            return self.lnprob(params, x, y)
+                groupParams.params[n].value = val
+            # groupParams.params = params
+            # groupParams.update_constraints()
+            # print(groupParams.params['FWHML'].value)
+            return self.lnprob(groupParams.params, x, y)
 
+            """Fix it, so no constraints are left on groupParams! Sampling is WRONG at this point!"""
         groupParams = lm.Minimizer(lambda *args, **kwargs: 1, params)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
                                        args=(x, y, params, groupParams))
-        print('Starting walk...')
-        sampler.run_mcmc(pos, nsteps)
+        burn = int(nsteps / burnin)
+        print('Starting burn-in ({} steps)...'.format(burn))
+        sampler.run_mcmc(pos, burn, storechain=False)
+        print('Starting walk ({} steps)...'.format(nsteps - burn))
+        sampler.run_mcmc(pos, nsteps - burn)
         print('Done.')
-        burn = nsteps / 10
-        samples = sampler.chain[:, burn:, :].reshape((-1, ndim))
+        samples = sampler.flatchain
+        print(var_names)
+        print(samples.shape)
+        print(samples[:, 1])
         val = []
         err = []
         q = [16.0, 50.0, 84.0]
@@ -242,7 +252,7 @@ class Spectrum(object):
             axes = axes.flatten()
 
             for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
-                a.plot(sampler.chain[:, burn:, i].T,
+                a.plot(sampler.chain[:, :, i].T,
                        color="k", alpha=0.4)
                 a.axhline(truth, color="#888888", lw=2)
                 a.set_xlim([0, nsteps])
@@ -251,35 +261,38 @@ class Spectrum(object):
             returnfigs += (figWalks,)
 
         if showTriangle:
-            figTri1 = tri.corner(samples,
-                                 labels=var_names,
-                                 truths=vars,
-                                 plot_datapoints=False,
-                                 show_titles=True,
-                                 quantiles=[0.16, 0.5, 0.84],
-                                 verbose=False)
+            if self.showAll:
+                figTri1 = tri.corner(samples,
+                                     labels=var_names,
+                                     truths=vars,
+                                     plot_datapoints=False,
+                                     show_titles=True,
+                                     quantiles=[0.16, 0.5, 0.84],
+                                     verbose=False)
+                returnfigs += (figTri1,)
 
-            s = []
-            for i, v in enumerate(var_names):
-                for r in self.selected:
-                    if r in v:
-                        s.append(i)
-            selected_samples = np.zeros((samples.shape[0], len(s)))
-            for i, val in enumerate(s):
-                selected_samples[:, i] = samples[:, val]
-            samples = selected_samples
-            var_names = (np.array(var_names)[s]).tolist()
-            vars = (np.array(vars)[s]).tolist()
+            if self.showSelected:
+                s = []
+                for i, v in enumerate(var_names):
+                    for r in self.selected:
+                        if r in v:
+                            s.append(i)
+                selected_samples = np.zeros((samples.shape[0], len(s)))
+                for i, val in enumerate(s):
+                    selected_samples[:, i] = samples[:, val]
+                samples = selected_samples
+                var_names = (np.array(var_names)[s]).tolist()
+                vars = (np.array(vars)[s]).tolist()
 
-            figTri = tri.corner(samples,
-                                labels=var_names,
-                                truths=vars,
-                                plot_datapoints=False,
-                                show_titles=True,
-                                quantiles=[0.16, 0.5, 0.84],
-                                verbose=False)
+                figTri = tri.corner(samples,
+                                    labels=var_names,
+                                    truths=vars,
+                                    plot_datapoints=False,
+                                    show_titles=True,
+                                    quantiles=[0.16, 0.5, 0.84],
+                                    verbose=False)
 
-            returnfigs += (figTri1, figTri)
+                returnfigs += (figTri,)
         return returnfigs
 
     def DisplayMLEFit(self):
@@ -1149,8 +1162,10 @@ class SingleSpectrum(Spectrum):
             leftbound, rightbound = params[key].min, params[key].max
             leftbound = -np.inf if leftbound is None else leftbound
             rightbound = np.inf if rightbound is None else rightbound
-            if not leftbound <= params[key].value <= rightbound:
+            if 'Amp0' in key and params[key].value < 0:
                 print(key)
+                print('{} <= {} <= {} ?'.format(leftbound, params[key].value, rightbound))
+            if not leftbound <= params[key].value <= rightbound:
                 return -np.inf
         return 1.0
 
