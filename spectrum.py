@@ -17,6 +17,17 @@ import satlas.triangle as tri
 from satlas.wigner import wigner_6j as W6J
 
 
+class PriorParameter(lm.Parameter):
+    """Extended the Parameter class from LMFIT to incorporate prior boundaries."""
+    def __init__(self, name, value=None, vary=True, min=None, max=None, expr=None,
+                 priormin=None, priormax=None):
+        super(PriorParameter, self).__init__(name, value=value,
+                                             vary=vary, min=min,
+                                             max=max, expr=expr)
+        self.priormin = priormin
+        self.priormax = priormax
+
+
 class Spectrum(object):
 
     """Baseclass for all spectra, such as :class:`SingleSpectrum`,
@@ -177,18 +188,20 @@ class Spectrum(object):
         pos = [vars + 1e-4 * np.random.randn(ndim) for i in range(walkers)]
         x, y, _ = self.sanitizeFitInput(x, y)
 
-        def lnprobList(fvars, x, y, params, groupParams):
+        def lnprobList(fvars, x, y, groupParams):
             for val, n in zip(fvars, var_names):
-                groupParams.params[n].value = val
-            # groupParams.params = params
-            # groupParams.update_constraints()
-            # print(groupParams.params['FWHML'].value)
-            return self.lnprob(groupParams.params, x, y)
-
-            """Fix it, so no constraints are left on groupParams! Sampling is WRONG at this point!"""
-        groupParams = lm.Minimizer(lambda *args, **kwargs: 1, params)
+                groupParams[n].value = val
+            return self.lnprob(groupParams, x, y)
+        groupParams = lm.Parameters()
+        for key in params.keys():
+            groupParams[key] = PriorParameter(key,
+                            value=params[key].value,
+                            vary=params[key].vary,
+                            expr=params[key].expr,
+                            priormin=params[key].min,
+                            priormax=params[key].max)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                       args=(x, y, params, groupParams))
+                                       args=(x, y, groupParams))
         burn = int(nsteps / burnin)
         print('Starting burn-in ({} steps)...'.format(burn))
         sampler.run_mcmc(pos, burn, storechain=False)
@@ -196,9 +209,6 @@ class Spectrum(object):
         sampler.run_mcmc(pos, nsteps - burn)
         print('Done.')
         samples = sampler.flatchain
-        print(var_names)
-        print(samples.shape)
-        print(samples[:, 1])
         val = []
         err = []
         q = [16.0, 50.0, 84.0]
@@ -1159,12 +1169,12 @@ class SingleSpectrum(Spectrum):
             If any of the parameters are out of bounds, returns :data:`-np.inf`
             , otherwise 1.0 is returned"""
         for key in params.keys():
-            leftbound, rightbound = params[key].min, params[key].max
+            try:
+                leftbound, rightbound = params[key].priormin, params[key].priormax
+            except:
+                leftbound, rightbound = params[key].min, params[key].max
             leftbound = -np.inf if leftbound is None else leftbound
             rightbound = np.inf if rightbound is None else rightbound
-            if 'Amp0' in key and params[key].value < 0:
-                print(key)
-                print('{} <= {} <= {} ?'.format(leftbound, params[key].value, rightbound))
             if not leftbound <= params[key].value <= rightbound:
                 return -np.inf
         return 1.0
