@@ -18,9 +18,12 @@ from satlas.wigner import wigner_6j as W6J
 
 
 class PriorParameter(lm.Parameter):
-    """Extended the Parameter class from LMFIT to incorporate prior boundaries."""
-    def __init__(self, name, value=None, vary=True, min=None, max=None, expr=None,
-                 priormin=None, priormax=None):
+
+    """Extended the Parameter class from LMFIT to incorporate prior boundaries.
+    """
+
+    def __init__(self, name, value=None, vary=True, min=None, max=None,
+                 expr=None, priormin=None, priormax=None):
         super(PriorParameter, self).__init__(name, value=value,
                                              vary=vary, min=min,
                                              max=max, expr=expr)
@@ -47,6 +50,7 @@ class Spectrum(object):
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'df']
         self.showSelected = True
         self.showAll = False
+        self.atol = 0.1
 
     def sanitizeFitInput(self, x, y, yerr=None):
         return x, y, yerr
@@ -65,6 +69,9 @@ class Spectrum(object):
         y: array_like
             Counts corresponding to :attr:`x`."""
         self.varFromParams(params)
+        if any([np.isclose(X.min(), X.max(), atol=self.atol)
+                for X in self.seperateResponse(x)]):
+            return -np.inf
         return llh.Poisson(y, self(x))
 
     def lnprob(self, params, x, y):
@@ -195,11 +202,11 @@ class Spectrum(object):
         groupParams = lm.Parameters()
         for key in params.keys():
             groupParams[key] = PriorParameter(key,
-                            value=params[key].value,
-                            vary=params[key].vary,
-                            expr=params[key].expr,
-                            priormin=params[key].min,
-                            priormax=params[key].max)
+                                              value=params[key].value,
+                                              vary=params[key].vary,
+                                              expr=params[key].expr,
+                                              priormin=params[key].min,
+                                              priormax=params[key].max)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
                                        args=(x, y, groupParams))
         burn = int(nsteps / burnin)
@@ -212,8 +219,8 @@ class Spectrum(object):
         val = []
         err = []
         q = [16.0, 50.0, 84.0]
-        for i, x in enumerate(samples.T):
-            q16, q50, q84 = np.percentile(x, q)
+        for i, samp in enumerate(samples.T):
+            q16, q50, q84 = np.percentile(samp, q)
             val.append(q50)
             err.append(max([q50 - q16, q84 - q50]))
 
@@ -238,21 +245,24 @@ class Spectrum(object):
             figLikeli, axes = plt.subplots(shape, shape)
             axes = axes.flatten()
             for i, (n, truth, a) in enumerate(zip(var_names, val, axes)):
-                left, right = self.MLEFit[n].min, self.MLEFit[n].max
-                l = val[i] - 100 * self.MLEFit[n].stderr
-                r = val[i] + 100 * self.MLEFit[n].stderr
-                left = l if left is None else max(l, left)
-                right = r if right is None else min(r, right)
+                st = samples.T
+                left, right = (truth - 5 * np.abs(st[i, :].min()),
+                               truth + 5 * np.abs(st[i, :].max()))
+                # l = val[i] - 100 * self.MLEFit[n].stderr
+                # r = val[i] + 100 * self.MLEFit[n].stderr
+                # left = l if left is None else max(l, left)
+                # right = r if right is None else min(r, right)
                 xvalues = np.linspace(left, right, 1000)
                 dummy = np.array(vars, dtype='float')
                 yvalues = np.zeros(xvalues.shape[0])
                 for j, value in enumerate(xvalues):
                     dummy[i] = value
-                    yvalues[j] = lnprobList(dummy, x, y, params, groupParams)
+                    yvalues[j] = lnprobList(dummy, x, y, groupParams)
                 a.plot(xvalues, yvalues, color="k")
                 a.axvline(truth, color="#888888", lw=2)
                 a.set_ylabel(n)
                 self.varFromParams(self.MLEFit)
+            plt.tight_layout()
 
             returnfigs += (figLikeli,)
 
@@ -267,6 +277,7 @@ class Spectrum(object):
                 a.axhline(truth, color="#888888", lw=2)
                 a.set_xlim([0, nsteps])
                 a.set_ylabel(n)
+            plt.tight_layout()
 
             returnfigs += (figWalks,)
 
