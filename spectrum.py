@@ -1225,7 +1225,7 @@ class SingleSpectrum(Spectrum):
         -------
         list of floats or NumPy arrays
             Seperate responses of spectra to the input :attr:`x`."""
-        return self(x)
+        return [self(x)]
 
     def __call__(self, x):
         """Get the response for frequency :attr:`x` (in MHz) of the spectrum.
