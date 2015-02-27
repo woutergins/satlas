@@ -344,6 +344,52 @@ a multi-dimensional array. Code copied from the QuTiP package.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="satlas.utilities.weightedAverage">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">weightedAverage</tt><big>(</big><em>x</em>, <em>sigma</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#weightedAverage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.weightedAverage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the weighted average of an array of values and the associated
+errors. Calculates the scatter and statistical error, and returns
+the greater of these two values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Array-like assortment of measured values, is transformed into a
+1D-array.</li>
+<li><strong>sigma</strong> (<em>array_like</em>) &#8211; Array-like assortment of errors on the measured values, is transformed
+into a 1D-array.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Returns a tuple (weighted_average, uncertainty), with the uncertainty
+being the greater of the uncertainty calculated from the statistical
+uncertainty and the scattering uncertainty.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The formulas used are</p>
+<div class="last math">
+<p><img src="_images/math/8e8a8e15907e5d464c1ea2120a037934290c7d41.png" alt="\left\langle x\right\rangle_{weighted} &amp;= \frac{\sum_{i=1}^N \frac{x_i}
+                                                         {\sigma_i^2}}
+                                              {\sum_{i=1}^N \frac{1}
+                                                        {\sigma_i^2}}
+
+\sigma_{stat}^2 &amp;= \frac{1}{\sum_{i=1}^N \frac{1}{\sigma_i^2}}
+
+\sigma_{scatter}^2 &amp;= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
+                                            x\right\rangle_{weighted}}
+                                              {\sigma_i^2}\right)^2}
+       {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"/></p>
+</div></div>
+</dd></dl>
+
 </div>
 </div>
 

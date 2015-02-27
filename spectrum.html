@@ -172,6 +172,7 @@
 <span class="n">hfs</span><span class="o">.</span><span class="n">FitToSpectroscopicData</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="c"># Print the fit report</span>
 <span class="n">hfs</span><span class="o">.</span><span class="n">DisplayFit</span><span class="p">()</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">hfs</span><span class="o">.</span><span class="n">seperateResponse</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 <span class="c"># Plot the result</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
@@ -218,7 +219,7 @@
 <span class="n">ydata</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ydata</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ydata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 <span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
-<span class="n">df</span> <span class="o">=</span> <span class="mf">3000.0</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mf">4100.0</span>
 <span class="n">spec2</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span>
                           <span class="n">scale</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">rAmp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">spec2</span><span class="o">.</span><span class="n">background</span> <span class="o">=</span> <span class="mi">400</span>
@@ -226,14 +227,18 @@
 <span class="n">xdata2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">spec2</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1000</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">spec2</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">ydata2</span> <span class="o">=</span> <span class="n">spec2</span><span class="p">(</span><span class="n">xdata2</span><span class="p">)</span>
 <span class="n">ydata2</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ydata2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ydata2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">spec2</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="mf">2950.0</span>
+<span class="n">spec2</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="mi">4000</span>
 <span class="n">spec1comb</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">CombinedSpectrum</span><span class="p">([</span><span class="n">spec1</span><span class="p">,</span> <span class="n">spec2</span><span class="p">])</span>
 
 <span class="n">spec1comb</span><span class="o">.</span><span class="n">FitToSpectroscopicData</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">],</span> <span class="p">[</span><span class="n">ydata</span><span class="p">,</span> <span class="n">ydata2</span><span class="p">])</span>
 <span class="n">spec1comb</span><span class="o">.</span><span class="n">DisplayFit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-<span class="n">evaluated</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">])</span>
-<span class="n">eval1</span><span class="p">,</span> <span class="n">eval2</span> <span class="o">=</span> <span class="n">evaluated</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">xdata</span><span class="p">)],</span> <span class="n">evaluated</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">xdata</span><span class="p">):]</span>
+<span class="n">eval1</span><span class="p">,</span> <span class="n">eval2</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="o">.</span><span class="n">seperateResponse</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">])</span>
+
+<span class="n">xdata3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="o">-</span><span class="mi">4500</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="n">xdata3</span> <span class="o">=</span> <span class="p">[</span><span class="n">xdata3</span><span class="p">,</span> <span class="n">xdata3</span><span class="p">]</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="p">(</span><span class="n">xdata3</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="o">.</span><span class="n">sanitizeFitInput</span><span class="p">(</span><span class="n">xdata3</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y2</span><span class="p">))</span>
 
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s">&#39;ro&#39;</span><span class="p">)</span>
@@ -521,6 +526,13 @@ without background.</p>
 of parameters.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="satlas.spectrum.PriorParameter">
+<em class="property">class </em><tt class="descclassname">satlas.spectrum.</tt><tt class="descname">PriorParameter</tt><big>(</big><em>name</em>, <em>value=None</em>, <em>vary=True</em>, <em>min=None</em>, <em>max=None</em>, <em>expr=None</em>, <em>priormin=None</em>, <em>priormax=None</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#PriorParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.PriorParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">lmfit.parameter.Parameter</span></tt></p>
+<p>Extended the Parameter class from LMFIT to incorporate prior boundaries.</p>
 </dd></dl>
 
 <dl class="class">
@@ -984,10 +996,9 @@ determined.</li>
 
 <dl class="method">
 <dt id="satlas.spectrum.Spectrum.walk">
-<tt class="descname">walk</tt><big>(</big><em>x</em>, <em>y</em>, <em>showLikeli=False</em>, <em>showWalks=False</em>, <em>showTriangle=False</em>, <em>nsteps=2000</em>, <em>walkers=20</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.walk" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">walk</tt><big>(</big><em>x</em>, <em>y</em>, <em>showLikeli=False</em>, <em>showWalks=False</em>, <em>showTriangle=False</em>, <em>nsteps=2000</em>, <em>walkers=20</em>, <em>burnin=10.0</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs a random walk in the parameter space to determine the
-distribution for the best fit of the parameters. A burn-in period of
-10% of the steps is used.</p>
+distribution for the best fit of the parameters.</p>
 <p>A message is printed before and after the walk.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1006,6 +1017,8 @@ created: one with all the parameters, one with only the parameters
 as filtered using <a class="reference internal" href="#spectrum.Spectrum.selected" title="spectrum.Spectrum.selected"><tt class="xref py py-attr docutils literal"><span class="pre">selected</span></tt></a>.</li>
 <li><strong>nsteps</strong> (<em>int, optional</em>) &#8211; Number of steps to be taken, defaults to 2000.</li>
 <li><strong>walkers</strong> (<em>int, optional</em>) &#8211; Number of walkers to be used, defaults to 20.</li>
+<li><strong>burnin</strong> (<em>float, optional</em>) &#8211; Burn-in to be used for the walk. Expressed in percentage,
+defaults to 10.0.</li>
 </ul>
 </td>
 </tr>

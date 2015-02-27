@@ -24,6 +24,7 @@ y += 3 * np.random.randn(x.shape[0]) * np.sqrt(y)
 hfs.FitToSpectroscopicData(x, y)
 # Print the fit report
 hfs.DisplayFit()
+e = hfs.seperateResponse(x)
 
 # Plot the result
 fig = plt.figure()

@@ -23,7 +23,7 @@ ydata = spec1(xdata)
 ydata += 3 * np.sqrt(ydata) * np.random.randn(ydata.shape[0])
 
 fwhm = [100, 100]
-df = 3000.0
+df = 4100.0
 spec2 = hs.SingleSpectrum(I, J, ABC, df, shape='voigt', fwhm=fwhm,
                           scale=3000, rAmp=True)
 spec2.background = 400
@@ -31,14 +31,18 @@ spec2.background = 400
 xdata2 = np.linspace(min(spec2.mu) - 1000, max(spec2.mu) + 1000, 1000)
 ydata2 = spec2(xdata2)
 ydata2 += 3 * np.sqrt(ydata2) * np.random.randn(ydata2.shape[0])
-spec2.df = 2950.0
+spec2.df = 4000
 spec1comb = hs.CombinedSpectrum([spec1, spec2])
 
 spec1comb.FitToSpectroscopicData([xdata, xdata2], [ydata, ydata2])
 spec1comb.DisplayFit(show_correl=False)
 
-evaluated = spec1comb([xdata, xdata2])
-eval1, eval2 = evaluated[:len(xdata)], evaluated[len(xdata):]
+eval1, eval2 = spec1comb.seperateResponse([xdata, xdata2])
+
+xdata3 = np.linspace(-5000, -4500, 20)
+xdata3 = [xdata3, xdata3]
+y2 = spec1comb(xdata3)
+x, y2, _ = spec1comb.sanitizeFitInput(xdata3, y2, np.sqrt(y2))
 
 fig, ax = plt.subplots(2, 1, sharex=True)
 ax[0].plot(xdata, ydata, 'ro')

@@ -498,7 +498,53 @@
         <span class="n">vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">vals</span><span class="p">))]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c"># 0.0 -&gt; nan -&gt; 0.0</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;Input must be real and finite&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">vals</span></div>
+    <span class="k">return</span> <span class="n">vals</span>
+
+</div>
+<div class="viewcode-block" id="weightedAverage"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.weightedAverage">[docs]</a><span class="k">def</span> <span class="nf">weightedAverage</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;Takes the weighted average of an array of values and the associated</span>
+<span class="sd">    errors. Calculates the scatter and statistical error, and returns</span>
+<span class="sd">    the greater of these two values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Array-like assortment of measured values, is transformed into a</span>
+<span class="sd">        1D-array.</span>
+<span class="sd">    sigma: array_like</span>
+<span class="sd">        Array-like assortment of errors on the measured values, is transformed</span>
+<span class="sd">        into a 1D-array.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        Returns a tuple (weighted_average, uncertainty), with the uncertainty</span>
+<span class="sd">        being the greater of the uncertainty calculated from the statistical</span>
+<span class="sd">        uncertainty and the scattering uncertainty.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    The formulas used are</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \left\langle x\right\rangle_{weighted} &amp;= \frac{\sum_{i=1}^N \frac{x_i}</span>
+<span class="sd">                                                                 {\sigma_i^2}}</span>
+<span class="sd">                                                      {\sum_{i=1}^N \frac{1}</span>
+<span class="sd">                                                                {\sigma_i^2}}</span>
+
+<span class="sd">        \sigma_{stat}^2 &amp;= \frac{1}{\sum_{i=1}^N \frac{1}{\sigma_i^2}}</span>
+
+<span class="sd">        \sigma_{scatter}^2 &amp;= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle</span>
+<span class="sd">                                                    x\right\rangle_{weighted}}</span>
+<span class="sd">                                                      {\sigma_i^2}\right)^2}</span>
+<span class="sd">               {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}&quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="n">Xstat</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">Xm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">Xstat</span>
+    <span class="n">Xscatt</span> <span class="o">=</span> <span class="p">(((</span><span class="n">x</span> <span class="o">-</span> <span class="n">Xm</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="n">Xstat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Xm</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">Xstat</span><span class="p">,</span> <span class="n">Xscatt</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
