@@ -373,3 +373,49 @@ def round2SignifFigs(vals, n):
     else:
         raise IOError('Input must be real and finite')
     return vals
+
+
+def weightedAverage(x, sigma):
+    r"""Takes the weighted average of an array of values and the associated
+    errors. Calculates the scatter and statistical error, and returns
+    the greater of these two values.
+
+    Parameters
+    ----------
+    x: array_like
+        Array-like assortment of measured values, is transformed into a
+        1D-array.
+    sigma: array_like
+        Array-like assortment of errors on the measured values, is transformed
+        into a 1D-array.
+
+    Returns
+    -------
+    tuple
+        Returns a tuple (weighted_average, uncertainty), with the uncertainty
+        being the greater of the uncertainty calculated from the statistical
+        uncertainty and the scattering uncertainty.
+
+    Note
+    ----
+    The formulas used are
+
+    .. math::
+
+        \left\langle x\right\rangle_{weighted} &= \frac{\sum_{i=1}^N \frac{x_i}
+                                                                 {\sigma_i^2}}
+                                                      {\sum_{i=1}^N \frac{1}
+                                                                {\sigma_i^2}}
+
+        \sigma_{stat}^2 &= \frac{1}{\sum_{i=1}^N \frac{1}{\sigma_i^2}}
+
+        \sigma_{scatter}^2 &= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
+                                                    x\right\rangle_{weighted}}
+                                                      {\sigma_i^2}\right)^2}
+               {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
+    x = np.ravel(x)
+    sigma = np.ravel(sigma)
+    Xstat = (1 / sigma**2).sum()
+    Xm = (x / sigma**2).sum() / Xstat
+    Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
+    return Xm, max(Xstat, Xscatt)

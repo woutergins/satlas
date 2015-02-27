@@ -70,7 +70,7 @@ class Spectrum(object):
             Counts corresponding to :attr:`x`."""
         self.varFromParams(params)
         if any([np.isclose(X.min(), X.max(), atol=self.atol)
-                for X in self.seperateResponse(x)]):
+                for X in self.seperateResponse(x)]) or any(self(x) < 0):
             return -np.inf
         return llh.Poisson(y, self(x))
 
@@ -538,7 +538,7 @@ class CombinedSpectrum(Spectrum):
         return np.sum([s.lnprior(par) for s, par in zip(self.spectra, params)])
 
     def seperateResponse(self, x):
-        return [s.seperateResponse(X) for s, X in zip(self.spectra, x)]
+        return np.squeeze([s.seperateResponse(X) for s, X in zip(self.spectra, x)])
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
