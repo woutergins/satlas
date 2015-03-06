@@ -137,7 +137,6 @@ class Spectrum(object):
         self.MLEFit = result.params
 
         print(result.message)
-        self.DisplayMLEFit()
         if walking:
             return self.walk(x, y, **kwargs)
         else:
@@ -725,7 +724,7 @@ class SingleSpectrum(Spectrum):
         self.FWHMLimit = 0.1
         self._df = df
 
-        self.scale = scale
+        self.scale = scale if rAmp else 1.0
         self._background = background
 
         self._energies = []
