@@ -392,32 +392,21 @@ class OpticalPumpingSimulator(object):
         ############################
         # BEAM-INFORMATION WIDGETS #
         ############################
-        self.nucleusLabel = QtGui.QLabel('Nucleus')
-        self.nucleus = QtGui.QLineEdit()
         self.nuclearSpinLabel = QtGui.QLabel('Nuclear spin')
         self.nuclearSpin = pg.SpinBox(value=dV['nuclearSpin'],
                                       bounds=[0, None], step=0.5)
-        self.kineticenergyLabel = QtGui.QLabel('Kinetic energy')
-        self.kineticenergy = pg.SpinBox(value=30 * 10 ** 3,
-                                        suffix='eV', siPrefix=True)
-        self.pathLabel = QtGui.QLabel('Flight path length')
-        self.path = pg.SpinBox(value=1.9, suffix='m', siPrefix=True)
-        self.rPathLabel = QtGui.QLabel('Relaxation path length')
-        self.rPath = pg.SpinBox(value=0, suffix='m', siPrefix=True)
+        self.pathLabel = QtGui.QLabel('Flight path time')
+        self.path = pg.SpinBox(value=4*10**-6, suffix='s', siPrefix=True)
+        self.rPathLabel = QtGui.QLabel('Relaxation path time')
+        self.rPath = pg.SpinBox(value=0, suffix='s', siPrefix=True)
         self.levelCountLabel = QtGui.QLabel('Levels')
         self.levelCount = pg.SpinBox(value=2, step=1,
                                      bounds=[2, None], int=True)
 
         # Add the widgets to a layout, add the layout to the dock.
         self.BeamInformation = pg.LayoutWidget()
-        self.BeamInformation.addWidget(self.nucleusLabel)
-        self.BeamInformation.addWidget(self.nucleus)
-        self.BeamInformation.nextRow()
         self.BeamInformation.addWidget(self.nuclearSpinLabel)
         self.BeamInformation.addWidget(self.nuclearSpin)
-        self.BeamInformation.nextRow()
-        self.BeamInformation.addWidget(self.kineticenergyLabel)
-        self.BeamInformation.addWidget(self.kineticenergy)
         self.BeamInformation.nextRow()
         self.BeamInformation.addWidget(self.pathLabel)
         self.BeamInformation.addWidget(self.path)
@@ -668,11 +657,7 @@ class OpticalPumpingSimulator(object):
                           lev.S.value(),
                           lev.J.value())
                           )
-        el = str(self.nucleus.text())
-        AMU2KG = 1.66053892 * 10 ** (-27)
-        M = 40 * AMU2KG
-        Ek = self.kineticenergy.value() * EV_TO_J
-        pathlength = self.path.value()
+        tof = self.path.value()
 
         lasers = self.lasers.giveValues()
         laser_intensity = []
@@ -692,14 +677,23 @@ class OpticalPumpingSimulator(object):
         # Create the calculation object
         p = Polar(levels, laser_intensity,
                   laser_mode, spin, field,
-                  lifetime, M, Ek, pathlength,
-                  relaxationpath=rPath)
+                  lifetime, tof,
+                  relaxationtime=rPath)
+        print('levels=', levels)
+        print('laser_intensity=', laser_intensity)
+        print('laser_mode=', laser_mode)
+        print('spin=', spin)
+        print('field=', field)
+        print('lifetime=', lifetime)
+        print('tof=', tof)
+        print('rPath=', rPath)
 
         # Set the population
         initialPopulaion = [lev.Population.value() for lev in self.levels]
         p.changeInitialPopulation(initialPopulaion)
 
         # Calculate
+        print(laser_frequency)
         y = p(laser_frequency)
 
         # Process and plot the results

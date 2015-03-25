@@ -108,19 +108,17 @@ class Polar(object):
         Lifetimes of the excited states in s. NxN array, with N the length of
         the :attr:`levels` parameter. Ordering must match the supplied list of
         :class:`Level` objects.
-    M : float
-        Mass of the particles of interest in kg.
-    Ek : float
-        Kinetic energy of the particles in J.
-    path : float
-        Length of the interaction region in m.
+    time : float
+        Interaction time in seconds.
 
     Other parameters
     ----------------
-    relaxationpath: float, optional
-        The length of the path after the interaction with the laser. Models
-        purely decay of the nuclei, without laser interaction. If set to 0
-        (default) this is not done.
+    steps : integer, optional
+        The number of timesteps, defaults to 400.
+    relaxationtime: float, optional
+        The length of the relaxation after the interaction with the laser.
+        Models purely decay of the nuclei, without laser interaction. If set
+        to 0 (default) this is not done.
     frac : float, optional
         Fraction of contamination of other laser modes. If set to 0 (default),
         no contamination of other laser modes is incorporated. Has to be
@@ -130,6 +128,11 @@ class Polar(object):
         Defaults to `odeint`, which is the LSODA solver. Possible other
         values are `vode`, `zvode`, `lsoda`, `dopri5` and `dop853`. See the
         SciPy documentation for an overview of these integrators.
+    time_dependence : callable, optional
+        If the frequency supplied is time-dependent, the time_dependence
+        gives the Doppler shift at each time. If given, the D-matrix is
+        calculated again for each timestep, and the used frequency is the given
+        frequency multiplied with the result of this callable for the time.
 
     Returns
     -------
@@ -138,7 +141,8 @@ class Polar(object):
         frequency and population of the different levels in percent."""
 
     def __init__(self, levels, laser, mode, spin, field, lifetimes,
-                 M, Ek, path, relaxationpath=0, frac=0, integrator='odeint'):
+                 time, steps=400, relaxationtime=0, frac=0,
+                 integrator='odeint', time_dependence=None):
         super(Polar, self).__init__()
 
         # Set all parameters for preparation of the A and D matrices
@@ -163,20 +167,19 @@ class Polar(object):
         self._prepare()
 
         # Set all the parameters for the integration.
-        self.steps = 400
-        self.velocity = np.sqrt(2.0 * Ek / M)
+        self.steps = steps
 
-        self.pathLength = path
-        self.tof = self.pathLength / self.velocity
+        self.tof = time
         self.dt = self.tof / self.steps
 
-        self.rPathLength = relaxationpath
-        if not np.isclose(self.rPathLength, 0):
-            self.rTof = self.rPathLength / self.velocity
-            self.rdt = self.rTof / self.steps
+        self.rTof = relaxationtime
+        self.rdt = self.rTof / self.steps
 
         integrators = ['odeint', 'vode', 'zvode', 'lsoda', 'dopri5', 'dop853']
         self.integrator = integrator if integrator in integrators else 'odeint'
+
+        self.time_dependence = time_dependence if callable(time_dependence) else None
+        self.frequency_shift = self.time_dependence is not None
 
     def _convF(self, I, J):
         """Convenience function for the calculation of F and F_z."""
@@ -464,6 +467,7 @@ class Polar(object):
                                         pass
 
         # Copy the needed arrays to self.
+        A = np.transpose(A) - np.eye(A.shape[0]) * A.sum(axis=1)
         self.A = A
         self.D = D
         self.P = P
@@ -522,26 +526,26 @@ class Polar(object):
             raise IndexError(mess)
         D = util.callNDArray(self.D, f)
         D = D.sum(axis=0)
-        # Copy A to a less verbose variable.
-        A = self.A
 
-        # Prepare A.
-        A = np.transpose(A) - np.eye(A.shape[0]) * A.sum(axis=1)
         # Prepare D.
         D = np.transpose(D) + D
         D -= np.eye(D.shape[0]) * D.sum(axis=1)
 
         # Create the M matrix.
-        self.M = A + D
+        self.M = self.A + D
 
-    def _rhs(self, t, y):
+    def _rhs(self, t, y, f):
         """Define the system of ODE's for use in the ode-object from SciPy.
         Note that the input is (t, y)."""
+        if self.frequency_shift:
+            self._initializeM(f * self.time_dependence(t))
         return np.dot(self.M, y)
 
-    def _rhsint(self, y, t):
+    def _rhsint(self, y, t, f):
         """Define the system of ODE's for use in the odeint method from SciPy.
         Note that the input is (y, t)."""
+        if self.frequency_shift:
+            self._initializeM(f * self.time_dependence(t))
         return np.dot(self.M, y)
 
     def _produce(self, F):
@@ -553,6 +557,7 @@ class Polar(object):
         The integration method selected as a standard is the LSODA method.
         If this performs unexpectedly, see the comments in the source code."""
         # Initializes the matrix M.
+        F = np.array(F)
         self._initializeM(F)
 
         ##############################
@@ -562,16 +567,18 @@ class Polar(object):
         # equation using the LSODA solver. For this, the function arguments
         # have to be (y, t), while for the ode command, the order is (t, y).
         # We are only interested in the result for the final timestep,
-        # the last column of the result so [-1, :] is saved.
+        # the last row of the result so [-1, :] is saved.
         if self.integrator == 'odeint':
             y = integrate.odeint(self._rhsint, self.P,
-                                 np.arange(0, self.tof, self.dt))[-1, :]
-            if not np.isclose(self.rPathLength, 0):
+                                 np.arange(0, self.tof, self.dt),
+                                 args=(F,))[-1, :]
+            if not np.isclose(self.rTof, 0):
                 dinkieD = self.D
                 self.D = np.zeros(self.D.shape)
                 self._initializeM(F)
                 y = integrate.odeint(self._rhsint, y,
-                                     np.arange(0, self.rTof, self.rdt))[-1, :]
+                                     np.arange(0, self.rTof, self.rdt),
+                                     args=(F,))[-1, :]
                 self.D = dinkieD
 
         #######################
@@ -590,18 +597,16 @@ class Polar(object):
         # 'dop853': Explicit Runge-Kutta method or order 8(5, 3)
         # For more detailed parameters available for each integrator, see
         # the SciPy documentation.
-        # Uncomment the following lines to use the general method; make
-        # sure to comment the odeint command above.
         else:
-            r = integrate.ode(self._rhs).set_integrator(self.integrator)
+            r = integrate.ode(self._rhs).set_integrator(self.integrator).set_f_params(F)
             r.set_initial_value(self.P)
             while r.t < self.tof and r.successful():
                 y = r.integrate(r.t + self.dt)
-            if not np.isclose(self.rPathLength, 0):
+            if not np.isclose(self.rTof, 0):
                 dinkieD = self.D
                 self.D = np.zeros(self.D.shape)
                 self._initializeM(F)
-                r = integrate.ode(self._rhs).set_integrator(self.integrator)
+                r = integrate.ode(self._rhs).set_integrator(self.integrator).set_f_params(F)
                 r.set_initial_value(y)
                 while r.t < self.rTof and r.successful():
                     y = r.integrate(r.t + self.rdt)
@@ -621,7 +626,104 @@ class Polar(object):
         y = np.append(pol, y)
         return y
 
-    def __call__(self, f):
+    def evolution(self, f):
+        """Given a single frequency f or range of frequency, return the time
+        evolution of the polarization and population.
+
+        Parameters
+        ----------
+        f : float
+            Laser frequency in MHz
+
+        Returns
+        -------
+        resp : NumPy array
+            Array containing the time, polarization and population of the
+            fine structure levels in function of time.
+            If f """
+
+        # Initializes the matrix M.
+        f = np.array([f])
+        self._initializeM(f)
+
+        ##############################
+        # LSODA USER FRIENDLY METHOD #
+        ##############################
+        # Use the user-friendlier odeint to solve the differential
+        # equation using the LSODA solver. For this, the function arguments
+        # have to be (y, t), while for the ode command, the order is (t, y).
+        # We are only interested in the result for the final timestep,
+        # the last row of the result so [-1, :] is saved.
+        if self.integrator == 'odeint':
+            y = integrate.odeint(self._rhsint, self.P,
+                                 np.arange(0, self.tof, self.dt),
+                                 args=(f,))
+            if not np.isclose(self.rTof, 0):
+                dinkieD = self.D
+                self.D = np.zeros(self.D.shape)
+                self._initializeM(np.array([f]))
+                yRel = integrate.odeint(self._rhsint, y,
+                                        np.arange(0, self.rTof, self.rdt),
+                                        args=(f,))
+                self.D = dinkieD
+                y = np.vstack((y, yRel))
+
+        #######################
+        # MORE GENERAL METHOD #
+        #######################
+        # Different integrator methods are available, if the standard
+        # method gives bad results, the Runge-Kutta methods are
+        # recommended for testing.
+        # The different integrators are:
+        # 'vode': Real-valued Variable-coefficient Ordinary Differential
+        #         Equation solver.
+        # 'zvode': Complex-valued Variable-coefficient Ordinary Differential
+        #          Equation solver.
+        # 'lsoda': Livermore Solver for Ordinary Differential Equations.
+        # 'dopri5': Explicit Runge-Kutta method of order (4)5.
+        # 'dop853': Explicit Runge-Kutta method or order 8(5, 3)
+        # For more detailed parameters available for each integrator, see
+        # the SciPy documentation.
+        else:
+            r = integrate.ode(self._rhs).set_integrator(self.integrator).set_f_params(f)
+            r.set_initial_value(self.P)
+            shape = (1 + np.bitwise_not(np.isclose(self.rTof, 0)) * self.steps,
+                     len(self.P))
+            y = np.zeros(shape)
+            y[0, :] = self.P
+            i = 1
+            while r.t < self.tof and r.successful():
+                y[i, :] = r.integrate(r.t + self.dt)
+                i += 1
+            if not np.isclose(self.rTof, 0):
+                dinkieD = self.D
+                self.D = np.zeros(self.D.shape)
+                self._initializeM(f)
+                r = integrate.ode(self._rhs).set_integrator(self.integrator).set_f_params(f)
+                r.set_initial_value(y)
+                while r.t < self.rTof and r.successful():
+                    y[i, :] = r.integrate(r.t + self.rdt)
+                    i += 1
+                self.D = dinkieD
+
+        ######################
+        # PROCESS THE RESULT #
+        ######################
+        # Convert the population to a polarization percentage.
+        def pol(a):
+            return 100 * (np.dot(self.MI, a) / self.spin)
+
+        pol = np.apply_along_axis(pol, 1, y).reshape((-1, 1))
+        # Convert to atomic population.
+        pop = np.zeros((self.steps, self.Nlev.sum()))
+        for i, (n, ncs) in enumerate(zip(self.Nlev, self.Nlevcs)):
+            pop[:, i] = y[:, ncs - n:ncs].sum(axis=1)
+        y = 100.0 * (pop / pop.sum())
+        y = np.hstack((pol, y))
+        time = np.linspace(0, self.tof + self.rTof, y.shape[0])
+        return time, y
+
+    def __call__(self, *f):
         """Given frequency is supplied in MHz.
         A list of frequencies has to be supplied for each laser,
         so in the case of one laser,::
