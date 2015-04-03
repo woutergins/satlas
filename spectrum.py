@@ -149,6 +149,12 @@ class Spectrum(object):
 
         A message is printed before and after the walk.
 
+        Warning
+        -------
+        The errors calculated can be asymmetrical, but only the largest is
+        saved as the overal uncertainty. This is a known issue, and work is
+        being done to resolve this.
+
         Parameters
         ----------
         x: array_like
@@ -164,8 +170,9 @@ class Spectrum(object):
         showTriangle: Boolean, optional
             Set this to True is a triangle plot depicting the distributions of
             the parameters in the random walk has to be plotted. Two plots are
-            created: one with all the parameters, one with only the parameters
-            as filtered using :attr:`selected`.
+            created if :attr:`showAll` is set to True: one with all the
+            parameters, one with only the parameters as filtered using
+            :attr:`selected`.
         nsteps: int, optional
             Number of steps to be taken, defaults to 2000.
         walkers: int, optional
@@ -247,10 +254,6 @@ class Spectrum(object):
                 st = samples.T
                 left, right = (truth - 5 * np.abs(st[i, :].min()),
                                truth + 5 * np.abs(st[i, :].max()))
-                # l = val[i] - 100 * self.MLEFit[n].stderr
-                # r = val[i] + 100 * self.MLEFit[n].stderr
-                # left = l if left is None else max(l, left)
-                # right = r if right is None else min(r, right)
                 xvalues = np.linspace(left, right, 1000)
                 dummy = np.array(vars, dtype='float')
                 yvalues = np.zeros(xvalues.shape[0])
@@ -317,12 +320,18 @@ class Spectrum(object):
 
     def DisplayMLEFit(self):
         """Give a readable overview of the result of the MLE fitting routine.
+
+        Warning
+        -------
+        The uncertainty shown is the largest of the asymmetrical errors! Work
+        is being done to incorporate asymmetrical errors in the report; for
+        now, rely on the triangle plot.
         """
         lm.report_fit(self.MLEFit)
 
     def FitToSpectroscopicData(self, x, y):
-        """Use the :meth:`FitToData` method, automatically estimating the errors on the
-        counts by the square root."""
+        """Use the :meth:`FitToData` method, automatically estimating the errors
+        on the counts by the square root."""
         x, y, _ = self.sanitizeFitInput(x, y)
         yerr = np.sqrt(y)
         yerr[np.isclose(yerr, 0.0)] = 1.0
