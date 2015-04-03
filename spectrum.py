@@ -17,6 +17,20 @@ import satlas.triangle as tri
 from satlas.wigner import wigner_6j as W6J
 
 
+class PriorParameter(lm.Parameter):
+
+    """Extended the Parameter class from LMFIT to incorporate prior boundaries.
+    """
+
+    def __init__(self, name, value=None, vary=True, min=None, max=None,
+                 expr=None, priormin=None, priormax=None):
+        super(PriorParameter, self).__init__(name, value=value,
+                                             vary=vary, min=min,
+                                             max=max, expr=expr)
+        self.priormin = priormin
+        self.priormax = priormax
+
+
 class Spectrum(object):
 
     """Baseclass for all spectra, such as :class:`SingleSpectrum`,
@@ -34,6 +48,9 @@ class Spectrum(object):
     def __init__(self):
         super(Spectrum, self).__init__()
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'df']
+        self.showSelected = True
+        self.showAll = False
+        self.atol = 0.1
 
     def sanitizeFitInput(self, x, y, yerr=None):
         return x, y, yerr
@@ -52,6 +69,9 @@ class Spectrum(object):
         y: array_like
             Counts corresponding to :attr:`x`."""
         self.varFromParams(params)
+        if any([np.isclose(X.min(), X.max(), atol=self.atol)
+                for X in self.seperateResponse(x)]) or any(self(x) < 0):
+            return -np.inf
         return llh.Poisson(y, self(x))
 
     def lnprob(self, params, x, y):
@@ -117,17 +137,15 @@ class Spectrum(object):
         self.MLEFit = result.params
 
         print(result.message)
-        self.DisplayMLEFit()
         if walking:
             return self.walk(x, y, **kwargs)
         else:
             return None
 
     def walk(self, x, y, showLikeli=False, showWalks=False, showTriangle=False,
-             nsteps=2000, walkers=20):
+             nsteps=2000, walkers=20, burnin=10.0):
         """Performs a random walk in the parameter space to determine the
-        distribution for the best fit of the parameters. A burn-in period of
-        10% of the steps is used.
+        distribution for the best fit of the parameters.
 
         A message is printed before and after the walk.
 
@@ -152,6 +170,9 @@ class Spectrum(object):
             Number of steps to be taken, defaults to 2000.
         walkers: int, optional
             Number of walkers to be used, defaults to 20.
+        burnin: float, optional
+            Burn-in to be used for the walk. Expressed in percentage,
+            defaults to 10.0.
 
         Returns
         -------
@@ -173,27 +194,32 @@ class Spectrum(object):
         pos = [vars + 1e-4 * np.random.randn(ndim) for i in range(walkers)]
         x, y, _ = self.sanitizeFitInput(x, y)
 
-        def lnprobList(fvars, x, y, params, groupParams):
+        def lnprobList(fvars, x, y, groupParams):
             for val, n in zip(fvars, var_names):
-                params[n].value = val
-            groupParams.params = params
-            groupParams.update_constraints()
-            params = groupParams.params
-            return self.lnprob(params, x, y)
-
-        groupParams = lm.Minimizer(lambda *args, **kwargs: 1, params)
+                groupParams[n].value = val
+            return self.lnprob(groupParams, x, y)
+        groupParams = lm.Parameters()
+        for key in params.keys():
+            groupParams[key] = PriorParameter(key,
+                                              value=params[key].value,
+                                              vary=params[key].vary,
+                                              expr=params[key].expr,
+                                              priormin=params[key].min,
+                                              priormax=params[key].max)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                       args=(x, y, params, groupParams))
-        print('Starting walk...')
-        sampler.run_mcmc(pos, nsteps)
+                                       args=(x, y, groupParams))
+        burn = int(nsteps / burnin)
+        print('Starting burn-in ({} steps)...'.format(burn))
+        sampler.run_mcmc(pos, burn, storechain=False)
+        print('Starting walk ({} steps)...'.format(nsteps - burn))
+        sampler.run_mcmc(pos, nsteps - burn)
         print('Done.')
-        burn = nsteps / 10
-        samples = sampler.chain[:, burn:, :].reshape((-1, ndim))
+        samples = sampler.flatchain
         val = []
         err = []
         q = [16.0, 50.0, 84.0]
-        for i, x in enumerate(samples.T):
-            q16, q50, q84 = np.percentile(x, q)
+        for i, samp in enumerate(samples.T):
+            q16, q50, q84 = np.percentile(samp, q)
             val.append(q50)
             err.append(max([q50 - q16, q84 - q50]))
 
@@ -218,21 +244,24 @@ class Spectrum(object):
             figLikeli, axes = plt.subplots(shape, shape)
             axes = axes.flatten()
             for i, (n, truth, a) in enumerate(zip(var_names, val, axes)):
-                left, right = self.MLEFit[n].min, self.MLEFit[n].max
-                l = val[i] - 100 * self.MLEFit[n].stderr
-                r = val[i] + 100 * self.MLEFit[n].stderr
-                left = l if left is None else max(l, left)
-                right = r if right is None else min(r, right)
+                st = samples.T
+                left, right = (truth - 5 * np.abs(st[i, :].min()),
+                               truth + 5 * np.abs(st[i, :].max()))
+                # l = val[i] - 100 * self.MLEFit[n].stderr
+                # r = val[i] + 100 * self.MLEFit[n].stderr
+                # left = l if left is None else max(l, left)
+                # right = r if right is None else min(r, right)
                 xvalues = np.linspace(left, right, 1000)
                 dummy = np.array(vars, dtype='float')
                 yvalues = np.zeros(xvalues.shape[0])
                 for j, value in enumerate(xvalues):
                     dummy[i] = value
-                    yvalues[j] = lnprobList(dummy, x, y, params, groupParams)
+                    yvalues[j] = lnprobList(dummy, x, y, groupParams)
                 a.plot(xvalues, yvalues, color="k")
                 a.axvline(truth, color="#888888", lw=2)
                 a.set_ylabel(n)
                 self.varFromParams(self.MLEFit)
+            plt.tight_layout()
 
             returnfigs += (figLikeli,)
 
@@ -242,44 +271,48 @@ class Spectrum(object):
             axes = axes.flatten()
 
             for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
-                a.plot(sampler.chain[:, burn:, i].T,
+                a.plot(sampler.chain[:, :, i].T,
                        color="k", alpha=0.4)
                 a.axhline(truth, color="#888888", lw=2)
                 a.set_xlim([0, nsteps])
                 a.set_ylabel(n)
+            plt.tight_layout()
 
             returnfigs += (figWalks,)
 
         if showTriangle:
-            figTri1 = tri.corner(samples,
-                                 labels=var_names,
-                                 truths=vars,
-                                 plot_datapoints=False,
-                                 show_titles=True,
-                                 quantiles=[0.16, 0.5, 0.84],
-                                 verbose=False)
+            if self.showAll:
+                figTri1 = tri.corner(samples,
+                                     labels=var_names,
+                                     truths=vars,
+                                     plot_datapoints=False,
+                                     show_titles=True,
+                                     quantiles=[0.16, 0.5, 0.84],
+                                     verbose=False)
+                returnfigs += (figTri1,)
 
-            s = []
-            for i, v in enumerate(var_names):
-                for r in self.selected:
-                    if r in v:
-                        s.append(i)
-            selected_samples = np.zeros((samples.shape[0], len(s)))
-            for i, val in enumerate(s):
-                selected_samples[:, i] = samples[:, val]
-            samples = selected_samples
-            var_names = (np.array(var_names)[s]).tolist()
-            vars = (np.array(vars)[s]).tolist()
+            if self.showSelected:
+                s = []
+                for i, v in enumerate(var_names):
+                    for r in self.selected:
+                        if r in v:
+                            s.append(i)
+                selected_samples = np.zeros((samples.shape[0], len(s)))
+                for i, val in enumerate(s):
+                    selected_samples[:, i] = samples[:, val]
+                samples = selected_samples
+                var_names = (np.array(var_names)[s]).tolist()
+                vars = (np.array(vars)[s]).tolist()
 
-            figTri = tri.corner(samples,
-                                labels=var_names,
-                                truths=vars,
-                                plot_datapoints=False,
-                                show_titles=True,
-                                quantiles=[0.16, 0.5, 0.84],
-                                verbose=False)
+                figTri = tri.corner(samples,
+                                    labels=var_names,
+                                    truths=vars,
+                                    plot_datapoints=False,
+                                    show_titles=True,
+                                    quantiles=[0.16, 0.5, 0.84],
+                                    verbose=False)
 
-            returnfigs += (figTri1, figTri)
+                returnfigs += (figTri,)
         return returnfigs
 
     def DisplayMLEFit(self):
@@ -504,7 +537,7 @@ class CombinedSpectrum(Spectrum):
         return np.sum([s.lnprior(par) for s, par in zip(self.spectra, params)])
 
     def seperateResponse(self, x):
-        return [s.seperateResponse(X) for s, X in zip(self.spectra, x)]
+        return np.squeeze([s.seperateResponse(X) for s, X in zip(self.spectra, x)])
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
@@ -691,7 +724,7 @@ class SingleSpectrum(Spectrum):
         self.FWHMLimit = 0.1
         self._df = df
 
-        self.scale = scale
+        self.scale = scale if rAmp else 1.0
         self._background = background
 
         self._energies = []
@@ -1146,11 +1179,13 @@ class SingleSpectrum(Spectrum):
             If any of the parameters are out of bounds, returns :data:`-np.inf`
             , otherwise 1.0 is returned"""
         for key in params.keys():
-            leftbound, rightbound = params[key].min, params[key].max
+            try:
+                leftbound, rightbound = params[key].priormin, params[key].priormax
+            except:
+                leftbound, rightbound = params[key].min, params[key].max
             leftbound = -np.inf if leftbound is None else leftbound
             rightbound = np.inf if rightbound is None else rightbound
             if not leftbound <= params[key].value <= rightbound:
-                print(key)
                 return -np.inf
         return 1.0
 
@@ -1189,7 +1224,7 @@ class SingleSpectrum(Spectrum):
         -------
         list of floats or NumPy arrays
             Seperate responses of spectra to the input :attr:`x`."""
-        return self(x)
+        return [self(x)]
 
     def __call__(self, x):
         """Get the response for frequency :attr:`x` (in MHz) of the spectrum.
