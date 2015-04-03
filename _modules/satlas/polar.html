@@ -234,19 +234,17 @@
 <span class="sd">        Lifetimes of the excited states in s. NxN array, with N the length of</span>
 <span class="sd">        the :attr:`levels` parameter. Ordering must match the supplied list of</span>
 <span class="sd">        :class:`Level` objects.</span>
-<span class="sd">    M : float</span>
-<span class="sd">        Mass of the particles of interest in kg.</span>
-<span class="sd">    Ek : float</span>
-<span class="sd">        Kinetic energy of the particles in J.</span>
-<span class="sd">    path : float</span>
-<span class="sd">        Length of the interaction region in m.</span>
+<span class="sd">    time : float</span>
+<span class="sd">        Interaction time in seconds.</span>
 
 <span class="sd">    Other parameters</span>
 <span class="sd">    ----------------</span>
-<span class="sd">    relaxationpath: float, optional</span>
-<span class="sd">        The length of the path after the interaction with the laser. Models</span>
-<span class="sd">        purely decay of the nuclei, without laser interaction. If set to 0</span>
-<span class="sd">        (default) this is not done.</span>
+<span class="sd">    steps : integer, optional</span>
+<span class="sd">        The number of timesteps, defaults to 400.</span>
+<span class="sd">    relaxationtime: float, optional</span>
+<span class="sd">        The length of the relaxation after the interaction with the laser.</span>
+<span class="sd">        Models purely decay of the nuclei, without laser interaction. If set</span>
+<span class="sd">        to 0 (default) this is not done.</span>
 <span class="sd">    frac : float, optional</span>
 <span class="sd">        Fraction of contamination of other laser modes. If set to 0 (default),</span>
 <span class="sd">        no contamination of other laser modes is incorporated. Has to be</span>
@@ -256,6 +254,11 @@
 <span class="sd">        Defaults to `odeint`, which is the LSODA solver. Possible other</span>
 <span class="sd">        values are `vode`, `zvode`, `lsoda`, `dopri5` and `dop853`. See the</span>
 <span class="sd">        SciPy documentation for an overview of these integrators.</span>
+<span class="sd">    time_dependence : callable, optional</span>
+<span class="sd">        If the frequency supplied is time-dependent, the time_dependence</span>
+<span class="sd">        gives the Doppler shift at each time. If given, the D-matrix is</span>
+<span class="sd">        calculated again for each timestep, and the used frequency is the given</span>
+<span class="sd">        frequency multiplied with the result of this callable for the time.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -264,7 +267,8 @@
 <span class="sd">        frequency and population of the different levels in percent.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">levels</span><span class="p">,</span> <span class="n">laser</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">spin</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">lifetimes</span><span class="p">,</span>
-                 <span class="n">M</span><span class="p">,</span> <span class="n">Ek</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">relaxationpath</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">integrator</span><span class="o">=</span><span class="s">&#39;odeint&#39;</span><span class="p">):</span>
+                 <span class="n">time</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">relaxationtime</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">integrator</span><span class="o">=</span><span class="s">&#39;odeint&#39;</span><span class="p">,</span> <span class="n">time_dependence</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Polar</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
 
         <span class="c"># Set all parameters for preparation of the A and D matrices</span>
@@ -289,20 +293,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_prepare</span><span class="p">()</span>
 
         <span class="c"># Set all the parameters for the integration.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="mi">400</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">Ek</span> <span class="o">/</span> <span class="n">M</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="n">steps</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">pathLength</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pathLength</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="o">=</span> <span class="n">time</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">rPathLength</span> <span class="o">=</span> <span class="n">relaxationpath</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rPathLength</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rPathLength</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="o">=</span> <span class="n">relaxationtime</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span>
 
         <span class="n">integrators</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;odeint&#39;</span><span class="p">,</span> <span class="s">&#39;vode&#39;</span><span class="p">,</span> <span class="s">&#39;zvode&#39;</span><span class="p">,</span> <span class="s">&#39;lsoda&#39;</span><span class="p">,</span> <span class="s">&#39;dopri5&#39;</span><span class="p">,</span> <span class="s">&#39;dop853&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span> <span class="o">=</span> <span class="n">integrator</span> <span class="k">if</span> <span class="n">integrator</span> <span class="ow">in</span> <span class="n">integrators</span> <span class="k">else</span> <span class="s">&#39;odeint&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_dependence</span> <span class="o">=</span> <span class="n">time_dependence</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">time_dependence</span><span class="p">)</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency_shift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_dependence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">_convF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Convenience function for the calculation of F and F_z.&quot;&quot;&quot;</span>
@@ -590,6 +593,7 @@
                                         <span class="k">pass</span>
 
         <span class="c"># Copy the needed arrays to self.</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">D</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
@@ -648,26 +652,26 @@
             <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">mess</span><span class="p">)</span>
         <span class="n">D</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">callNDArray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
         <span class="n">D</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="c"># Copy A to a less verbose variable.</span>
-        <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span>
 
-        <span class="c"># Prepare A.</span>
-        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="c"># Prepare D.</span>
         <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="o">+</span> <span class="n">D</span>
         <span class="n">D</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">D</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="c"># Create the M matrix.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">=</span> <span class="n">A</span> <span class="o">+</span> <span class="n">D</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">+</span> <span class="n">D</span>
 
-    <span class="k">def</span> <span class="nf">_rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_rhs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Define the system of ODE&#39;s for use in the ode-object from SciPy.</span>
 <span class="sd">        Note that the input is (t, y).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_shift</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_dependence</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_rhsint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_rhsint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Define the system of ODE&#39;s for use in the odeint method from SciPy.</span>
 <span class="sd">        Note that the input is (y, t).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_shift</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_dependence</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_produce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
@@ -679,6 +683,7 @@
 <span class="sd">        The integration method selected as a standard is the LSODA method.</span>
 <span class="sd">        If this performs unexpectedly, see the comments in the source code.&quot;&quot;&quot;</span>
         <span class="c"># Initializes the matrix M.</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
 
         <span class="c">##############################</span>
@@ -688,16 +693,18 @@
         <span class="c"># equation using the LSODA solver. For this, the function arguments</span>
         <span class="c"># have to be (y, t), while for the ode command, the order is (t, y).</span>
         <span class="c"># We are only interested in the result for the final timestep,</span>
-        <span class="c"># the last column of the result so [-1, :] is saved.</span>
+        <span class="c"># the last row of the result so [-1, :] is saved.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span> <span class="o">==</span> <span class="s">&#39;odeint&#39;</span><span class="p">:</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">odeint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhsint</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span>
-                                 <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">))[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rPathLength</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                                 <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">),</span>
+                                 <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">F</span><span class="p">,))[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="n">dinkieD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
                 <span class="n">y</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">odeint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhsint</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
-                                     <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span><span class="p">))[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+                                     <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span><span class="p">),</span>
+                                     <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">F</span><span class="p">,))[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">dinkieD</span>
 
         <span class="c">#######################</span>
@@ -716,18 +723,16 @@
         <span class="c"># &#39;dop853&#39;: Explicit Runge-Kutta method or order 8(5, 3)</span>
         <span class="c"># For more detailed parameters available for each integrator, see</span>
         <span class="c"># the SciPy documentation.</span>
-        <span class="c"># Uncomment the following lines to use the general method; make</span>
-        <span class="c"># sure to comment the odeint command above.</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span><span class="o">.</span><span class="n">set_f_params</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
             <span class="n">r</span><span class="o">.</span><span class="n">set_initial_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
             <span class="k">while</span> <span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">successful</span><span class="p">():</span>
                 <span class="n">y</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rPathLength</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="n">dinkieD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span><span class="o">.</span><span class="n">set_f_params</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
                 <span class="n">r</span><span class="o">.</span><span class="n">set_initial_value</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
                 <span class="k">while</span> <span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">successful</span><span class="p">():</span>
                     <span class="n">y</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span><span class="p">)</span>
@@ -747,7 +752,104 @@
         <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pol</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span>
 
-<div class="viewcode-block" id="Polar.__call__"><a class="viewcode-back" href="../../polar.html#satlas.polar.Polar.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+<div class="viewcode-block" id="Polar.evolution"><a class="viewcode-back" href="../../polar.html#satlas.polar.Polar.evolution">[docs]</a>    <span class="k">def</span> <span class="nf">evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a single frequency f or range of frequency, return the time</span>
+<span class="sd">        evolution of the polarization and population.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f : float</span>
+<span class="sd">            Laser frequency in MHz</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        resp : NumPy array</span>
+<span class="sd">            Array containing the time, polarization and population of the</span>
+<span class="sd">            fine structure levels in function of time.</span>
+<span class="sd">            If f &quot;&quot;&quot;</span>
+
+        <span class="c"># Initializes the matrix M.</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="c">##############################</span>
+        <span class="c"># LSODA USER FRIENDLY METHOD #</span>
+        <span class="c">##############################</span>
+        <span class="c"># Use the user-friendlier odeint to solve the differential</span>
+        <span class="c"># equation using the LSODA solver. For this, the function arguments</span>
+        <span class="c"># have to be (y, t), while for the ode command, the order is (t, y).</span>
+        <span class="c"># We are only interested in the result for the final timestep,</span>
+        <span class="c"># the last row of the result so [-1, :] is saved.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span> <span class="o">==</span> <span class="s">&#39;odeint&#39;</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">odeint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhsint</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span>
+                                 <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">),</span>
+                                 <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">dinkieD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">]))</span>
+                <span class="n">yRel</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">odeint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhsint</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+                                        <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span><span class="p">),</span>
+                                        <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">dinkieD</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">yRel</span><span class="p">))</span>
+
+        <span class="c">#######################</span>
+        <span class="c"># MORE GENERAL METHOD #</span>
+        <span class="c">#######################</span>
+        <span class="c"># Different integrator methods are available, if the standard</span>
+        <span class="c"># method gives bad results, the Runge-Kutta methods are</span>
+        <span class="c"># recommended for testing.</span>
+        <span class="c"># The different integrators are:</span>
+        <span class="c"># &#39;vode&#39;: Real-valued Variable-coefficient Ordinary Differential</span>
+        <span class="c">#         Equation solver.</span>
+        <span class="c"># &#39;zvode&#39;: Complex-valued Variable-coefficient Ordinary Differential</span>
+        <span class="c">#          Equation solver.</span>
+        <span class="c"># &#39;lsoda&#39;: Livermore Solver for Ordinary Differential Equations.</span>
+        <span class="c"># &#39;dopri5&#39;: Explicit Runge-Kutta method of order (4)5.</span>
+        <span class="c"># &#39;dop853&#39;: Explicit Runge-Kutta method or order 8(5, 3)</span>
+        <span class="c"># For more detailed parameters available for each integrator, see</span>
+        <span class="c"># the SciPy documentation.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span><span class="o">.</span><span class="n">set_f_params</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">set_initial_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">bitwise_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span>
+                     <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">))</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">successful</span><span class="p">():</span>
+                <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">dinkieD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_initializeM</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">ode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rhs</span><span class="p">)</span><span class="o">.</span><span class="n">set_integrator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="p">)</span><span class="o">.</span><span class="n">set_f_params</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">set_initial_value</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+                <span class="k">while</span> <span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">successful</span><span class="p">():</span>
+                    <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rdt</span><span class="p">)</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">dinkieD</span>
+
+        <span class="c">######################</span>
+        <span class="c"># PROCESS THE RESULT #</span>
+        <span class="c">######################</span>
+        <span class="c"># Convert the population to a polarization percentage.</span>
+        <span class="k">def</span> <span class="nf">pol</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MI</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">spin</span><span class="p">)</span>
+
+        <span class="n">pol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">pol</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="c"># Convert to atomic population.</span>
+        <span class="n">pop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nlev</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ncs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nlevcs</span><span class="p">)):</span>
+            <span class="n">pop</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:,</span> <span class="n">ncs</span> <span class="o">-</span> <span class="n">n</span><span class="p">:</span><span class="n">ncs</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">pop</span> <span class="o">/</span> <span class="n">pop</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">pol</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tof</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rTof</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">time</span><span class="p">,</span> <span class="n">y</span>
+</div>
+<div class="viewcode-block" id="Polar.__call__"><a class="viewcode-back" href="../../polar.html#satlas.polar.Polar.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">f</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Given frequency is supplied in MHz.</span>
 <span class="sd">        A list of frequencies has to be supplied for each laser,</span>
 <span class="sd">        so in the case of one laser,::</span>

@@ -179,7 +179,7 @@ to be performed.</td>
 
 <dl class="class">
 <dt id="satlas.polar.Polar">
-<em class="property">class </em><tt class="descclassname">satlas.polar.</tt><tt class="descname">Polar</tt><big>(</big><em>levels</em>, <em>laser</em>, <em>mode</em>, <em>spin</em>, <em>field</em>, <em>lifetimes</em>, <em>M</em>, <em>Ek</em>, <em>path</em>, <em>relaxationpath=0</em>, <em>frac=0</em>, <em>integrator='odeint'</em><big>)</big><a class="reference internal" href="_modules/satlas/polar.html#Polar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.polar.Polar" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">satlas.polar.</tt><tt class="descname">Polar</tt><big>(</big><em>levels</em>, <em>laser</em>, <em>mode</em>, <em>spin</em>, <em>field</em>, <em>lifetimes</em>, <em>time</em>, <em>steps=400</em>, <em>relaxationtime=0</em>, <em>frac=0</em>, <em>integrator='odeint'</em>, <em>time_dependence=None</em><big>)</big><a class="reference internal" href="_modules/satlas/polar.html#Polar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.polar.Polar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for calculating the polarization for optical pumping between
 several supplied levels and a given laser intensity and frequency.
 Assumes no decay below the ground state.</p>
@@ -199,18 +199,18 @@ of multiple lasers, a ist of modes has to be supplied.</li>
 <li><strong>lifetimes</strong> (<em>array_like</em>) &#8211; Lifetimes of the excited states in s. NxN array, with N the length of
 the <tt class="xref py py-attr docutils literal"><span class="pre">levels</span></tt> parameter. Ordering must match the supplied list of
 <tt class="xref py py-class docutils literal"><span class="pre">Level</span></tt> objects.</li>
-<li><strong>M</strong> (<em>float</em>) &#8211; Mass of the particles of interest in kg.</li>
-<li><strong>Ek</strong> (<em>float</em>) &#8211; Kinetic energy of the particles in J.</li>
-<li><strong>path</strong> (<em>float</em>) &#8211; Length of the interaction region in m.</li>
+<li><strong>time</strong> (<em>float</em>) &#8211; Interaction time in seconds.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
-<li><strong>relaxationpath</strong> (<em>float, optional</em>) &#8211;
-The length of the path after the interaction with the laser. Models
-purely decay of the nuclei, without laser interaction. If set to 0
-(default) this is not done.</li>
+<li><strong>steps</strong> (<em>integer, optional</em>) &#8211;
+The number of timesteps, defaults to 400.</li>
+<li><strong>relaxationtime</strong> (<em>float, optional</em>) &#8211;
+The length of the relaxation after the interaction with the laser.
+Models purely decay of the nuclei, without laser interaction. If set
+to 0 (default) this is not done.</li>
 <li><strong>frac</strong> (<em>float, optional</em>) &#8211;
 Fraction of contamination of other laser modes. If set to 0 (default),
 no contamination of other laser modes is incorporated. Has to be
@@ -220,6 +220,11 @@ Selects the integrator to use for solving the differential equations.
 Defaults to <cite>odeint</cite>, which is the LSODA solver. Possible other
 values are <cite>vode</cite>, <cite>zvode</cite>, <cite>lsoda</cite>, <cite>dopri5</cite> and <cite>dop853</cite>. See the
 SciPy documentation for an overview of these integrators.</li>
+<li><strong>time_dependence</strong> (<em>callable, optional</em>) &#8211;
+If the frequency supplied is time-dependent, the time_dependence
+gives the Doppler shift at each time. If given, the D-matrix is
+calculated again for each timestep, and the used frequency is the given
+frequency multiplied with the result of this callable for the time.</li>
 </ul>
 </td>
 </tr>
@@ -234,7 +239,7 @@ frequency and population of the different levels in percent.</p>
 </table>
 <dl class="method">
 <dt id="satlas.polar.Polar.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>f</em><big>)</big><a class="reference internal" href="_modules/satlas/polar.html#Polar.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.polar.Polar.__call__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__call__</tt><big>(</big><em>*f</em><big>)</big><a class="reference internal" href="_modules/satlas/polar.html#Polar.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.polar.Polar.__call__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given frequency is supplied in MHz.
 A list of frequencies has to be supplied for each laser,
 so in the case of one laser,:</p>
@@ -284,6 +289,28 @@ assumes equal distribution among the magnetic substates
 of each fine-structure level.
 Can be supplied as integer (e.g. 10 particles, 40 particles, ...)
 or as floats (0.10, 0.40). The input is automatically normalized.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.polar.Polar.evolution">
+<tt class="descname">evolution</tt><big>(</big><em>f</em><big>)</big><a class="reference internal" href="_modules/satlas/polar.html#Polar.evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.polar.Polar.evolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a single frequency f or range of frequency, return the time
+evolution of the polarization and population.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>f</strong> (<em>float</em>) &#8211; Laser frequency in MHz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>resp</strong> &#8211;
+Array containing the time, polarization and population of the
+fine structure levels in function of time.
+If f</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">NumPy array</td>
 </tr>
 </tbody>
 </table>

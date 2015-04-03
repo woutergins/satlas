@@ -6,7 +6,8 @@ import numpy as np
 import seaborn
 
 
-seaborn.set()
+seaborn.set_style('ticks')
+seaborn.set_palette('colorblind')
 # Needed for interaction temperature
 g = 0.4213
 Bfield = 1000.0  # Gauss
@@ -53,7 +54,7 @@ cbar.set_label('T$_1$ [s]', fontsize=16)
 ax.set_xlabel('Time [s]', fontsize=16)
 ax.set_ylabel('Polarization [%]', fontsize=16)
 ax.set_title('Pulse delay {:.3g} s'.format(pulsedelay), fontsize=18)
-ax.tick_params(labelsize=16)
+ax.tick_params(labelsize=14)
 ax.grid(True, alpha=0.4)
 
 # Add in the expected activity.
@@ -62,7 +63,10 @@ ax2.semilogy(t, pops, lw=2)
 ax2.set_xlabel('Time [s]', fontsize=16)
 ax2.set_ylabel('Activity [Hz]', fontsize=16)
 ax2.set_title('Expected activity', fontsize=18)
-ax2.tick_params(labelsize=12)
+ax2.tick_params(labelsize=14)
 ax2.grid(True, alpha=0.4)
+
+seaborn.despine(ax=ax, offset=10, trim=False)
+seaborn.despine(ax=ax2, offset=10, trim=False)
 plt.tight_layout()
 plt.show()

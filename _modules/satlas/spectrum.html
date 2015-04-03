@@ -263,7 +263,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">MLEFit</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span>
 
         <span class="k">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">DisplayMLEFit</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">walking</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -275,6 +274,12 @@
 <span class="sd">        distribution for the best fit of the parameters.</span>
 
 <span class="sd">        A message is printed before and after the walk.</span>
+
+<span class="sd">        Warning</span>
+<span class="sd">        -------</span>
+<span class="sd">        The errors calculated can be asymmetrical, but only the largest is</span>
+<span class="sd">        saved as the overal uncertainty. This is a known issue, and work is</span>
+<span class="sd">        being done to resolve this.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -291,8 +296,9 @@
 <span class="sd">        showTriangle: Boolean, optional</span>
 <span class="sd">            Set this to True is a triangle plot depicting the distributions of</span>
 <span class="sd">            the parameters in the random walk has to be plotted. Two plots are</span>
-<span class="sd">            created: one with all the parameters, one with only the parameters</span>
-<span class="sd">            as filtered using :attr:`selected`.</span>
+<span class="sd">            created if :attr:`showAll` is set to True: one with all the</span>
+<span class="sd">            parameters, one with only the parameters as filtered using</span>
+<span class="sd">            :attr:`selected`.</span>
 <span class="sd">        nsteps: int, optional</span>
 <span class="sd">            Number of steps to be taken, defaults to 2000.</span>
 <span class="sd">        walkers: int, optional</span>
@@ -374,10 +380,6 @@
                 <span class="n">st</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">T</span>
                 <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="p">(</span><span class="n">truth</span> <span class="o">-</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
                                <span class="n">truth</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
-                <span class="c"># l = val[i] - 100 * self.MLEFit[n].stderr</span>
-                <span class="c"># r = val[i] + 100 * self.MLEFit[n].stderr</span>
-                <span class="c"># left = l if left is None else max(l, left)</span>
-                <span class="c"># right = r if right is None else min(r, right)</span>
                 <span class="n">xvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
                 <span class="n">dummy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">vars</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">)</span>
                 <span class="n">yvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">xvalues</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -444,12 +446,18 @@
 </div>
 <div class="viewcode-block" id="Spectrum.DisplayMLEFit"><a class="viewcode-back" href="../../spectrum.html#satlas.spectrum.Spectrum.DisplayMLEFit">[docs]</a>    <span class="k">def</span> <span class="nf">DisplayMLEFit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Give a readable overview of the result of the MLE fitting routine.</span>
+
+<span class="sd">        Warning</span>
+<span class="sd">        -------</span>
+<span class="sd">        The uncertainty shown is the largest of the asymmetrical errors! Work</span>
+<span class="sd">        is being done to incorporate asymmetrical errors in the report; for</span>
+<span class="sd">        now, rely on the triangle plot.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">lm</span><span class="o">.</span><span class="n">report_fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MLEFit</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Spectrum.FitToSpectroscopicData"><a class="viewcode-back" href="../../spectrum.html#satlas.spectrum.Spectrum.FitToSpectroscopicData">[docs]</a>    <span class="k">def</span> <span class="nf">FitToSpectroscopicData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Use the :meth:`FitToData` method, automatically estimating the errors on the</span>
-<span class="sd">        counts by the square root.&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;Use the :meth:`FitToData` method, automatically estimating the errors</span>
+<span class="sd">        on the counts by the square root.&quot;&quot;&quot;</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitizeFitInput</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="n">yerr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">yerr</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -851,7 +859,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">FWHMLimit</span> <span class="o">=</span> <span class="mf">0.1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_df</span> <span class="o">=</span> <span class="n">df</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span> <span class="k">if</span> <span class="n">rAmp</span> <span class="k">else</span> <span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_background</span> <span class="o">=</span> <span class="n">background</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_energies</span> <span class="o">=</span> <span class="p">[]</span>

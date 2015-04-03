@@ -4,7 +4,8 @@ import numpy as np
 import seaborn
 
 
-seaborn.set()
+seaborn.set_style('ticks')
+seaborn.set_palette('colorblind')
 I = 1.0
 J = [5.0 / 2, 3.0 / 2]
 ABC = [-129.109, -1723.61, 0, 0, 0, 0]
@@ -45,12 +46,15 @@ y2 = spec1comb(xdata3)
 x, y2, _ = spec1comb.sanitizeFitInput(xdata3, y2, np.sqrt(y2))
 
 fig, ax = plt.subplots(2, 1, sharex=True)
-ax[0].plot(xdata, ydata, 'ro')
+ax[0].plot(xdata, ydata, 'o')
 ax[0].plot(xdata, eval1, lw=2.0)
-ax[1].plot(xdata2, ydata2, 'ro')
+ax[1].plot(xdata2, ydata2, 'o')
 ax[1].plot(xdata2, eval2, lw=2.0)
 
 ax[1].set_xlabel('Frequency (MHz)', fontsize=16)
 ax[0].set_ylabel('Counts', fontsize=16)
+
+seaborn.despine(ax=ax[1], offset=10, trim=True)
+seaborn.despine(ax=ax[0], offset=10, trim=True, bottom=True)
 plt.tight_layout()
 plt.show()
