@@ -7,6 +7,9 @@
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib import cm
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -419,3 +422,66 @@ def weightedAverage(x, sigma):
     Xm = (x / sigma**2).sum() / Xstat
     Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
     return Xm, max(Xstat, Xscatt)
+
+
+def contour2d(x, y, ax=None, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    bins = kwargs.pop("bins", 50)
+    color = kwargs.pop("color", "k")
+    linewidths = kwargs.pop("linewidths", None)
+
+    try:
+        x = x.values
+    except:
+        x = x.astype(np.float64)
+    try:
+        y = y.values
+    except:
+        y = y.astype(np.float64)
+    X = np.linspace(x.min(), x.max(), bins + 1)
+    Y = np.linspace(y.min(), y.max(), bins + 1)
+    H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
+                             weights=kwargs.get('weights', None))
+    X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
+    X, Y = X[:-1], Y[:-1]
+
+    V = 1.0 - np.exp(-0.5 * np.arange(0.5, 2.1, 0.5) ** 2)
+    Hflat = H.flatten()
+    inds = np.argsort(Hflat)[::-1]
+    Hflat = Hflat[inds]
+    sm = np.cumsum(Hflat)
+    sm /= sm[-1]
+
+    for i, v0 in enumerate(V):
+        try:
+            V[i] = Hflat[sm <= v0][-1]
+        except:
+            V[i] = Hflat[0]
+    ax.contourf(X1, Y1, H.T, V[::-1], cmap=cm.spectral)
+    # ax.pcolor(X, Y, H.max() - H.T, cmap=cmap)
+    # ax.contour(X1, Y1, H.T, colors='k', linewidths=2.0)
+    ax.set_xlim((x.min(), x.max()))
+    ax.set_ylim((y.min(), y.max()))
+
+    return ax
+
+
+def removeAxis(x, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    ax.set_visible(False)
+    ax.set_frame_on(False)
+    return ax
+
+
+def addTitle(x, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+
+    q = [16.0, 50.0, 84.0]
+    q16, q50, q84 = np.percentile(x.values, q)
+
+    title = x.columns[0] + r' = {:.2f}_{-{:.2f}}^{+{:.2f}}'
+    ax.set_title(title.format(q50, q16, q84))
+    return ax
