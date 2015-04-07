@@ -45,6 +45,11 @@ class myPairGrid(PairGrid):
             labels = ax.get_yticklabels()
             for label in labels:
                 label.set_rotation(45)
+        y, x = np.triu_indices_from(self.axes, k=1)
+        for i, j in zip(y, x):
+            self.axes[i, j].set_visible(False)
+            self.axes[i, j].set_frame_on(False)
+            self.axes[i, j].set_axis_off()
 
         # Make the plot look nice
         if despine:

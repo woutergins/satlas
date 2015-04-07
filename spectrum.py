@@ -216,7 +216,7 @@ class Spectrum(object):
                                               priormax=params[key].max)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
                                        args=(x, y, groupParams))
-        burn = int(nsteps / burnin)
+        burn = int(nsteps * burnin / 100)
         print('Starting burn-in ({} steps)...'.format(burn))
         sampler.run_mcmc(pos, burn, storechain=False)
         print('Starting walk ({} steps)...'.format(nsteps - burn))
@@ -286,14 +286,17 @@ class Spectrum(object):
             returnfigs += (figWalks,)
 
         if showTriangle:
+            del sampler
             data = pd.DataFrame(samples, columns=var_names)
             if self.showAll:
                 g = myPairGrid(data, diag_sharey=False, despine=False, size=2)
-                g.map_diag(sns.distplot)
+                g.map_diag(sns.distplot, kde=False)
                 g.map_diag(utils.addTitle)
+                # g.map_lower(plt.hexbin)
                 g.map_lower(utils.contour2d)
-                g.map_upper(utils.removeAxis)
+                # g.map_upper(utils.removeAxis)
                 returnfigs += (g.fig,)
+                del g
 
             if self.showSelected:
                 s = []
@@ -303,11 +306,13 @@ class Spectrum(object):
                             s.append(i)
                 data = data[s]
                 g = myPairGrid(data, diag_sharey=False, despine=False)
-                g.map_diag(sns.distplot)
+                g.map_diag(sns.distplot, kde=False)
                 g.map_diag(utils.addTitle)
+                # g.map_lower(plt.hexbin)
                 g.map_lower(utils.contour2d)
-                g.map_upper(utils.removeAxis)
+                # g.map_upper(utils.removeAxis)
                 returnfigs += (g.fig,)
+                del g
 
         # if showTriangle:
         #     if self.showAll:
