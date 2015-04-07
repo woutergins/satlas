@@ -447,6 +447,7 @@ def contour2d(x, y, ax=None, **kwargs):
     X, Y = X[:-1], Y[:-1]
 
     V = 1.0 - np.exp(-0.5 * np.arange(0.5, 2.1, 0.5) ** 2)
+    # V = []
     Hflat = H.flatten()
     inds = np.argsort(Hflat)[::-1]
     Hflat = Hflat[inds]
@@ -459,19 +460,24 @@ def contour2d(x, y, ax=None, **kwargs):
         except:
             V[i] = Hflat[0]
     ax.contourf(X1, Y1, H.T, V[::-1], cmap=cm.spectral)
-    # ax.pcolor(X, Y, H.max() - H.T, cmap=cmap)
-    # ax.contour(X1, Y1, H.T, colors='k', linewidths=2.0)
     ax.set_xlim((x.min(), x.max()))
     ax.set_ylim((y.min(), y.max()))
+    labels = ax.get_xticklabels()
+    for label in labels:
+        label.set_rotation(30)
+    labels = ax.get_yticklabels()
+    for label in labels:
+        label.set_rotation(30)
 
     return ax
 
 
-def removeAxis(x, ax=None, *args, **kwargs):
+def removeAxis(x, y, ax=None, *args, **kwargs):
     if ax is None:
         ax = plt.gca()
     ax.set_visible(False)
     ax.set_frame_on(False)
+    ax.set_axis_off()
     return ax
 
 
@@ -482,6 +488,19 @@ def addTitle(x, ax=None, *args, **kwargs):
     q = [16.0, 50.0, 84.0]
     q16, q50, q84 = np.percentile(x.values, q)
 
-    title = x.columns[0] + r' = {:.2f}_{-{:.2f}}^{+{:.2f}}'
-    ax.set_title(title.format(q50, q16, q84))
+    title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    ax.set_title(title.format(q50, q50-q16, q84-q50))
+    qvalues = [q16, q50, q84]
+    for q in qvalues:
+        ax.axvline(q, ls="dashed")
     return ax
+
+
+def addTruths(x, truth=None, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+
+    if truth is None:
+        raise ValueError('truth should be a value')
+    else:
+        ax.axvline(truth)

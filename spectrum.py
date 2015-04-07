@@ -239,77 +239,61 @@ class Spectrum(object):
         self.varFromParams(params)
 
         returnfigs = ()
+
+        import matplotlib.pyplot as plt
         import pandas as pd
         import seaborn as sns
+        from satlas.pairgrid import myPairGrid
         sns.set_palette('colorblind')
         sns.set_style('white')
-        data = pd.DataFrame(samples, columns=var_names)
-        s = []
-        for i, v in enumerate(var_names):
-            for r in self.selected:
-                if r in v:
-                    s.append(i)
-        g = sns.PairGrid(data, diag_sharey=False)
-        g.map_lower(utils.contour2d, cmap="Blues_d")
-        g.map_diag(sns.distplot)
-        # g.map_diag(utils.addTitle)
-        g.map_upper(utils.removeAxis)
 
-        # if showLikeli or showWalks or showTriangle:
-        #     import matplotlib.pyplot as plt
-        #     # try:
-        #     #     import seaborn
-        #     #     seaborn.set()
-        #     # except ImportError:
-        #     #     pass
-        # if showLikeli:
-        #     shape = int(np.ceil(np.sqrt(len(var_names))))
-        #     figLikeli, axes = plt.subplots(shape, shape)
-        #     axes = axes.flatten()
-        #     for i, (n, truth, a) in enumerate(zip(var_names, val, axes)):
-        #         st = samples.T
-        #         left, right = (truth - 5 * np.abs(st[i, :].min()),
-        #                        truth + 5 * np.abs(st[i, :].max()))
-        #         xvalues = np.linspace(left, right, 1000)
-        #         dummy = np.array(vars, dtype='float')
-        #         yvalues = np.zeros(xvalues.shape[0])
-        #         for j, value in enumerate(xvalues):
-        #             dummy[i] = value
-        #             yvalues[j] = lnprobList(dummy, x, y, groupParams)
-        #         a.plot(xvalues, yvalues, color="k")
-        #         a.axvline(truth, color="#888888", lw=2)
-        #         a.set_ylabel(n)
-        #         self.varFromParams(self.MLEFit)
-        #     plt.tight_layout()
+        if showLikeli:
+            shape = int(np.ceil(np.sqrt(len(var_names))))
+            figLikeli, axes = plt.subplots(shape, shape)
+            axes = axes.flatten()
+            for i, (n, truth, a) in enumerate(zip(var_names, val, axes)):
+                st = samples.T
+                left, right = (truth - 5 * np.abs(st[i, :].min()),
+                               truth + 5 * np.abs(st[i, :].max()))
+                xvalues = np.linspace(left, right, 1000)
+                dummy = np.array(vars, dtype='float')
+                yvalues = np.zeros(xvalues.shape[0])
+                for j, value in enumerate(xvalues):
+                    dummy[i] = value
+                    yvalues[j] = lnprobList(dummy, x, y, groupParams)
+                a.plot(xvalues, yvalues)
+                a.axvline(truth, lw=2)
+                a.set_ylabel(n)
+                self.varFromParams(self.MLEFit)
+            plt.tight_layout()
 
-        #     returnfigs += (figLikeli,)
+            returnfigs += (figLikeli,)
 
-        # if showWalks:
-        #     shape = int(np.ceil(np.sqrt(len(var_names))))
-        #     figWalks, axes = plt.subplots(shape, shape, sharex=True)
-        #     axes = axes.flatten()
+        if showWalks:
+            shape = int(np.ceil(np.sqrt(len(var_names))))
+            figWalks, axes = plt.subplots(shape, shape, sharex=True)
+            axes = axes.flatten()
 
-        #     for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
-        #         a.plot(sampler.chain[:, :, i].T,
-        #                color="k", alpha=0.4)
-        #         a.axhline(truth, color="#888888", lw=2)
-        #         a.set_xlim([0, nsteps])
-        #         a.set_ylabel(n)
-        #     plt.tight_layout()
+            for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
+                a.plot(sampler.chain[:, :, i].T,
+                       alpha=0.4,
+                       rasterized=True)
+                a.axhline(truth, color="#888888", lw=2)
+                a.set_xlim([0, nsteps])
+                a.set_ylabel(n)
+            figWalks.tight_layout()
 
-        #     returnfigs += (figWalks,)
+            returnfigs += (figWalks,)
 
         if showTriangle:
+            data = pd.DataFrame(samples, columns=var_names)
             if self.showAll:
-                figTri1 = tri.corner(samples,
-                                     labels=var_names,
-                                     truths=vars,
-                                     plot_datapoints=False,
-                                     show_titles=True,
-                                     quantiles=[0.16, 0.5, 0.84],
-                                     verbose=False)
-                returnfigs += (figTri1,)
-
+                g = myPairGrid(data, diag_sharey=False, despine=False, size=2)
+                g.map_diag(sns.distplot)
+                g.map_diag(utils.addTitle)
+                g.map_lower(utils.contour2d)
+                g.map_upper(utils.removeAxis)
+                returnfigs += (g.fig,)
 
             if self.showSelected:
                 s = []
@@ -317,24 +301,49 @@ class Spectrum(object):
                     for r in self.selected:
                         if r in v:
                             s.append(i)
-                selected_samples = np.zeros((samples.shape[0], len(s)))
-                for i, val in enumerate(s):
-                    selected_samples[:, i] = samples[:, val]
-                samples = selected_samples
-                var_names = (np.array(var_names)[s]).tolist()
-                vars = (np.array(vars)[s]).tolist()
+                data = data[s]
+                g = myPairGrid(data, diag_sharey=False, despine=False)
+                g.map_diag(sns.distplot)
+                g.map_diag(utils.addTitle)
+                g.map_lower(utils.contour2d)
+                g.map_upper(utils.removeAxis)
+                returnfigs += (g.fig,)
 
-                figTri = tri.corner(samples,
-                                    labels=var_names,
-                                    truths=vars,
-                                    plot_datapoints=False,
-                                    show_titles=True,
-                                    quantiles=[0.16, 0.5, 0.84],
-                                    verbose=False)
+        # if showTriangle:
+        #     if self.showAll:
+        #         figTri1 = tri.corner(samples,
+        #                              labels=var_names,
+        #                              truths=vars,
+        #                              plot_datapoints=False,
+        #                              show_titles=True,
+        #                              quantiles=[0.16, 0.5, 0.84],
+        #                              verbose=False)
+        #         returnfigs += (figTri1,)
 
-                returnfigs += (figTri,)
-        # return returnfigs
-        return g
+
+        #     if self.showSelected:
+        #         s = []
+        #         for i, v in enumerate(var_names):
+        #             for r in self.selected:
+        #                 if r in v:
+        #                     s.append(i)
+        #         selected_samples = np.zeros((samples.shape[0], len(s)))
+        #         for i, val in enumerate(s):
+        #             selected_samples[:, i] = samples[:, val]
+        #         samples = selected_samples
+        #         var_names = (np.array(var_names)[s]).tolist()
+        #         vars = (np.array(vars)[s]).tolist()
+
+        #         figTri = tri.corner(samples,
+        #                             labels=var_names,
+        #                             truths=vars,
+        #                             plot_datapoints=False,
+        #                             show_titles=True,
+        #                             quantiles=[0.16, 0.5, 0.84],
+        #                             verbose=False)
+
+        #         returnfigs += (figTri,)
+        return returnfigs
 
     def DisplayMLEFit(self):
         """Give a readable overview of the result of the MLE fitting routine.
