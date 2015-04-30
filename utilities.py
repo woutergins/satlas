@@ -85,8 +85,8 @@ def callNDArray(arr, arg):
 class ReleaseCurve(object):
 
     r"""Creates a callable object for the standard release curve. Formula
-    based on J.P. Ramos et al. :cite:`Ramos2014`. Input parameters are initialized to an 35Ar release
-    curve.
+    based on J.P. Ramos et al. :cite:`Ramos2014`. Input parameters are
+    initialized to an 35Ar release curve.
 
     Parameters
     ----------

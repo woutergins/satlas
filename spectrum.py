@@ -275,9 +275,8 @@ class Spectrum(object):
             axes = axes.flatten()
 
             for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
-                a.plot(sampler.chain[:, :, i].T,
-                       alpha=0.4,
-                       rasterized=True)
+                a.plot(sampler.chain[:, :, i].T, 'k',
+                       alpha=0.4)
                 a.axhline(truth, color="#888888", lw=2)
                 a.set_xlim([0, nsteps])
                 a.set_ylabel(n)
@@ -306,7 +305,7 @@ class Spectrum(object):
                             s.append(i)
                 data = data[s]
                 g = myPairGrid(data, diag_sharey=False, despine=False)
-                g.map_diag(sns.distplot, kde=False)
+                g.map_diag(sns.distplot, kde=True, hist=False)
                 g.map_diag(utils.addTitle)
                 # g.map_lower(plt.hexbin)
                 g.map_lower(utils.contour2d)
@@ -361,15 +360,15 @@ class Spectrum(object):
         """
         lm.report_fit(self.MLEFit)
 
-    def FitToSpectroscopicData(self, x, y):
+    def FitToSpectroscopicData(self, x, y, **kwargs):
         """Use the :meth:`FitToData` method, automatically estimating the errors
         on the counts by the square root."""
         x, y, _ = self.sanitizeFitInput(x, y)
         yerr = np.sqrt(y)
         yerr[np.isclose(yerr, 0.0)] = 1.0
-        return self.FitToData(x, y, yerr)
+        return self.FitToData(x, y, yerr, **kwargs)
 
-    def FitToData(self, x, y, yerr):
+    def FitToData(self, x, y, yerr, errorByFit=False):
         """Use a non-linear least squares minimization (Levenberg-Marquardt)
         algorithm to minimize the chi-square of the fit to data :attr:`x` and
         :attr:`y` with errorbars :attr:`yerr`. Reasonable bounds are used on
@@ -387,12 +386,16 @@ class Spectrum(object):
 
         x, y, yerr = self.sanitizeFitInput(x, y, yerr)
 
-        def Model(params):
+        def Model(params, x, y, yerr, errorByFit):
             self.varFromParams(params)
-            return (y - self(x)) / yerr
+            model = self(x)
+            if errorByFit:
+                yerr = np.sqrt(model)
+                yerr[np.isclose(yerr, 0.0)] = 1.0
+            return (y - model) / yerr
 
         params = self.paramsFromVar()
-        result = lm.minimize(Model, params)
+        result = lm.minimize(Model, params, args=(x, y, yerr, errorByFit))
 
         self.ChiSquareFit = result
 
@@ -983,7 +986,8 @@ class SingleSpectrum(Spectrum):
 
     def calculateEnergy(self, level, F):
         r"""The hyperfine addition to a central frequency (attribute *df*) for
-        a specific level is calculated. The formula used is
+        a specific level is calculated. The formula comes from :cite:`Schwartz1955`
+        and in a simplified form, reads
 
         .. math::
             C_F &= F(F+1) - I(I+1) - J(J+1)
@@ -1041,7 +1045,7 @@ class SingleSpectrum(Spectrum):
                   (2 * I * (2 * I - 1) * J * (2 * J - 1))
             E_F = 0
         else:
-            C_F = F*(F+1) - I*(I+1) - J*(J+1)
+            C_F = F * (F + 1) - I * (I + 1) - J * (J + 1)
             D_F = (3 * C_F * (C_F + 1) -
                    4 * I * (I + 1) * J * (J + 1)) /\
                   (2 * I * (2 * I - 1) * J * (2 * J - 1))
