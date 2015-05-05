@@ -8,14 +8,20 @@
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import numpy as np
-import lmfit as lm
-import satlas.profiles as p
-import satlas.loglikelihood as llh
 import emcee as mcmc
-import satlas.triangle as tri
+import lmfit as lm
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import satlas.loglikelihood as llh
+from satlas.pairgrid import myPairGrid
+import satlas.profiles as p
 import satlas.utilities as utils
 from satlas.wigner import wigner_6j as W6J
+import seaborn as sns
+
+sns.set_palette('colorblind')
+sns.set_style('white')
 
 
 class PriorParameter(lm.Parameter):
@@ -240,13 +246,6 @@ class Spectrum(object):
 
         returnfigs = ()
 
-        import matplotlib.pyplot as plt
-        import pandas as pd
-        import seaborn as sns
-        from satlas.pairgrid import myPairGrid
-        sns.set_palette('colorblind')
-        sns.set_style('white')
-
         if showLikeli:
             shape = int(np.ceil(np.sqrt(len(var_names))))
             figLikeli, axes = plt.subplots(shape, shape)
@@ -410,6 +409,16 @@ class Spectrum(object):
         if hasattr(self, 'ChiSquareFit'):
             print('Scaled errors estimated from covariance matrix.')
             print(lm.fit_report(self.ChiSquareFit, **kwargs))
+        else:
+            print('Spectrum has not yet been fitted!')
+
+    def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
+        if hasattr(self, 'ChiSquareFit'):
+            if not len(params) == 2:
+                raise KeyError('The number of supplied parameters does not equal 2!')
+            param1, param2 = params
+            x, y, gr = lm.conf_interval2d(self.ChiSquareFit, param1, param2, **kwargs)
+            return x, y, gr
         else:
             print('Spectrum has not yet been fitted!')
 
