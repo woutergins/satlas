@@ -8,8 +8,11 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import lmfit as lm
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import cm
+import matplotlib as mpl
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -504,3 +507,86 @@ def addTruths(x, truth=None, ax=None, *args, **kwargs):
         raise ValueError('truth should be a value')
     else:
         ax.axvline(truth)
+
+
+class FittingGrid(sns.Grid):
+
+    def __init__(self, minimizer, size=3, aspect=1, despine=True, nx=10, ny=10, selected=None):
+        super(FittingGrid, self).__init__()
+        # Sort out the variables that define the grid
+        self.nx, self.ny = nx, ny
+        self.minimizer = minimizer
+        vars = []
+        for key in minimizer.params:
+            if minimizer.params[key].vary:
+                if selected is None:
+                    vars.append(key)
+                else:
+                    for r in selected:
+                        if r in key:
+                            vars.append(key)
+
+        self.vars = list(vars)
+
+        # Create the figure and the array of subplots
+        figsize = (len(vars) - 1) * size * aspect, (len(vars) - 1) * size
+
+        fig, axes = plt.subplots(len(vars) - 1, len(vars) - 1,
+                                 figsize=figsize,
+                                 sharex="col", sharey="row",
+                                 squeeze=False)
+
+        self.fig = fig
+        self.axes = axes
+        self._legend_data = {}
+        self.remove_upper()
+        self.cm = sns.light_palette('navy', reverse=True, as_cmap=True)
+        # Label the axes
+        self._add_axis_labels()
+
+        # Make the plot look nice
+        if despine:
+            sns.despine(fig=fig)
+        self.make_maps()
+
+    def make_maps(self):
+        for x, y in zip(*np.tril_indices(len(self.vars) - 1)):
+            ax = self.axes[x, y]
+            y += 1
+            param1 = self.vars[x]
+            param2 = self.vars[y]
+            V = [0, 0.68, 0.95, 0.99]
+            print(param1, param2)
+            X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
+                                          nx=self.nx, ny=self.ny)
+            cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
+        cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
+        plt.colorbar(cf, cax=cax)
+
+
+    def remove_upper(self):
+        """Plot with a bivariate function on the upper diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        for i, j in zip(*np.triu_indices_from(self.axes, 1)):
+            ax = self.axes[i, j]
+            plt.sca(ax)
+            ax.set_visible(False)
+            ax.set_frame_on(False)
+            ax.set_axis_off()
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+    def _add_axis_labels(self):
+        """Add labels to the left and bottom Axes."""
+        for ax, label in zip(self.axes[-1, :], self.vars[:-1]):
+            ax.set_xlabel(label)
+        for ax, label in zip(self.axes[:, 0], self.vars[1:]):
+            ax.set_ylabel(label)

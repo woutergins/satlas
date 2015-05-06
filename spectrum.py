@@ -77,7 +77,7 @@ class Spectrum(object):
             Counts corresponding to :attr:`x`."""
         self.varFromParams(params)
         if any([np.isclose(X.min(), X.max(), atol=self.atol)
-                for X in self.seperateResponse(x)]) or any(self(x) < 0):
+                for X in self.SeperateResponse(x)]) or any(self(x) < 0):
             return -np.inf
         return llh.Poisson(y, self(x))
 
@@ -394,6 +394,7 @@ class Spectrum(object):
             return (y - model) / yerr
 
         params = self.paramsFromVar()
+
         result = lm.minimize(Model, params, args=(x, y, yerr, errorByFit))
 
         self.ChiSquareFit = result
@@ -412,12 +413,20 @@ class Spectrum(object):
         else:
             print('Spectrum has not yet been fitted!')
 
+    def CorrelationPlot(self):
+        g = utils.FittingGrid(self.ChiSquareFit, selected=self.selected)
+        return g
+
     def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
+        """Creates and returns a chi-square map around the supplied two
+        parameters. """
         if hasattr(self, 'ChiSquareFit'):
             if not len(params) == 2:
-                raise KeyError('The number of supplied parameters does not equal 2!')
+                mess = 'The number of supplied parameters does not equal 2!'
+                raise KeyError(mess)
             param1, param2 = params
-            x, y, gr = lm.conf_interval2d(self.ChiSquareFit, param1, param2, **kwargs)
+            x, y, gr = lm.conf_interval2d(self.ChiSquareFit,
+                                          param1, param2, **kwargs)
             return x, y, gr
         else:
             print('Spectrum has not yet been fitted!')
@@ -528,15 +537,16 @@ class CombinedSpectrum(Spectrum):
                             dinkie = params[key]
                             new_name = key.split('_')
                             new_name = '_'.join(new_name[1:])
-                            dinkie.name = new_name
-                            p[new_name] = dinkie
+                            p.add(new_name, value=dinkie.value,
+                                  vary=dinkie.vary, min=dinkie.min,
+                                  max=dinkie.max, expr=dinkie.expr)
             else:
                 for key in params.keys():
                     if key.startswith('s' + str(i) + '_'):
                         dinkie = params[key]
                         new_name = key.split('_')[-1]
-                        dinkie.name = new_name
-                        p[new_name] = dinkie
+                        p.add(new_name, value=dinkie.value, vary=dinkie.vary,
+                              min=dinkie.min, max=dinkie.max, expr=dinkie.expr)
             s.varFromParams(p)
 
     def splitParams(self, params):
@@ -589,8 +599,8 @@ class CombinedSpectrum(Spectrum):
         params = self.splitParams(params)
         return np.sum([s.lnprior(par) for s, par in zip(self.spectra, params)])
 
-    def seperateResponse(self, x):
-        return np.squeeze([s.seperateResponse(X) for s, X in zip(self.spectra, x)])
+    def SeperateResponse(self, x):
+        return np.squeeze([s.SeperateResponse(X) for s, X in zip(self.spectra, x)])
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
@@ -643,7 +653,7 @@ class IsomerSpectrum(CombinedSpectrum):
         super(IsomerSpectrum, self).walk(x, y, showLikeli, showWalks,
                                          showTriangle, nsteps, walkers)
 
-    def seperateResponse(self, x):
+    def SeperateResponse(self, x):
         """Get the response for each seperate spectrum for the values x,
         without background.
 
@@ -1265,7 +1275,7 @@ class SingleSpectrum(Spectrum):
         else:
             return self.__add__(other)
 
-    def seperateResponse(self, x):
+    def SeperateResponse(self, x):
         """Get the response for each seperate spectrum for the values :attr:`x`
         , without background.
 
