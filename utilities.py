@@ -527,6 +527,9 @@ class FittingGrid(sns.Grid):
                             vars.append(key)
 
         self.vars = list(vars)
+        self.vars = sorted(self.vars)
+        self.x_vars = self.vars[:-1]
+        self.y_vars = self.vars[1:]
 
         # Create the figure and the array of subplots
         figsize = (len(vars) - 1) * size * aspect, (len(vars) - 1) * size
@@ -538,6 +541,8 @@ class FittingGrid(sns.Grid):
 
         self.fig = fig
         self.axes = axes
+        if len(vars) == 2:
+            self.axes = np.array([axes]).reshape((1, 1))
         self._legend_data = {}
         self.remove_upper()
         self.cm = sns.light_palette('navy', reverse=True, as_cmap=True)
@@ -546,23 +551,21 @@ class FittingGrid(sns.Grid):
 
         # Make the plot look nice
         if despine:
-            sns.despine(fig=fig)
+            for a in self.axes.flatten():
+                sns.despine(ax=a)
         self.make_maps()
 
     def make_maps(self):
         for x, y in zip(*np.tril_indices(len(self.vars) - 1)):
             ax = self.axes[x, y]
-            y += 1
-            param1 = self.vars[x]
-            param2 = self.vars[y]
+            param1 = self.x_vars[y]
+            param2 = self.y_vars[x]
             V = [0, 0.68, 0.95, 0.99]
-            print(param1, param2)
             X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
                                           nx=self.nx, ny=self.ny)
             cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
         cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
         plt.colorbar(cf, cax=cax)
-
 
     def remove_upper(self):
         """Plot with a bivariate function on the upper diagonal subplots.
@@ -586,7 +589,7 @@ class FittingGrid(sns.Grid):
 
     def _add_axis_labels(self):
         """Add labels to the left and bottom Axes."""
-        for ax, label in zip(self.axes[-1, :], self.vars[:-1]):
+        for ax, label in zip(self.axes[-1, :], self.x_vars):
             ax.set_xlabel(label)
-        for ax, label in zip(self.axes[:, 0], self.vars[1:]):
+        for ax, label in zip(self.axes[:, 0], self.y_vars):
             ax.set_ylabel(label)

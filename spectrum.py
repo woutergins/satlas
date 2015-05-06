@@ -413,8 +413,8 @@ class Spectrum(object):
         else:
             print('Spectrum has not yet been fitted!')
 
-    def CorrelationPlot(self):
-        g = utils.FittingGrid(self.ChiSquareFit, selected=self.selected)
+    def CorrelationPlot(self, selected=True):
+        g = utils.FittingGrid(self.ChiSquareFit, selected=self.selected if selected else None)
         return g
 
     def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
