@@ -23,7 +23,6 @@ class myPairGrid(PairGrid):
 
         fig, axes = plt.subplots(len(self.y_vars), len(self.x_vars),
                                  figsize=figsize,
-                                 # sharex="col", sharey="row",
                                  squeeze=False)
 
         self.fig = fig

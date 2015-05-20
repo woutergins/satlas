@@ -10,13 +10,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import lmfit as lm
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib import cm
 import matplotlib as mpl
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
+
+cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
+invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
 
 
 def state_number_enumerate(dims, state=None, idx=0):
@@ -428,11 +429,11 @@ def weightedAverage(x, sigma):
 
 
 def contour2d(x, y, ax=None, **kwargs):
+    """Creates a 2D contourmap from loglikelihood sampled data. Draws the
+    1, 2 and 3 sigma contours and fills them in."""
     if ax is None:
         ax = plt.gca()
     bins = kwargs.pop("bins", 50)
-    color = kwargs.pop("color", "k")
-    linewidths = kwargs.pop("linewidths", None)
 
     try:
         x = x.values
@@ -448,21 +449,26 @@ def contour2d(x, y, ax=None, **kwargs):
                              weights=kwargs.get('weights', None))
     X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
     X, Y = X[:-1], Y[:-1]
+    H = (H - H.min()) / (H.max() - H.min())
 
-    V = 1.0 - np.exp(-0.5 * np.arange(0.5, 2.1, 0.5) ** 2)
-    # V = []
     Hflat = H.flatten()
     inds = np.argsort(Hflat)[::-1]
     Hflat = Hflat[inds]
     sm = np.cumsum(Hflat)
     sm /= sm[-1]
-
-    for i, v0 in enumerate(V):
+    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
+    V = np.empty(len(levels))
+    for i, v0 in enumerate(levels):
         try:
             V[i] = Hflat[sm <= v0][-1]
         except:
             V[i] = Hflat[0]
-    ax.contourf(X1, Y1, H.T, V[::-1], cmap=cm.spectral)
+
+    bounds = np.concatenate([[H.max()], V])[::-1]
+    norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+
+    contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+
     ax.set_xlim((x.min(), x.max()))
     ax.set_ylim((y.min(), y.max()))
     labels = ax.get_xticklabels()
@@ -472,7 +478,7 @@ def contour2d(x, y, ax=None, **kwargs):
     for label in labels:
         label.set_rotation(30)
 
-    return ax
+    return ax, contourset
 
 
 def removeAxis(x, y, ax=None, *args, **kwargs):
@@ -511,7 +517,8 @@ def addTruths(x, truth=None, ax=None, *args, **kwargs):
 
 class FittingGrid(sns.Grid):
 
-    def __init__(self, minimizer, size=3, aspect=1, despine=True, nx=10, ny=10, selected=None):
+    def __init__(self, minimizer, size=3, aspect=1,
+                 despine=True, nx=10, ny=10, selected=None):
         super(FittingGrid, self).__init__()
         # Sort out the variables that define the grid
         self.nx, self.ny = nx, ny
@@ -545,27 +552,37 @@ class FittingGrid(sns.Grid):
             self.axes = np.array([axes]).reshape((1, 1))
         self._legend_data = {}
         self.remove_upper()
-        self.cm = sns.light_palette('navy', reverse=True, as_cmap=True)
+        self.cm = sns.light_palette('navy', reverse=False, as_cmap=True)
+        self.cm = sns.diverging_palette(255, 133, l=60, n=3, center="dark", as_cmap=True)
         # Label the axes
         self._add_axis_labels()
 
         # Make the plot look nice
         if despine:
-            for a in self.axes.flatten():
-                sns.despine(ax=a)
+            sns.despine(fig=self.fig)
         self.make_maps()
 
     def make_maps(self):
+        V = [0, 0.68, 0.95, 0.99]
+        bounds = V
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
         for x, y in zip(*np.tril_indices(len(self.vars) - 1)):
             ax = self.axes[x, y]
             param1 = self.x_vars[y]
             param2 = self.y_vars[x]
-            V = [0, 0.68, 0.95, 0.99]
             X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
                                           nx=self.nx, ny=self.ny)
-            cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
+            # cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
+            cf = ax.contourf(X, Y, GR, V, cmap=cmap, norm=norm)
+            labels = ax.get_xticklabels()
+            for label in labels:
+                label.set_rotation(30)
+            labels = ax.get_yticklabels()
+            for label in labels:
+                label.set_rotation(30)
         cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
-        plt.colorbar(cf, cax=cax)
+        cbar = plt.colorbar(cf, cax=cax)
+        cbar.ax.set_yticklabels(['', r'1$\sigma$', r'2$\sigma$', r'3$\sigma$'])
 
     def remove_upper(self):
         """Plot with a bivariate function on the upper diagonal subplots.
@@ -593,3 +610,206 @@ class FittingGrid(sns.Grid):
             ax.set_xlabel(label)
         for ax, label in zip(self.axes[:, 0], self.y_vars):
             ax.set_ylabel(label)
+
+
+class WalkingGrid(sns.PairGrid):
+
+    def __init__(self, *args, **kwargs):
+        super(WalkingGrid, self).__init__(*args, **kwargs)
+
+        size = kwargs.pop("size", 3)
+        aspect = kwargs.pop("aspect", 1)
+        despine = kwargs.pop("despine", True)
+        # Create the figure and the array of subplots
+        figsize = len(self.x_vars) * size * aspect, len(self.y_vars) * size
+
+        plt.close(self.fig)
+
+        fig, axes = plt.subplots(len(self.y_vars), len(self.x_vars),
+                                 figsize=figsize,
+                                 squeeze=False)
+
+        self.fig = fig
+        self.axes = axes
+
+        l, b, r, t = 0.25 * size *aspect / figsize[0], 0.4 * size / figsize[1], 1 - 0.1 * size * aspect / figsize[0], 1 - 0.2 * size * aspect / figsize[1]
+        fig.subplots_adjust(left=l, bottom=b, right=r, top=t,
+                            wspace=0.02, hspace=0.02)
+        for ax in np.diag(self.axes):
+            ax.set_yticks([])
+        for ax in self.axes[:-1, :].flatten():
+            ax.set_xticks([])
+        for ax in self.axes[:, 1:].flatten():
+            ax.set_yticks([])
+        for ax in self.axes.flatten():
+            labels = ax.get_xticklabels()
+            for label in labels:
+                label.set_rotation(45)
+            labels = ax.get_yticklabels()
+            for label in labels:
+                label.set_rotation(45)
+        y, x = np.triu_indices_from(self.axes, k=1)
+        for i, j in zip(y, x):
+            self.axes[i, j].set_visible(False)
+            self.axes[i, j].set_frame_on(False)
+            self.axes[i, j].set_axis_off()
+
+        # Make the plot look nice
+        if despine:
+            sns.despine(fig=fig)
+        self.map_diag(sns.distplot, kde=False)
+        self.map_diag(addTitle)
+        self.map_lower_with_colorbar(contour2d)
+
+    def map_diag(self, func, **kwargs):
+        """Plot with a univariate function on each diagonal subplot.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take an x array as a positional arguments and draw onto the
+            "currently active" matplotlib Axes. There is a special case when
+            using a ``hue`` variable and ``plt.hist``; the histogram will be
+            plotted with stacked bars.
+
+        """
+        # Add special diagonal axes for the univariate plot
+        if self.square_grid and self.diag_axes is None:
+            # diag_axes = []
+            # for ax in np.diag(self.axes):
+            #     diag_axes.append(ax)
+            # self.diag_axes = np.array(diag_axes, np.object)
+            self.diag_axes = np.diag(self.axes)
+        else:
+            pass
+            # self.diag_axes = None
+
+        # Plot on each of the diagonal axes
+        for i, var in enumerate(self.x_vars):
+            ax = self.diag_axes[i]
+            hue_grouped = self.data[var].groupby(self.hue_vals)
+
+            # Special-case plt.hist with stacked bars
+            if func is plt.hist:
+                plt.sca(ax)
+                vals = [v.values for g, v in hue_grouped]
+                func(vals, color=self.palette, histtype="barstacked",
+                     **kwargs)
+            else:
+                for k, (label_k, data_k) in enumerate(hue_grouped):
+                    plt.sca(ax)
+                    func(data_k, label=label_k,
+                         color=self.palette[k], **kwargs)
+
+            self._clean_axis(ax)
+
+        self._add_axis_labels()
+
+    def map_lower_with_colorbar(self, func, **kwargs):
+        """Plot with a bivariate function on the lower diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        kw_color = kwargs.pop("color", None)
+        for i, j in zip(*np.tril_indices_from(self.axes, -1)):
+            hue_grouped = self.data.groupby(self.hue_vals)
+            for k, (label_k, data_k) in enumerate(hue_grouped):
+
+                ax = self.axes[i, j]
+                plt.sca(ax)
+
+                x_var = self.x_vars[j]
+                y_var = self.y_vars[i]
+
+                # Insert the other hue aesthetics if appropriate
+                for kw, val_list in self.hue_kws.items():
+                    kwargs[kw] = val_list[k]
+
+                color = self.palette[k] if kw_color is None else kw_color
+                ax, c = func(data_k[x_var], data_k[y_var], label=label_k,
+                             color=color, **kwargs)
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+        if kw_color is not None:
+            kwargs["color"] = kw_color
+        self._add_axis_labels()
+        cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
+        cbar = plt.colorbar(c, cax=cax)
+        cbar.ax.set_yticklabels([r'3$\sigma$', r'2$\sigma$', r'1$\sigma$', ''])
+
+    def map_upper(self, func, **kwargs):
+        """Plot with a bivariate function on the upper diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        kw_color = kwargs.pop("color", None)
+        for i, j in zip(*np.triu_indices_from(self.axes, 1)):
+
+            hue_grouped = self.data.groupby(self.hue_vals)
+            for k, (label_k, data_k) in enumerate(hue_grouped):
+
+                ax = self.axes[i, j]
+                plt.sca(ax)
+
+                x_var = self.x_vars[j]
+                y_var = self.y_vars[i]
+
+                # Insert the other hue aesthetics if appropriate
+                for kw, val_list in self.hue_kws.items():
+                    kwargs[kw] = val_list[k]
+
+                color = self.palette[k] if kw_color is None else kw_color
+                func(data_k[x_var], data_k[y_var], label=label_k,
+                     color=color, **kwargs)
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+        if kw_color is not None:
+            kwargs["color"] = kw_color
+
+    def map_offdiag(self, func, **kwargs):
+        """Plot with a bivariate function on the off-diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+
+        self.map_lower(func, **kwargs)
+        self.map_upper(func, **kwargs)
+
+    def _add_axis_labels(self):
+        """Add labels to the left and bottom Axes."""
+        for ax, label in zip(self.axes[-1, :], self.x_vars):
+            ax.set_xlabel(label)
+        for ax, label in zip(self.axes[:, 0], self.y_vars):
+            ax.set_ylabel(label)
+
+    def _find_numeric_cols(self, data):
+        """Find which variables in a DataFrame are numeric."""
+        # This can't be the best way to do this, but  I do not
+        # know what the best way might be, so this seems ok
+        numeric_cols = []
+        for col in data:
+            try:
+                data[col].astype(np.float)
+                numeric_cols.append(col)
+            except (ValueError, TypeError):
+                pass
+        return numeric_cols

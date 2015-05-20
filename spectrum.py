@@ -10,6 +10,7 @@
 """
 import emcee as mcmc
 import lmfit as lm
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ import satlas.profiles as p
 import satlas.utilities as utils
 from satlas.wigner import wigner_6j as W6J
 import seaborn as sns
+
 
 sns.set_palette('colorblind')
 sns.set_style('white')
@@ -286,13 +288,11 @@ class Spectrum(object):
         if showTriangle:
             del sampler
             data = pd.DataFrame(samples, columns=var_names)
+            data.sort_index(axis=1, inplace=True)
+            var_names = sorted(var_names)
             if self.showAll:
-                g = myPairGrid(data, diag_sharey=False, despine=False, size=2)
-                g.map_diag(sns.distplot, kde=False)
-                g.map_diag(utils.addTitle)
-                # g.map_lower(plt.hexbin)
-                g.map_lower(utils.contour2d)
-                # g.map_upper(utils.removeAxis)
+                g = utils.WalkingGrid(data, diag_sharey=False,
+                                      despine=False, size=2)
                 returnfigs += (g.fig,)
                 del g
 
@@ -303,12 +303,8 @@ class Spectrum(object):
                         if r in v:
                             s.append(i)
                 data = data[s]
-                g = myPairGrid(data, diag_sharey=False, despine=False)
-                g.map_diag(sns.distplot, kde=True, hist=False)
-                g.map_diag(utils.addTitle)
-                # g.map_lower(plt.hexbin)
-                g.map_lower(utils.contour2d)
-                # g.map_upper(utils.removeAxis)
+                g = utils.WalkingGrid(data, diag_sharey=False,
+                                      despine=False, size=2)
                 returnfigs += (g.fig,)
                 del g
 
@@ -414,7 +410,8 @@ class Spectrum(object):
             print('Spectrum has not yet been fitted!')
 
     def CorrelationPlot(self, selected=True):
-        g = utils.FittingGrid(self.ChiSquareFit, selected=self.selected if selected else None)
+        g = utils.FittingGrid(self.ChiSquareFit,
+                              selected=self.selected if selected else None)
         return g
 
     def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
