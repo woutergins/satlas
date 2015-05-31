@@ -10,20 +10,13 @@
 """
 import emcee as mcmc
 import lmfit as lm
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.loglikelihood as llh
-from satlas.pairgrid import myPairGrid
 import satlas.profiles as p
 import satlas.utilities as utils
 from satlas.wigner import wigner_6j as W6J
-import seaborn as sns
-
-
-sns.set_palette('colorblind')
-sns.set_style('white')
 
 
 class PriorParameter(lm.Parameter):
@@ -144,15 +137,15 @@ class Spectrum(object):
         result.scalar_minimize(method='Nelder-Mead')
         self.varFromParams(result.params)
         self.MLEFit = result.params
+        self.MLEResult = result.message
 
-        print(result.message)
         if walking:
             return self.walk(x, y, **kwargs)
         else:
             return None
 
-    def walk(self, x, y, showLikeli=False, showWalks=False, showTriangle=False,
-             nsteps=2000, walkers=20, burnin=10.0):
+    def walk(self, x, y, nsteps=2000, walkers=20, burnin=10.0, verbose=True,
+             store_walks=False):
         """Performs a random walk in the parameter space to determine the
         distribution for the best fit of the parameters.
 
@@ -170,18 +163,6 @@ class Spectrum(object):
             Frequency of the data, in MHz.
         y: array_like
             Counts corresponding to :attr:`x`.
-        showLikeli: Boolean, optional
-            Set this to True if a plot depicting the 1D slice of the
-            loglikelihood function for each parameter has to be plotted.
-        showWalks: Boolean, optional
-            Set this to True if a plot depicting the random walk has to be
-            plotted.
-        showTriangle: Boolean, optional
-            Set this to True is a triangle plot depicting the distributions of
-            the parameters in the random walk has to be plotted. Two plots are
-            created if :attr:`showAll` is set to True: one with all the
-            parameters, one with only the parameters as filtered using
-            :attr:`selected`.
         nsteps: int, optional
             Number of steps to be taken, defaults to 2000.
         walkers: int, optional
@@ -189,15 +170,13 @@ class Spectrum(object):
         burnin: float, optional
             Burn-in to be used for the walk. Expressed in percentage,
             defaults to 10.0.
+        verbose: boolean, optional
+            Controls printing the status of the sampling to the stdout.
+            Defaults to True.
+        store_walks: boolean, optional
+            For deeper debugging, the data from the walks can be saved and
+            viewed later on"""
 
-        Returns
-        -------
-        returnfigs: tuple
-            If any plots have been made by setting booleans, the figure handles
-            are returned as a tuple, ordered as
-            :attr:`(Likelihood, walks, triangleComplete, triangleSelected)`.
-            Plots that have not been requested are not added. If no plots have
-            been requested, returns an empty tuple."""
         params = self.paramsFromVar()
         self.MLEFit = self.paramsFromVar()
         var_names = []
@@ -225,11 +204,14 @@ class Spectrum(object):
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
                                        args=(x, y, groupParams))
         burn = int(nsteps * burnin / 100)
-        print('Starting burn-in ({} steps)...'.format(burn))
+        if verbose:
+            print('Starting burn-in ({} steps)...'.format(burn))
         sampler.run_mcmc(pos, burn, storechain=False)
-        print('Starting walk ({} steps)...'.format(nsteps - burn))
+        if verbose:
+            print('Starting walk ({} steps)...'.format(nsteps - burn))
         sampler.run_mcmc(pos, nsteps - burn)
-        print('Done.')
+        if verbose:
+            print('Done.')
         samples = sampler.flatchain
         val = []
         err = []
@@ -246,103 +228,66 @@ class Spectrum(object):
         self.MLEFit = params
         self.varFromParams(params)
 
-        returnfigs = ()
+        data = pd.DataFrame(samples, columns=var_names)
+        data.sort_index(axis=1, inplace=True)
+        self.MLEData = data
+        if store_walks:
+            self.walks = [(name, sampler.chain[:, :, i].T) for i, name in enumerate(var_names)]
+        else:
+            self.walks = None
 
-        if showLikeli:
-            shape = int(np.ceil(np.sqrt(len(var_names))))
-            figLikeli, axes = plt.subplots(shape, shape)
-            axes = axes.flatten()
-            for i, (n, truth, a) in enumerate(zip(var_names, val, axes)):
-                st = samples.T
-                left, right = (truth - 5 * np.abs(st[i, :].min()),
-                               truth + 5 * np.abs(st[i, :].max()))
-                xvalues = np.linspace(left, right, 1000)
-                dummy = np.array(vars, dtype='float')
-                yvalues = np.zeros(xvalues.shape[0])
-                for j, value in enumerate(xvalues):
-                    dummy[i] = value
-                    yvalues[j] = lnprobList(dummy, x, y, groupParams)
-                a.plot(xvalues, yvalues)
-                a.axvline(truth, lw=2)
-                a.set_ylabel(n)
-                self.varFromParams(self.MLEFit)
-            plt.tight_layout()
-
-            returnfigs += (figLikeli,)
-
-        if showWalks:
+    def GenerateWalks(self):
+        if self.walks is not None:
             shape = int(np.ceil(np.sqrt(len(var_names))))
             figWalks, axes = plt.subplots(shape, shape, sharex=True)
             axes = axes.flatten()
 
-            for i, (n, truth, a) in enumerate(zip(var_names, vars, axes)):
-                a.plot(sampler.chain[:, :, i].T, 'k',
-                       alpha=0.4)
-                a.axhline(truth, color="#888888", lw=2)
-                a.set_xlim([0, nsteps])
+            for (n, values), a in zip(self.walks):
+                a.plot(values, 'k', alpha=0.4)
+                a.set_xlim([0, len(values)])
                 a.set_ylabel(n)
-            figWalks.tight_layout()
+            return figWalks, axes
+        else:
+            return None
 
-            returnfigs += (figWalks,)
+    def GenerateLikelihood(self, x, y):
+        params = self.paramsFromVar()
+        var_names = []
+        vars = []
+        for key in params.keys():
+            if params[key].vary:
+                var_names.append(key)
+                vars.append(params[key].value)
+        x, y, _ = self.sanitizeFitInput(x, y)
 
-        if showTriangle:
-            del sampler
-            data = pd.DataFrame(samples, columns=var_names)
-            data.sort_index(axis=1, inplace=True)
-            var_names = sorted(var_names)
-            if self.showAll:
-                g = utils.WalkingGrid(data, diag_sharey=False,
-                                      despine=False, size=2)
-                returnfigs += (g.fig,)
-                del g
-
-            if self.showSelected:
-                s = []
-                for i, v in enumerate(var_names):
-                    for r in self.selected:
-                        if r in v:
-                            s.append(i)
-                data = data[s]
-                g = utils.WalkingGrid(data, diag_sharey=False,
-                                      despine=False, size=2)
-                returnfigs += (g.fig,)
-                del g
-
-        # if showTriangle:
-        #     if self.showAll:
-        #         figTri1 = tri.corner(samples,
-        #                              labels=var_names,
-        #                              truths=vars,
-        #                              plot_datapoints=False,
-        #                              show_titles=True,
-        #                              quantiles=[0.16, 0.5, 0.84],
-        #                              verbose=False)
-        #         returnfigs += (figTri1,)
-
-
-        #     if self.showSelected:
-        #         s = []
-        #         for i, v in enumerate(var_names):
-        #             for r in self.selected:
-        #                 if r in v:
-        #                     s.append(i)
-        #         selected_samples = np.zeros((samples.shape[0], len(s)))
-        #         for i, val in enumerate(s):
-        #             selected_samples[:, i] = samples[:, val]
-        #         samples = selected_samples
-        #         var_names = (np.array(var_names)[s]).tolist()
-        #         vars = (np.array(vars)[s]).tolist()
-
-        #         figTri = tri.corner(samples,
-        #                             labels=var_names,
-        #                             truths=vars,
-        #                             plot_datapoints=False,
-        #                             show_titles=True,
-        #                             quantiles=[0.16, 0.5, 0.84],
-        #                             verbose=False)
-
-        #         returnfigs += (figTri,)
-        return returnfigs
+        def lnprobList(fvars, x, y, groupParams):
+            for val, n in zip(fvars, var_names):
+                groupParams[n].value = val
+            return self.lnprob(groupParams, x, y)
+        groupParams = lm.Parameters()
+        for key in params.keys():
+            groupParams[key] = PriorParameter(key,
+                                              value=params[key].value,
+                                              vary=params[key].vary,
+                                              expr=params[key].expr,
+                                              priormin=params[key].min,
+                                              priormax=params[key].max)
+        data = {}
+        for i, n in enumerate(var_names):
+            best = self.MLEFit[n].value
+            std = self.MLEFit[n].stderr
+            left, right = (best - 5 * std, best + 5 * std)
+            xvalues = np.linspace(left, right, 1000)
+            dummy = np.array(vars, dtype='float')
+            yvalues = np.zeros(xvalues.shape[0])
+            for j, value in enumerate(xvalues):
+                dummy[i] = value
+                yvalues[j] = lnprobList(dummy, x, y, groupParams)
+            data[n] = {}
+            data[n]['x'] = xvalues
+            data[n]['y'] = yvalues
+            self.varFromParams(self.MLEFit)
+        return data
 
     def DisplayMLEFit(self):
         """Give a readable overview of the result of the MLE fitting routine.
@@ -409,9 +354,33 @@ class Spectrum(object):
         else:
             print('Spectrum has not yet been fitted!')
 
-    def CorrelationPlot(self, selected=True):
+    def vars(self, selection='any'):
+        var, var_names, varerr = [], [], []
+        if hasattr(self, 'ChiSquareFit') and (selection.lower() == 'chisquare' or selection.lower() == 'any'):
+            for key in sorted(self.ChiSquareFit.params.keys()):
+                if self.ChiSquareFit.params[key].vary:
+                    var.append(self.ChiSquareFit.params[key].value)
+                    var_names.append(self.ChiSquareFit.params[key].name)
+                    varerr.append(self.ChiSquareFit.params[key].stderr)
+        elif hasattr(self, 'MLEFit'):
+            for key in sorted(self.MLEFit.params.keys()):
+                if self.MLEFit.params[key].vary:
+                    var.append(self.MLEFit.params[key].value)
+                    var_names.append(self.MLEFit.params[key].name)
+                    varerr.append(self.MLEFit.params[key].stderr)
+        else:
+            params = self.paramsFromVar()
+            for key in sorted(params.keys()):
+                if params[key].vary:
+                    var.append(params[key].value)
+                    var_names.append(params[key].name)
+                    varerr.append(None)
+        return var_names, var, varerr
+
+    def CorrelationPlot(self, selected=True, **kwargs):
         g = utils.FittingGrid(self.ChiSquareFit,
-                              selected=self.selected if selected else None)
+                              selected=self.selected if selected else None,
+                              despine=False, **kwargs)
         return g
 
     def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
@@ -1237,8 +1206,8 @@ class SingleSpectrum(Spectrum):
         Returns
         -------
         float
-            If any of the parameters are out of bounds, returns :data:`-np.inf`
-            , otherwise 1.0 is returned"""
+            If any of the parameters are out of bounds, returns :data:`-np.inf`,
+            otherwise 1.0 is returned."""
         for key in params.keys():
             try:
                 leftbound, rightbound = params[key].priormin, params[key].priormax
@@ -1249,6 +1218,42 @@ class SingleSpectrum(Spectrum):
             if not leftbound <= params[key].value <= rightbound:
                 return -np.inf
         return 1.0
+
+    def bootstrap(self, x, y, bootstraps=100, samples=None, selected=True):
+        total = np.cumsum(y)
+        dist = total / float(y.sum())
+        names, var, varerr = self.vars(selection='chisquare')
+        selected = self.selected if selected else names
+        v = [name for name in names if name in selected]
+        data = pd.DataFrame(index=np.arange(0, bootstraps + 1),
+                            columns=v)
+        stderrs = pd.DataFrame(index=np.arange(0, bootstraps + 1),
+                               columns=v)
+        v = [var[i] for i, name in enumerate(names) if name in selected]
+        data.loc[0] = v
+        v = [varerr[i] for i, name in enumerate(names) if name in selected]
+        stderrs.loc[0] = v
+        if samples is None:
+            samples = y.sum()
+        length = len(x)
+
+        for i in range(bootstraps):
+            newy = np.bincount(
+                    np.searchsorted(
+                            dist,
+                            np.random.rand(samples)
+                            ),
+                    minlength=length
+                    )
+            self.FitToSpectroscopicData(x, newy)
+            names, var, varerr = self.vars(selection='chisquare')
+            v = [var[i] for i, name in enumerate(names) if name in selected]
+            data.loc[i + 1] = v
+            v = [varerr[i] for i, name in enumerate(names) if name in selected]
+            stderrs.loc[i + 1] = v
+        pan = {'data': data, 'stderr': stderrs}
+        pan = pd.Panel(pan)
+        return pan
 
     def __add__(self, other):
         """Add two spectra together to get an :class:`IsomerSpectrum`.

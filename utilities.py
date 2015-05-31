@@ -6,11 +6,12 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import lmfit as lm
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -428,6 +429,77 @@ def weightedAverage(x, sigma):
     return Xm, max(Xstat, Xscatt)
 
 
+def bootstrapCI(dataframe, kind='basic'):
+    if isinstance(dataframe, pd.Panel):
+        data = dataframe['data']
+        stderrs = dataframe['stderr']
+        args = (data, stderrs)
+    else:
+        data = dataframe
+        args = (data)
+
+    def percentile(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        left = data.apply(lambda col: np.percentile(col, 15.865), axis=0)
+        right = data.apply(lambda col: np.percentile(col, 84.135), axis=0)
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    def basic(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        left = data.apply(lambda col: 2 * col[0] - np.percentile(col[1:],
+                                                                 84.135),
+                          axis=0)
+        right = data.apply(lambda col: 2 * col[0] - np.percentile(col[1:],
+                                                                  15.865),
+                           axis=0)
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    def student(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        R = (data - data.loc[0]) / stderrs
+        left = R.apply(lambda col: np.percentile(col[1:], 84.135), axis=0)
+        right = R.apply(lambda col: np.percentile(col[1:], 15.865), axis=0)
+        left = data.loc[0] - stderrs.loc[0] * left
+        right = data.loc[0] - stderrs.loc[0] * right
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    method = {'basic': basic, 'percentile': percentile, 't': student}
+    method = method.pop(kind.lower(), basic)
+    return method(*args)
+
+
+def generateLikelihoodPlot(data):
+    shape = int(np.ceil(np.sqrt(len(data.keys()))))
+    figLikelih, axes = plt.subplots(shape, shape)
+    axes = axes.flatten()
+    for name, ax in zip(data.keys(), axes):
+        x = data[name]['x']
+        y = data[name]['y']
+        ax.plot(x, y)
+        ax.set_xlabel(name)
+    return figLikelih, axes
+
+
+def generateCorrelationplot(data, filter=None):
+    if filter is None:
+        g = WalkingGrid(data, diag_sharey=False,
+                        despine=False)
+        returnfig = g.fig
+    else:
+        filter = [c for f in filter for c in data.columns.tolist() if f in c]
+        data = data[filter]
+        g = WalkingGrid(data, diag_sharey=False,
+                        despine=False)
+        returnfig = g.fig
+    return returnfig
+
+
 def contour2d(x, y, ax=None, **kwargs):
     """Creates a 2D contourmap from loglikelihood sampled data. Draws the
     1, 2 and 3 sigma contours and fills them in."""
@@ -473,10 +545,10 @@ def contour2d(x, y, ax=None, **kwargs):
     ax.set_ylim((y.min(), y.max()))
     labels = ax.get_xticklabels()
     for label in labels:
-        label.set_rotation(30)
+        label.set_rotation(45)
     labels = ax.get_yticklabels()
     for label in labels:
-        label.set_rotation(30)
+        label.set_rotation(45)
 
     return ax, contourset
 
@@ -576,10 +648,10 @@ class FittingGrid(sns.Grid):
             cf = ax.contourf(X, Y, GR, V, cmap=cmap, norm=norm)
             labels = ax.get_xticklabels()
             for label in labels:
-                label.set_rotation(30)
+                label.set_rotation(45)
             labels = ax.get_yticklabels()
             for label in labels:
-                label.set_rotation(30)
+                label.set_rotation(45)
         cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
         cbar = plt.colorbar(cf, cax=cax)
         cbar.ax.set_yticklabels(['', r'1$\sigma$', r'2$\sigma$', r'3$\sigma$'])
@@ -617,7 +689,7 @@ class WalkingGrid(sns.PairGrid):
     def __init__(self, *args, **kwargs):
         super(WalkingGrid, self).__init__(*args, **kwargs)
 
-        size = kwargs.pop("size", 3)
+        size = kwargs.pop("size", 4)
         aspect = kwargs.pop("aspect", 1)
         despine = kwargs.pop("despine", True)
         # Create the figure and the array of subplots
@@ -742,7 +814,7 @@ class WalkingGrid(sns.PairGrid):
         self._add_axis_labels()
         cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
         cbar = plt.colorbar(c, cax=cax)
-        cbar.ax.set_yticklabels([r'3$\sigma$', r'2$\sigma$', r'1$\sigma$', ''])
+        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
 
     def map_upper(self, func, **kwargs):
         """Plot with a bivariate function on the upper diagonal subplots.
