@@ -16,7 +16,7 @@ class Profile(object):
     def __init__(self, fwhm=None, mu=None, amp=None, ampIsArea=False):
         super(Profile, self).__init__()
         self.ampIsArea = ampIsArea
-        self.fwhm = np.abs(fwhm) if fwhm is not None else 1.0
+        self.fwhm = np.abs(fwhm) if fwhm is not None else np.abs(1.0)
         self.mu = mu if mu is not None else 0.0
         self.amp = amp if amp is not None else 1.0
 
@@ -74,7 +74,10 @@ Note
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = value
+        try:
+            self._fwhm = value[0]
+        except IndexError:
+            self._fwhm = value
         self.sigma = self.fwhm / (2 * np.sqrt(2 * np.log(2)))
         if not self.ampIsArea:
             self._normFactor = (self.sigma * np.sqrt(2 * np.pi)) ** (-1)
@@ -126,7 +129,10 @@ http://mathworld.wolfram.com/LorentzianFunction.html:
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = value
+        try:
+            self._fwhm = value[0]
+        except IndexError:
+            self._fwhm = value
         self.gamma = 0.5 * self.fwhm
         if not self.ampIsArea:
             self._normFactor = 1.0 / (self.gamma * np.pi)
@@ -248,7 +254,10 @@ code inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = value
+        try:
+            self._fwhm = value[0]
+        except IndexError:
+            self._fwhm = value
         self.gamma = self.fwhm / np.sqrt(np.power(2, 2.0 / 3) - 1)
         if not self.ampIsArea:
             self._normFactor = (1.0 ** (-1.5)) / (2 * self.gamma)
@@ -299,7 +308,10 @@ Deyan Yordanov :cite:`Yordanov2007`.
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = value
+        try:
+            self._fwhm = value[0]
+        except IndexError:
+            self._fwhm = value
         self.gamma = self.fwhm / (2 * np.log(np.sqrt(2) + 1))
         if not self.ampIsArea:
             self._normFactor = 1.0 / (2 * self.gamma)
@@ -357,7 +369,10 @@ lineshapes:
 
     @fwhm.setter
     def fwhm(self, value):
-        value = np.abs(value)
+        try:
+            self._fwhm = value[0]
+        except IndexError:
+            self._fwhm = value
         self._fwhm = value
         self.L.fwhm = value
         self.G.fwhm = value

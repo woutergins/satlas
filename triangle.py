@@ -373,10 +373,10 @@ def hist2d(x, y, *args, **kwargs):
         ax.pcolor(X, Y, H.max() - H.T, cmap=cmap)
         ax.contour(X1, Y1, H.T, V, colors=color, linewidths=linewidths)
 
-    data = np.vstack([x, y])
-    mu = np.mean(data, axis=1)
-    cov = np.cov(data)
     if kwargs.pop("plot_ellipse", False):
+        data = np.vstack([x, y])
+        mu = np.mean(data, axis=1)
+        cov = np.cov(data)
         error_ellipse(mu, cov, ax=ax, edgecolor="r", ls="dashed")
 
     ax.set_xlim(extent[0])

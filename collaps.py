@@ -10,7 +10,7 @@
 from datetime import datetime
 import re
 import sys
-from satlas.spectrum import Spectrum
+from satlas.spectrum import SingleSpectrum
 import satlas.utilities as utilities
 import lmfit as lm
 import numpy as np
@@ -54,18 +54,34 @@ class Measurement(object):
         self.timeStamp = None
 
     def _updateProperties(self):
+        # If the Track objects have the 'cecVoltage' attribute,
+        # it is a new styled file.
         newFiles = hasattr(self.tracks[-1], 'cecVoltage')
+        # If the tracks are a real measurement, the boolean
+        # 'measurement' will be True. If this is False,
+        # it is a Kepco scan, which is dealt with differently.
         if self.tracks[-1].measurement:
+            # Gather the spectra for the different scalars in a dictionary,
+            # with the scalar number as key. The numbers are stored as the
+            # keys of the spectrum in the track.
             self.ySeperate = {}
             for key in sorted(self.tracks[-1].spectrum.keys()):
                 dinkie = np.array([])
+                # The value for x (the voltage) gets overwritten each
+                # iteration over the scalars, but I don't know a better
+                # implementation...
                 self.x = np.array([])
+                # Store the Prema voltage
                 self.premaVoltage = np.array([])
                 if newFiles:
+                    # Store the CEC voltage and cooler voltage if the
+                    # files are the new style.
                     self.cecVoltage = np.array([])
                     self.coolerVoltage = np.array([])
                 for track in self.tracks:
+                    # Generate the full voltage range.
                     self.x = np.append(self.x, track.voltage)
+                    # Gather the prema voltages
                     self.premaVoltage = np.append(self.premaVoltage,
                                                   track.premaVoltage)
                     if newFiles:
@@ -73,14 +89,21 @@ class Measurement(object):
                                                     track.cecVoltage)
                         self.coolerVoltage = np.append(self.coolerVoltage,
                                                        track.coolerVoltage)
+                    # Gather the data in a temporary variable 'dinkie'
                     dinkie = np.append(dinkie, track.spectrum[key].data)
+                # Assign all the gathered data from all tracks to the
+                # dictionary.
                 self.ySeperate[key] = dinkie
             self.channelNumbers = sorted(self.ySeperate.keys())
+            # Assign the data from the highest scalar to 'self.y'
             self.y = self.ySeperate[self.channelNumbers[-1]]
         else:
+            # Save the voltages from a Kepco measurement
             self.x = self.tracks[-1].voltage
             self.y = self.tracks[-1].kepcoMeasurement if (
                 self.tracks[-1].kepcoUsed) else self.tracks[-1].siclMeasurement
+            # Never actually seen a Kepco measurement with multiple tracks,
+            # but you never know...
             self.ySeperate = {}
             for track in self.tracks:
                 self.ySeperate[track.fluke] = track.kepcoMeasurement if (
@@ -133,8 +156,8 @@ class Track(object):
     def __init__(self, *arg):
         super(Track, self).__init__()
         self.isotope = arg[0]
-        self.scans = arg[2]
         self.cycles = arg[1]
+        self.scans = arg[2]
         self.measurement = False
         self.kepco = False
         self.sicl = False
@@ -152,6 +175,8 @@ class Track(object):
         return s
 
     def addObject(self, obj):
+        # When adding an object to a track, check which object is being added,
+        # and take steps accordingly.
         if isinstance(obj, PM_SpectrumObj):
             if not self.measurement:
                 self.measurement = True
@@ -215,6 +240,8 @@ class Track(object):
             if self.sicl:
                 self.siclMeasurement = self.siclMeasurement
 
+    # For Kepco measurements, make the linear fit with the data given.
+    # Save this result.
     @property
     def kepcoMeasurement(self):
         return self._kepcoMeasurement
@@ -242,6 +269,9 @@ class Track(object):
             self.bstderrKepco = result.params['b'].stderr
             kepcoA = (self.aKepco, self.astderrKepco)
             kepcoB = (self.bKepco, self.bstderrKepco)
+            # If the files are the new style files,
+            # compare with the readout from the SICL reader
+            # and use the one with the smallest error.
             if hasattr(self, 'astderrSicl'):
                 siclA = (self.aSicl, self.astderrSicl)
                 siclB = (self.bSicl, self.bstderrSicl)
@@ -255,6 +285,8 @@ class Track(object):
                 self.a, self.astderr = kepcoA
                 self.b, self.bstderr = kepcoB
 
+    # Do the exact same for the SICL readouts of a Kepco measurement
+    # as for the normal results.
     @property
     def siclMeasurement(self):
         return self._siclMeasurement
@@ -300,7 +332,7 @@ class KepcoEichungVoltageObj(object):
 
     def __init__(self, *arg):
         super(KepcoEichungVoltageObj, self).__init__()
-        # self.arg = arg
+        # Automatically adjust the list of voltages from kV to V.
         self.voltageList = np.array(arg[-1]) * 10.0 ** 3
 
     def __str__(self):
@@ -312,7 +344,7 @@ class PremaVoltageObj(object):
 
     def __init__(self, *arg):
         super(PremaVoltageObj, self).__init__()
-        self.arg = arg
+        # Automatically adjust the list of voltages from kV to V.
         self.voltageList = np.array(arg[-1]) * 1000.0
 
     def __str__(self):
@@ -321,6 +353,10 @@ class PremaVoltageObj(object):
 
 
 class LineVoltageSweepObj(object):
+
+    # Creates a callable object for evaluating the
+    # line voltage range with a given number of data points
+    # between the minimum and maximum of the voltage values.
 
     def __init__(self, begin, end, *args):
         super(LineVoltageSweepObj, self).__init__()
@@ -343,6 +379,7 @@ class FlukeSwitchObj(object):
     def __init__(self, *arg):
         super(FlukeSwitchObj, self).__init__()
         self.arg = arg
+        # Store the Fluke number
         self.number = arg[0]
 
     def __str__(self):
@@ -364,21 +401,26 @@ class TriggerObj(object):
 
 class PM_SpectrumObj(object):
 
-    # """Represents a spectrum object.
+    # Represents a spectrum object.
 
     # Attributes
     # ----------
 
     # number : int
-    #     Channel number of the scalar. Typically, 0-3 represent the ungated photomultiplier tubes (L1, L2, R1, R2), 4-7 represent the gated photomultiplier tubes (L1, L2, R1, R2), the highest channel number represents the sum of the gated signals
+    #     Channel number of the scalar. Typically, 0-3 represent
+    #     the ungated photomultiplier tubes (L1, L2, R1, R2),
+    #     4-7 represent the gated photomultiplier tubes (L1, L2, R1, R2),
+    #     the highest channel number represents the sum of the gated signals
     # data : NumPy array
     #     Data of the spectrum
     # bins : int
     #     Amount of channels in the spectrum
     # kind : 'normal' or 'composite'.
-    #     If kind is 'normal', the scalar is the gated or ungated signal. If kind is 'composite', the scalar is a processed signal
+    #     If kind is 'normal', the scalar is the gated or ungated signal.
+    #     If kind is 'composite', the scalar is a processed signal.
     # formula : string
-    #     If kind is 'composite', this string represents the formula used to obtain the spectrum in function of the other channels and tracks"""
+    #     If kind is 'composite', this string represents the formula used
+    #     to obtain the spectrum in function of the other channels and tracks
 
     def __init__(self, *arg):
         super(PM_SpectrumObj, self).__init__()
@@ -397,6 +439,11 @@ class SiclReaderObj(object):
 
     def __init__(self, *arg):
         super(SiclReaderObj, self).__init__()
+        # If the address is 'lan[A-34461A-06287]:inst0', the SICL reader read
+        # the Charge Exchange Voltage (CEC). Otherwise, it is the ISCOOL
+        # voltage.
+        # Also automatically convert the numbers to voltages, and round to the
+        # specified number of significant digits.
         if arg[0] == 'lan[A-34461A-06287]:inst0':
             self.measured = 'CEC'
             self.cecvoltage = np.array(arg[-1]) * 10.0 ** 3
@@ -413,6 +460,9 @@ class SiclReaderObj(object):
 
 class SiclStepObj(object):
 
+    # List of applied voltages for the Kepco measurement based on the SICL
+    # reader.
+
     def __init__(self, *arg):
         super(SiclStepObj, self).__init__()
         self.voltageList = np.array(arg[-1]) * 10.0 ** 3
@@ -428,24 +478,38 @@ class MCPParser(object):
 
     def __init__(self):
         super(MCPParser, self).__init__()
+        # Define the start and stop symbols for objects and data.
         self.startDataSymbol = '<'
         self.stopDataSymbol = '>'
         self.startObjectSymbol = '['
         self.endObjectSymbol = ']'
+        # Make a translation table to convert the data to a Python list.
         self.table = string_class.maketrans('<>', '[]')
 
     def _startObject(self, dataString):
         orig = dataString
+        # Remove the first and last character from the string
+        # (why did I do this?)
         dataString = dataString[1:-1]
+        # Remove any newlines and carriage returns from the string.
         dataString = re.sub('[\n\r]', '', dataString)
+        # Split the string along each comma.
         dataString = dataString.split(',')
+        # From the first part of the string, remove the " characters from the
+        # beginning and end. This will indicate the object to be created.
         obj = dataString[0].strip('"')
+        # Collect the other parts of the string, and again join them using
+        # a comma. This will be the arguments for the object creation.
         arguments = dataString[1:]
         args = ','.join(arguments)
+        # Remove all double quotes, double commas and convert a data list to a
+        # Python list.
         args = args.replace('""', '')
         args = args.replace(',,', ',')
         args = args.translate(self.table)
+        # Replace the erroneous comma between the parenthesis and bracket.
         args = args.replace(')[', '),[')
+        # Add in some comma's that went missing.
         charRepl = []
         for i, char in enumerate(args):
             if char == '(':
@@ -453,6 +517,7 @@ class MCPParser(object):
                     charRepl.append(args[i - 1])
         for char in charRepl:
             args = args.replace(char + '(', char + ',(')
+        # Create the object
         input = obj + '(' + args + ')'
         try:
             return eval(input)
@@ -479,6 +544,8 @@ class MCPParser(object):
         tracks = []
         for i, char in enumerate(dataString):
             try:
+                # If the sequence '<<' or '>,<' occurs, read until the object
+                # definition of a Track ends at the newline.
                 if (dataString[i] == dataString[i + 1] == '<') or \
                    (dataString[i] == '>' and dataString[i + 1] == ','
                         and dataString[i + 2] == '<'):
@@ -486,16 +553,23 @@ class MCPParser(object):
                         if val == '\n':
                             pos = j
                             break
+                    # Strip the newline away
                     args = re.sub('[\n]', '', dataString[i:i + pos + 1])
+                    # Remove the extra comma and <> form beginning and end.
                     args = args.strip('<,>')
+                    # Create and append the Track.
                     tracks.append(eval('Track(' + args + ')'))
+                # The sequence '@<' indicates a timestamp follows.
                 if dataString[i] == '@' and dataString[i + 1] == '<':
                     date = dataString[i + 3:i + 2 + 25]
                     Time = datetime.strptime(date, '%a %b %d %H:%M:%S %Y')
             except IndexError:
                 pass
+            # Check that a new object is started, but mind the address in the
+            # SICL reader!
             if char == self.startObjectSymbol and not dataString[i - 1] == 'n':
                 checkData = True
+            # Read in the data
             if char == self.startDataSymbol and checkData:
                 closings = 0
                 for j, val in enumerate(dataString[i:]):
@@ -506,6 +580,7 @@ class MCPParser(object):
                         closings -= 1
                     if closings == 0:
                         break
+                # Create the object, and add it to the track.
                 dinkie = self._startObject(dataString[i:i + pos + 1])
                 tracks[-1].addObject(dinkie)
                 checkData = False
@@ -1016,10 +1091,10 @@ def interactiveMode(I, J, ABC, f, filename=None, mass=None,
 
         x = laserFreq * dopp - transitionFreq
 
-        test = Spectrum(I, J, ABC, f, shape='lorentzian')
+        test = SingleSpectrum(I, J, ABC, f, shape='lorentzian', fwhm=50)
         test.scale = max(y)
     else:
-        test = Spectrum(I, J, ABC, f, shape='lorentzian')
+        test = SingleSpectrum(I, J, ABC, f, shape='lorentzian', fwhm=50)
         left, right = min(test.mu), max(test.mu)
         x = np.linspace(left - 600, right + 600, 1000)
     test.fwhm = 100

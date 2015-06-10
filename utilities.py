@@ -6,11 +6,19 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
+import lmfit as lm
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
+
+cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
+invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
 
 
 def state_number_enumerate(dims, state=None, idx=0):
@@ -82,8 +90,8 @@ def callNDArray(arr, arg):
 class ReleaseCurve(object):
 
     r"""Creates a callable object for the standard release curve. Formula
-    based on J.P. Ramos et al. :cite:`Ramos2014`. Input parameters are initialized to an 35Ar release
-    curve.
+    based on J.P. Ramos et al. :cite:`Ramos2014`. Input parameters are
+    initialized to an 35Ar release curve.
 
     Parameters
     ----------
@@ -104,10 +112,10 @@ class ReleaseCurve(object):
         corresponding l-parameter. Default: 1905 ms
     pulses : integer
         Number of pulses seperated by the delay parameter. Has no effect if the
-        :attr:`cont` parameter is True. Is also an attribute. Default: 3
+        :attr:`continued` parameter is True. Is also an attribute. Default: 3
     delay : float
         Seconds between pulses. Is also an attribute. Default: 10.0 s
-    cont : bool
+    continued : bool
         Continuously generate pulses seperated by the delay parameter if True,
         else create the number of pulses given in the pulses parameter. Is also
         an attribute. Default: True
@@ -124,7 +132,7 @@ class ReleaseCurve(object):
     def __init__(self, amp=4.0 * 10 ** 7, a=0.9,
                  tr=78 * (10 ** -3), tf=396 * (10 ** -3),
                  ts=1905 * (10 ** -3),
-                 pulses=3, delay=10.0, cont=True):
+                 pulses=3, delay=10.0, continued=True):
         super(ReleaseCurve, self).__init__()
         self.amp = amp
         self.a = a
@@ -135,9 +143,9 @@ class ReleaseCurve(object):
 
         self.pulses = pulses
         self.delay = delay
-        self.cont = cont
+        self.continued = continued
 
-    def FitToData(self, t, y, yerr):
+    def fit_to_data(self, t, y, yerr):
         """If a release curve is measured as a function of time, this should
         fit the parameters to the given curve y(t) with errors yerr.
 
@@ -168,9 +176,9 @@ class ReleaseCurve(object):
             self.lr = np.log(2) / params['tr']
             self.lf = np.log(2) / params['tf']
             self.ls = np.log(2) / params['ts']
-            return (y - self.EmpiricalFormula(t)) / yerr
+            return (y - self.empirical_formula(t)) / yerr
 
-        lm.minimize(resid, params)
+        return lm.minimize(resid, params)
 
     @property
     def pulses(self):
@@ -181,14 +189,14 @@ class ReleaseCurve(object):
         self._pulses = int(value)
 
     @property
-    def cont(self):
-        return self._cont
+    def continued(self):
+        return self._continued
 
-    @cont.setter
-    def cont(self, value):
-        self._cont = (value == 1)
+    @continued.setter
+    def continued(self, value):
+        self._continued = (value == 1)
 
-    def EmpiricalFormula(self, t):
+    def empirical_formula(self, t):
         amp = self.amp
         a = self.a
         lr = self.lr
@@ -209,32 +217,32 @@ class ReleaseCurve(object):
             Times for which the yield is requested."""
         pulses = self.pulses
         delay = self.delay
-        cont = self.cont
+        continued = self.continued
 
         pulses = np.arange(1.0, pulses) * delay
-        rc = self.EmpiricalFormula(t)
-        if not cont:
+        rc = self.empirical_formula(t)
+        if not continued:
             for pulsetime in pulses:
                 mask = t > pulsetime
                 try:
                     if any(mask):
-                        rc[mask] += self.EmpiricalFormula(t[mask] - pulsetime)
+                        rc[mask] += self.empirical_formula(t[mask] - pulsetime)
                 except TypeError:
                     if mask:
-                        rc += self.EmpiricalFormula(t - pulsetime)
+                        rc += self.empirical_formula(t - pulsetime)
         else:
             pulsetime = delay
             try:
                 number = (t // pulsetime).astype('int')
                 for pulses in range(1, max(number) + 1):
                     mask = (number >= pulses)
-                    rc[mask] += self.EmpiricalFormula(t[mask] -
-                                                      pulses * pulsetime)
+                    rc[mask] += self.empirical_formula(t[mask] -
+                                                       pulses * pulsetime)
             except AttributeError:
                 number = int(t // pulsetime)
                 if number > 0:
                     for i in range(number):
-                        rc += self.EmpiricalFormula(t - (i + 1) * pulsetime)
+                        rc += self.empirical_formula(t - (i + 1) * pulsetime)
         return rc
 
 
@@ -375,7 +383,7 @@ def round2SignifFigs(vals, n):
     return vals
 
 
-def weightedAverage(x, sigma):
+def weighted_average(x, sigma):
     r"""Takes the weighted average of an array of values and the associated
     errors. Calculates the scatter and statistical error, and returns
     the greater of these two values.
@@ -411,11 +419,516 @@ def weightedAverage(x, sigma):
 
         \sigma_{scatter}^2 &= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
                                                     x\right\rangle_{weighted}}
-                                                      {\sigma_i^2}\right)^2}
-               {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
+                                                      {\sigma_i}\right)^2}
+               {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
     x = np.ravel(x)
     sigma = np.ravel(sigma)
     Xstat = (1 / sigma**2).sum()
     Xm = (x / sigma**2).sum() / Xstat
-    Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
-    return Xm, max(Xstat, Xscatt)
+    # Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
+    Xscatt = (((x - Xm) / sigma)**2).sum() / ((len(x) - 1) * Xstat)
+    Xstat = 1 / Xstat
+    return Xm, max(Xstat, Xscatt) ** 0.5
+
+
+def bootstrap_ci(dataframe, kind='basic'):
+    """Generate confidence intervals on the 1-sigma level for bootstrapped data
+    given in a DataFrame.
+
+    Parameters
+    ----------
+    dataframe: DataFrame
+        DataFrame with the results of each bootstrap fit on a row. If the
+        t-method is to be used, a Panel is required, with the data in
+        the panel labeled 'data' and the uncertainties labeled 'stderr'
+    kind: str, optional
+        Selects which method to use: percentile, basic, or t-method (student).
+
+    Returns
+    -------
+    DataFrame
+        Dataframe containing the left and right limits for each column as rows.
+"""
+    if isinstance(dataframe, pd.Panel):
+        data = dataframe['data']
+        stderrs = dataframe['stderr']
+        args = (data, stderrs)
+    else:
+        data = dataframe
+        args = (data)
+
+    def percentile(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        left = data.apply(lambda col: np.percentile(col, 15.865), axis=0)
+        right = data.apply(lambda col: np.percentile(col, 84.135), axis=0)
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    def basic(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        left = data.apply(lambda col: 2 * col[0] - np.percentile(col[1:],
+                                                                 84.135),
+                          axis=0)
+        right = data.apply(lambda col: 2 * col[0] - np.percentile(col[1:],
+                                                                  15.865),
+                           axis=0)
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    def student(data, stderrs=None):
+        CI = pd.DataFrame(index=['left', 'right'], columns=data.columns)
+        R = (data - data.loc[0]) / stderrs
+        left = R.apply(lambda col: np.percentile(col[1:], 84.135), axis=0)
+        right = R.apply(lambda col: np.percentile(col[1:], 15.865), axis=0)
+        left = data.loc[0] - stderrs.loc[0] * left
+        right = data.loc[0] - stderrs.loc[0] * right
+        CI.loc['left'] = left
+        CI.loc['right'] = right
+        return CI
+
+    method = {'basic': basic, 'percentile': percentile, 't': student}
+    method = method.pop(kind.lower(), basic)
+    return method(*args)
+
+
+def generate_likelihood_plot(data):
+    shape = int(np.ceil(np.sqrt(len(data.keys()))))
+    figLikelih, axes = plt.subplots(shape, shape)
+    axes = axes.flatten()
+    for name, ax in zip(data.keys(), axes):
+        x = data[name]['x']
+        y = data[name]['y']
+        ax.plot(x, y)
+        ax.set_xlabel(name)
+    return figLikelih, axes
+
+
+def generate_correlation_plot(data, filter=None):
+    """Given the random walk data, creates a triangle plot: distribution of
+    a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
+    3 sigma contours on the off-diagonal. The 1-sigma limits based on the
+    percentile method are also indicated, as well as added to the title.
+
+    Parameters
+    ----------
+    data: DataFrame
+        DataFrame collecting all the information on the random walk for each
+        parameter.
+    filter: list of str, optional
+        If supplied, only this list of columns is used for the plot.
+
+    Returns
+    -------
+    figure
+        Returns the MatPlotLib figure created."""
+    if filter is None:
+        g = WalkingGrid(data, diag_sharey=False,
+                        despine=False)
+        returnfig = g.fig
+    else:
+        filter = [c for f in filter for c in data.columns.tolist() if f in c]
+        data = data[filter]
+        g = WalkingGrid(data, diag_sharey=False,
+                        despine=False)
+        returnfig = g.fig
+    return returnfig
+
+
+def contour2d(x, y, ax=None, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    bins = kwargs.pop("bins", 50)
+
+    try:
+        x = x.values
+    except:
+        x = x.astype(np.float64)
+    try:
+        y = y.values
+    except:
+        y = y.astype(np.float64)
+    X = np.linspace(x.min(), x.max(), bins + 1)
+    Y = np.linspace(y.min(), y.max(), bins + 1)
+    H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
+                             weights=kwargs.get('weights', None))
+    X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
+    X, Y = X[:-1], Y[:-1]
+    H = (H - H.min()) / (H.max() - H.min())
+
+    Hflat = H.flatten()
+    inds = np.argsort(Hflat)[::-1]
+    Hflat = Hflat[inds]
+    sm = np.cumsum(Hflat)
+    sm /= sm[-1]
+    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
+    V = np.empty(len(levels))
+    for i, v0 in enumerate(levels):
+        try:
+            V[i] = Hflat[sm <= v0][-1]
+        except:
+            V[i] = Hflat[0]
+
+    bounds = np.concatenate([[H.max()], V])[::-1]
+    norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+
+    contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+
+    ax.set_xlim((x.min(), x.max()))
+    ax.set_ylim((y.min(), y.max()))
+    labels = ax.get_xticklabels()
+    for label in labels:
+        label.set_rotation(45)
+    labels = ax.get_yticklabels()
+    for label in labels:
+        label.set_rotation(45)
+
+    return ax, contourset
+
+
+def removeAxis(x, y, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+    ax.set_visible(False)
+    ax.set_frame_on(False)
+    ax.set_axis_off()
+    return ax
+
+
+def addTitle(x, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+
+    q = [16.0, 50.0, 84.0]
+    q16, q50, q84 = np.percentile(x.values, q)
+
+    title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    ax.set_title(title.format(q50, q50-q16, q84-q50))
+    qvalues = [q16, q50, q84]
+    for q in qvalues:
+        ax.axvline(q, ls="dashed")
+    return ax
+
+
+def addTruths(x, truth=None, ax=None, *args, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+
+    if truth is None:
+        raise ValueError('truth should be a value')
+    else:
+        ax.axvline(truth)
+
+
+class FittingGrid(sns.Grid):
+
+    def __init__(self, minimizer, size=3, aspect=1,
+                 despine=False, nx=10, ny=10, selected=None,
+                 limits=5, **kwargs):
+        super(FittingGrid, self).__init__()
+        # Sort out the variables that define the grid
+        self.nx, self.ny = nx, ny
+        self.minimizer = minimizer
+        vars = []
+        self.extra_keywords = kwargs
+        self.limit = limits
+        for key in minimizer.params:
+            if minimizer.params[key].vary:
+                if selected is None:
+                    vars.append(key)
+                else:
+                    for r in selected:
+                        if r in key:
+                            vars.append(key)
+
+        self.vars = list(vars)
+        self.vars = sorted(self.vars)
+        self.x_vars = self.vars[:-1]
+        self.y_vars = self.vars[1:]
+
+        # Create the figure and the array of subplots
+        figsize = (len(vars) - 1) * size * aspect, (len(vars) - 1) * size
+
+        fig, axes = plt.subplots(len(vars) - 1, len(vars) - 1,
+                                 figsize=figsize,
+                                 sharex="col", sharey="row",
+                                 squeeze=False)
+
+        self.fig = fig
+        self.axes = axes
+        if len(vars) == 2:
+            self.axes = np.array([axes]).reshape((1, 1))
+        self._legend_data = {}
+        self.remove_upper()
+
+        # Label the axes
+        self._add_axis_labels()
+
+        # Make the plot look nice
+        if despine:
+            sns.despine(fig=self.fig)
+        self.make_maps()
+
+    def make_maps(self):
+        V = [0, 0.68, 0.95, 0.99]
+        bounds = V
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        for x, y in zip(*np.tril_indices(len(self.vars) - 1)):
+            ax = self.axes[x, y]
+            param1 = self.x_vars[y]
+            param2 = self.y_vars[x]
+            p1 = self.minimizer.params[param1]
+            p2 = self.minimizer.params[param2]
+            limits = ((p1.value + self.limit * p1.stderr,
+                       p1.value - self.limit * p1.stderr),
+                      (p2.value + self.limit * p2.stderr,
+                       p2.value - self.limit * p2.stderr))
+            X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
+                                          nx=self.nx, ny=self.ny,
+                                          limits=limits)
+            # cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
+            cf = ax.contourf(X, Y, GR, V, cmap=cmap, norm=norm)
+            labels = ax.get_xticklabels()
+            for label in labels:
+                label.set_rotation(45)
+            labels = ax.get_yticklabels()
+            for label in labels:
+                label.set_rotation(45)
+        cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
+        cbar = plt.colorbar(cf, cax=cax)
+        cbar.ax.set_yticklabels(['', r'1$\sigma$', r'2$\sigma$', r'3$\sigma$'])
+
+    def remove_upper(self):
+        """Plot with a bivariate function on the upper diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        for i, j in zip(*np.triu_indices_from(self.axes, 1)):
+            ax = self.axes[i, j]
+            plt.sca(ax)
+            ax.set_visible(False)
+            ax.set_frame_on(False)
+            ax.set_axis_off()
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+    def _add_axis_labels(self):
+        """Add labels to the left and bottom Axes."""
+        for ax, label in zip(self.axes[-1, :], self.x_vars):
+            ax.set_xlabel(label)
+        for ax, label in zip(self.axes[:, 0], self.y_vars):
+            ax.set_ylabel(label)
+
+
+class WalkingGrid(sns.PairGrid):
+
+    def __init__(self, *args, **kwargs):
+        super(WalkingGrid, self).__init__(*args, **kwargs)
+
+        size = kwargs.pop("size", 4)
+        aspect = kwargs.pop("aspect", 1)
+        despine = kwargs.pop("despine", True)
+        # Create the figure and the array of subplots
+        figsize = len(self.x_vars) * size * aspect, len(self.y_vars) * size
+
+        plt.close(self.fig)
+
+        fig, axes = plt.subplots(len(self.y_vars), len(self.x_vars),
+                                 figsize=figsize,
+                                 squeeze=False)
+
+        self.fig = fig
+        self.axes = axes
+
+        l, b, r, t = (0.25 * size * aspect / figsize[0],
+                      0.4 * size / figsize[1],
+                      1 - 0.1 * size * aspect / figsize[0],
+                      1 - 0.2 * size * aspect / figsize[1])
+
+        fig.subplots_adjust(left=l, bottom=b, right=r, top=t,
+                            wspace=0.02, hspace=0.02)
+        for ax in np.diag(self.axes):
+            ax.set_yticks([])
+        for ax in self.axes[:-1, :].flatten():
+            ax.set_xticks([])
+        for ax in self.axes[:, 1:].flatten():
+            ax.set_yticks([])
+        for ax in self.axes.flatten():
+            labels = ax.get_xticklabels()
+            for label in labels:
+                label.set_rotation(45)
+            labels = ax.get_yticklabels()
+            for label in labels:
+                label.set_rotation(45)
+        y, x = np.triu_indices_from(self.axes, k=1)
+        for i, j in zip(y, x):
+            self.axes[i, j].set_visible(False)
+            self.axes[i, j].set_frame_on(False)
+            self.axes[i, j].set_axis_off()
+
+        # Make the plot look nice
+        if despine:
+            sns.despine(fig=fig)
+        self.map_diag(sns.distplot, kde=False)
+        self.map_diag(addTitle)
+        self.map_lower_with_colorbar(contour2d)
+
+    def map_diag(self, func, **kwargs):
+        """Plot with a univariate function on each diagonal subplot.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take an x array as a positional arguments and draw onto the
+            "currently active" matplotlib Axes. There is a special case when
+            using a ``hue`` variable and ``plt.hist``; the histogram will be
+            plotted with stacked bars.
+
+        """
+        # Add special diagonal axes for the univariate plot
+        if self.square_grid and self.diag_axes is None:
+            # diag_axes = []
+            # for ax in np.diag(self.axes):
+            #     diag_axes.append(ax)
+            # self.diag_axes = np.array(diag_axes, np.object)
+            self.diag_axes = np.diag(self.axes)
+        else:
+            pass
+            # self.diag_axes = None
+
+        # Plot on each of the diagonal axes
+        for i, var in enumerate(self.x_vars):
+            ax = self.diag_axes[i]
+            hue_grouped = self.data[var].groupby(self.hue_vals)
+
+            # Special-case plt.hist with stacked bars
+            if func is plt.hist:
+                plt.sca(ax)
+                vals = [v.values for g, v in hue_grouped]
+                func(vals, color=self.palette, histtype="barstacked",
+                     **kwargs)
+            else:
+                for k, (label_k, data_k) in enumerate(hue_grouped):
+                    plt.sca(ax)
+                    func(data_k, label=label_k,
+                         color=self.palette[k], **kwargs)
+
+            self._clean_axis(ax)
+
+        self._add_axis_labels()
+
+    def map_lower_with_colorbar(self, func, **kwargs):
+        """Plot with a bivariate function on the lower diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        kw_color = kwargs.pop("color", None)
+        for i, j in zip(*np.tril_indices_from(self.axes, -1)):
+            hue_grouped = self.data.groupby(self.hue_vals)
+            for k, (label_k, data_k) in enumerate(hue_grouped):
+
+                ax = self.axes[i, j]
+                plt.sca(ax)
+
+                x_var = self.x_vars[j]
+                y_var = self.y_vars[i]
+
+                # Insert the other hue aesthetics if appropriate
+                for kw, val_list in self.hue_kws.items():
+                    kwargs[kw] = val_list[k]
+
+                color = self.palette[k] if kw_color is None else kw_color
+                ax, c = func(data_k[x_var], data_k[y_var], label=label_k,
+                             color=color, **kwargs)
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+        if kw_color is not None:
+            kwargs["color"] = kw_color
+        self._add_axis_labels()
+        cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
+        cbar = plt.colorbar(c, cax=cax)
+        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+
+    def map_upper(self, func, **kwargs):
+        """Plot with a bivariate function on the upper diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+        kw_color = kwargs.pop("color", None)
+        for i, j in zip(*np.triu_indices_from(self.axes, 1)):
+
+            hue_grouped = self.data.groupby(self.hue_vals)
+            for k, (label_k, data_k) in enumerate(hue_grouped):
+
+                ax = self.axes[i, j]
+                plt.sca(ax)
+
+                x_var = self.x_vars[j]
+                y_var = self.y_vars[i]
+
+                # Insert the other hue aesthetics if appropriate
+                for kw, val_list in self.hue_kws.items():
+                    kwargs[kw] = val_list[k]
+
+                color = self.palette[k] if kw_color is None else kw_color
+                func(data_k[x_var], data_k[y_var], label=label_k,
+                     color=color, **kwargs)
+
+            self._clean_axis(ax)
+            self._update_legend_data(ax)
+
+        if kw_color is not None:
+            kwargs["color"] = kw_color
+
+    def map_offdiag(self, func, **kwargs):
+        """Plot with a bivariate function on the off-diagonal subplots.
+
+        Parameters
+        ----------
+        func : callable plotting function
+            Must take x, y arrays as positional arguments and draw onto the
+            "currently active" matplotlib Axes.
+
+        """
+
+        self.map_lower(func, **kwargs)
+        self.map_upper(func, **kwargs)
+
+    def _add_axis_labels(self):
+        """Add labels to the left and bottom Axes."""
+        for ax, label in zip(self.axes[-1, :], self.x_vars):
+            ax.set_xlabel(label)
+        for ax, label in zip(self.axes[:, 0], self.y_vars):
+            ax.set_ylabel(label)
+
+    def _find_numeric_cols(self, data):
+        """Find which variables in a DataFrame are numeric."""
+        # This can't be the best way to do this, but  I do not
+        # know what the best way might be, so this seems ok
+        numeric_cols = []
+        for col in data:
+            try:
+                data[col].astype(np.float)
+                numeric_cols.append(col)
+            except (ValueError, TypeError):
+                pass
+        return numeric_cols
