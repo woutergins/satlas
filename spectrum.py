@@ -451,11 +451,11 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         for plotting the correlation maps between parameters.
 
         Parameters
-        -----------
+        ----------
         selected: boolean, optional
             Controls if only the parameters defined in :attr:`selected` are
             used (True) or if all parameters are used (False). Defaults to True
-        **kwargs
+        kwargs: keywords
             Other keywords are passed on to the :func:`conf_interval2d`
             function from lmfit. The exception is the keyword :attr:`limits`,
             which is now a float that indicates how many standard deviations
@@ -463,7 +463,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
 
         Returns
         -------
-        figure
+        plt.figure
             Returns the generated MatPlotLib figure"""
         g = utils.FittingGrid(self.chisquare_fit,
                               selected=self.selected if selected else None,
