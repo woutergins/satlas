@@ -1,13 +1,13 @@
-from satlas.relaxation import KorringaRelaxation
-from satlas.utilities import ReleaseCurve
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn
+from satlas.relaxation import KorringaRelaxation
+from satlas.utilities import ReleaseCurve
+import seaborn as sns
 
 
-seaborn.set_style('ticks')
-seaborn.set_palette('colorblind')
+sns.set_style('ticks', rc={'xtick.direction': 'in', 'ytick.direction': 'in'})
+sns.set_palette('colorblind')
 # Needed for interaction temperature
 g = 0.4213
 Bfield = 1000.0  # Gauss
@@ -66,7 +66,5 @@ ax2.set_title('Expected activity', fontsize=18)
 ax2.tick_params(labelsize=14)
 ax2.grid(True, alpha=0.4)
 
-seaborn.despine(ax=ax, offset=10, trim=False)
-seaborn.despine(ax=ax2, offset=10, trim=False)
 plt.tight_layout()
 plt.show()

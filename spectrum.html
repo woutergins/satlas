@@ -145,15 +145,16 @@
 <h2>Usage examples<a class="headerlink" href="#usage-examples" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="spectrum-creation">
 <h3>Spectrum creation<a class="headerlink" href="#spectrum-creation" title="Permalink to this headline">¶</a></h3>
-<p>Creating a simple hyperfinestructure uses the class <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></tt> from the <a class="reference internal" href="#module-spectrum" title="spectrum: Implementation of classes for the analysis of hyperfine structure spectra, including simultaneous fitting, various fitting routines and isomeric presence. (Windows)"><tt class="xref py py-mod docutils literal"><span class="pre">spectrum</span></tt></a> module. Fitting to a single dataset is also demonstrated.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<p>Creating a simple hyperfinestructure uses the class <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></tt> from the <a class="reference internal" href="#module-spectrum" title="spectrum: Implementation of classes for the analysis of hyperfine structure spectra, including simultaneous fitting, various fitting routines and isomeric presence. (Windows)"><tt class="xref py py-mod docutils literal"><span class="pre">spectrum</span></tt></a> module.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">seaborn</span>
+<span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
+<span class="kn">import</span> <span class="nn">satlas.utilities</span> <span class="kn">as</span> <span class="nn">utils</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
 
 
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">)</span>
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;xtick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;ytick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
 <span class="c"># Gather all information</span>
 <span class="n">I</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
@@ -166,38 +167,38 @@
 
 <span class="c"># Say which frequencies are scanned</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">superx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">100</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 <span class="c"># Generate the data, add some noise</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">hfs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="n">y</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 <span class="c"># Fit to the generated data</span>
-<span class="n">hfs</span><span class="o">.</span><span class="n">FitToSpectroscopicData</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">hfs</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <span class="c"># Print the fit report</span>
-<span class="n">hfs</span><span class="o">.</span><span class="n">DisplayFit</span><span class="p">()</span>
-<span class="n">e</span> <span class="o">=</span> <span class="n">hfs</span><span class="o">.</span><span class="n">seperateResponse</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">hfs</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">()</span>
 
 <span class="c"># Plot the result</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">hfs</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">r&#39;$\chi^2$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">superx</span><span class="p">,</span> <span class="n">hfs</span><span class="p">(</span><span class="n">superx</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">r&#39;$\chi^2$&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Frequency (MHz)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Counts&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
-<span class="n">seaborn</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c"># Example of Maximum Likelihood Estimation (MLE) fitting,</span>
 <span class="c"># along with error calculation using Monte Carlo walking.</span>
 <span class="n">hfs</span><span class="o">.</span><span class="n">showAll</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c"># Show all triangle plots</span>
-<span class="n">hfs</span><span class="o">.</span><span class="n">LikelihoodSpectroscopicFit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
-                               <span class="n">walking</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="c"># Perform the walk</span>
-                               <span class="n">walkers</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c"># Number of walkers,</span>
-                                             <span class="c"># see the emcee documentation for</span>
-                                             <span class="c"># more on this</span>
-                               <span class="n">nsteps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>  <span class="c"># Number of steps for each walker</span>
-                               <span class="n">burnin</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>  <span class="c"># Defines the percentage of burnin</span>
-                               <span class="n">showTriangle</span><span class="o">=</span><span class="bp">True</span>  <span class="c"># Show an awesome result plot</span>
-                               <span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">hfs</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;MLE&#39;</span><span class="p">)</span>
+<span class="n">hfs</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+                   <span class="n">walking</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="c"># Perform the walk</span>
+                   <span class="n">walkers</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="c"># Number of walkers,</span>
+                                <span class="c"># see the emcee documentation for</span>
+                                <span class="c"># more on this</span>
+                   <span class="n">nsteps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>  <span class="c"># Number of steps for each walker</span>
+                   <span class="n">burnin</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>  <span class="c"># Defines the percentage of burnin</span>
+                   <span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">superx</span><span class="p">,</span> <span class="n">hfs</span><span class="p">(</span><span class="n">superx</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;MLE&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">utils</span><span class="o">.</span><span class="n">generate_correlation_plot</span><span class="p">(</span><span class="n">hfs</span><span class="o">.</span><span class="n">mle_data</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">hfs</span><span class="o">.</span><span class="n">selected</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -210,74 +211,72 @@
 <img alt="_images/SingleSpectrumExample_01.png" src="_images/SingleSpectrumExample_01.png" />
 <p class="caption">(<a class="reference external" href="./pyplots/SingleSpectrumExample_01.png">png</a>, <a class="reference external" href="./pyplots/SingleSpectrumExample_01.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/SingleSpectrumExample_01.pdf">pdf</a>)</p>
 </div>
-<div class="figure">
-<img alt="_images/SingleSpectrumExample_02.png" src="_images/SingleSpectrumExample_02.png" />
-<p class="caption">(<a class="reference external" href="./pyplots/SingleSpectrumExample_02.png">png</a>, <a class="reference external" href="./pyplots/SingleSpectrumExample_02.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/SingleSpectrumExample_02.pdf">pdf</a>)</p>
-</div>
 </div>
 <div class="section" id="multiple-spectrum-fitting">
 <h3>Multiple spectrum fitting<a class="headerlink" href="#multiple-spectrum-fitting" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="combination-of-single-spectra">
 <h4>Combination of single spectra<a class="headerlink" href="#combination-of-single-spectra" title="Permalink to this headline">¶</a></h4>
-<p>The creation of a <tt class="xref py py-class docutils literal"><span class="pre">CombinedSpectrum</span></tt> from <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectra</span></tt> is demonstrated. Fitting to two datasets is also demonstrated.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<p>The creation of a <tt class="xref py py-class docutils literal"><span class="pre">CombinedSpectrum</span></tt> from <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectra</span></tt> is demonstrated.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">seaborn</span>
+<span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
 
 
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">)</span>
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;xtick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;ytick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
+
+<span class="c"># Set the general parameters</span>
 <span class="n">I</span> <span class="o">=</span> <span class="mf">1.0</span>
 <span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
-<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">129.109</span><span class="p">,</span> <span class="o">-</span><span class="mf">1723.61</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-
-<span class="n">df</span> <span class="o">=</span> <span class="mf">2285.804947</span>
-<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">]</span>
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">130</span><span class="p">,</span> <span class="o">-</span><span class="mi">1710</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
 <span class="n">varyDict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Bl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Bu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
+
+<span class="c"># Create the first spectrum</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mi">2285</span>
+<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">50</span><span class="p">]</span>
 <span class="n">spec1</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span>
-                          <span class="n">scale</span><span class="o">=</span><span class="mf">4000.0</span><span class="p">,</span> <span class="n">rAmp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                          <span class="n">scale</span><span class="o">=</span><span class="mf">4000.0</span><span class="p">,</span> <span class="n">racah_int</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="n">spec1</span><span class="o">.</span><span class="n">background</span> <span class="o">=</span> <span class="mi">300</span>
-<span class="n">spec1</span><span class="o">.</span><span class="n">setVary</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
+<span class="n">spec1</span><span class="o">.</span><span class="n">set_variation</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
 
+<span class="c"># Generate some random data</span>
 <span class="n">xdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">spec1</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1000</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">spec1</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">ydata</span> <span class="o">=</span> <span class="n">spec1</span><span class="p">(</span><span class="n">xdata</span><span class="p">)</span>
 <span class="n">ydata</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ydata</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ydata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
+<span class="c"># Create a second spectrum</span>
+<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">150</span><span class="p">]</span>
 <span class="n">df</span> <span class="o">=</span> <span class="mf">4100.0</span>
 <span class="n">spec2</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span>
-                          <span class="n">scale</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">rAmp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                          <span class="n">scale</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">racah_int</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">spec2</span><span class="o">.</span><span class="n">background</span> <span class="o">=</span> <span class="mi">400</span>
 
+<span class="c"># Generate some random data for spectrum 2</span>
 <span class="n">xdata2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">spec2</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1000</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">spec2</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">ydata2</span> <span class="o">=</span> <span class="n">spec2</span><span class="p">(</span><span class="n">xdata2</span><span class="p">)</span>
 <span class="n">ydata2</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ydata2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ydata2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">spec2</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="mi">4000</span>
+
+<span class="c"># Combine the spectra in a CombinedSpectrum, fit it and report the fit</span>
 <span class="n">spec1comb</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">CombinedSpectrum</span><span class="p">([</span><span class="n">spec1</span><span class="p">,</span> <span class="n">spec2</span><span class="p">])</span>
 
-<span class="n">spec1comb</span><span class="o">.</span><span class="n">FitToSpectroscopicData</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">],</span> <span class="p">[</span><span class="n">ydata</span><span class="p">,</span> <span class="n">ydata2</span><span class="p">])</span>
-<span class="n">spec1comb</span><span class="o">.</span><span class="n">DisplayFit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">spec1comb</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">],</span> <span class="p">[</span><span class="n">ydata</span><span class="p">,</span> <span class="n">ydata2</span><span class="p">])</span>
+<span class="n">spec1comb</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-<span class="n">eval1</span><span class="p">,</span> <span class="n">eval2</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="o">.</span><span class="n">seperateResponse</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">])</span>
-
-<span class="n">xdata3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="o">-</span><span class="mi">4500</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
-<span class="n">xdata3</span> <span class="o">=</span> <span class="p">[</span><span class="n">xdata3</span><span class="p">,</span> <span class="n">xdata3</span><span class="p">]</span>
-<span class="n">y2</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="p">(</span><span class="n">xdata3</span><span class="p">)</span>
-<span class="n">x</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="o">.</span><span class="n">sanitizeFitInput</span><span class="p">(</span><span class="n">xdata3</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y2</span><span class="p">))</span>
+<span class="c"># Plot the result</span>
+<span class="n">eval1</span><span class="p">,</span> <span class="n">eval2</span> <span class="o">=</span> <span class="n">spec1comb</span><span class="o">.</span><span class="n">seperate_response</span><span class="p">([</span><span class="n">xdata</span><span class="p">,</span> <span class="n">xdata2</span><span class="p">])</span>
 
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">eval1</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata2</span><span class="p">,</span> <span class="n">ydata2</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata2</span><span class="p">,</span> <span class="n">eval2</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">eval1</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata2</span><span class="p">,</span> <span class="n">ydata2</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata2</span><span class="p">,</span> <span class="n">eval2</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
 
 <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Frequency (MHz)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Counts&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 
-<span class="n">seaborn</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">offset</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">seaborn</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">offset</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -289,65 +288,62 @@
 </div>
 <div class="section" id="combination-of-spectra-with-isomeric-presence">
 <h4>Combination of spectra with isomeric presence<a class="headerlink" href="#combination-of-spectra-with-isomeric-presence" title="Permalink to this headline">¶</a></h4>
-<p>Adding in isomeric peaks complicates the spectrum</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<p>Isomeric peaks in the spectrum can be handled by creating another spectrum and adding it to the first.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">seaborn</span>
+<span class="kn">import</span> <span class="nn">satlas.spectrum</span> <span class="kn">as</span> <span class="nn">hs</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
 
 
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">)</span>
-<span class="n">seaborn</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s">&#39;ticks&#39;</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;xtick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">,</span> <span class="s">&#39;ytick.direction&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s">&#39;colorblind&#39;</span><span class="p">)</span>
 
-<span class="n">varyDict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Bl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Bu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
-
-<span class="c"># Gather all information</span>
+<span class="c"># Set the general parameters</span>
 <span class="n">I</span> <span class="o">=</span> <span class="mf">1.0</span>
 <span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
-<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">129.109</span><span class="p">,</span> <span class="o">-</span><span class="mf">1723.61</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">130</span><span class="p">,</span> <span class="o">-</span><span class="mi">1710</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">varyDict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Bl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Bu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cl&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s">&#39;Cu&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
 
-<span class="n">df</span> <span class="o">=</span> <span class="mf">2285.804947</span>
-<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">]</span>
-<span class="c"># Create the spectrum</span>
+<span class="c"># Create the first spectrum</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mi">2285</span>
+<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">50</span><span class="p">]</span>
 <span class="n">spec1</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span>
-                          <span class="n">scale</span><span class="o">=</span><span class="mf">4000.0</span><span class="p">,</span> <span class="n">rAmp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="c"># Set a few parameters</span>
+                          <span class="n">scale</span><span class="o">=</span><span class="mf">4000.0</span><span class="p">,</span> <span class="n">racah_int</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">spec1</span><span class="o">.</span><span class="n">background</span> <span class="o">=</span> <span class="mi">300</span>
-<span class="c"># Fix the B and C parameters for spec1</span>
-<span class="n">spec1</span><span class="o">.</span><span class="n">setVary</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
+<span class="n">spec1</span><span class="o">.</span><span class="n">set_variation</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
 
-<span class="c"># Isomer adding</span>
+<span class="c"># Add an isomer to the spectrum</span>
+<span class="c"># First, create the spectrum itself</span>
 <span class="n">I</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">45.3133</span><span class="p">,</span> <span class="o">-</span><span class="mf">591.94</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">df</span> <span class="o">=</span> <span class="mf">2266.436463</span>
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">45</span><span class="p">,</span> <span class="o">-</span><span class="mi">591</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mi">2266</span>
 <span class="n">spec4</span> <span class="o">=</span> <span class="n">hs</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span>
-                          <span class="n">scale</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">rAmp</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">spec4</span><span class="o">.</span><span class="n">setVary</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
+                          <span class="n">scale</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">racah_int</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">spec4</span><span class="o">.</span><span class="n">set_variation</span><span class="p">(</span><span class="n">varyDict</span><span class="p">)</span>
 
+<span class="c"># Add the spectra together</span>
 <span class="n">first</span> <span class="o">=</span> <span class="n">spec1</span> <span class="o">+</span> <span class="n">spec4</span>
 <span class="c"># Set the parameters to be shared between the spectra.</span>
 <span class="n">first</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;FWHM&#39;</span><span class="p">,</span> <span class="s">&#39;FWHML&#39;</span><span class="p">,</span> <span class="s">&#39;FWHMG&#39;</span><span class="p">]</span>
 
-<span class="c"># Generate the data, add some white noise</span>
+<span class="c"># Generate some random data</span>
 <span class="n">xdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">8000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">ydata</span> <span class="o">=</span> <span class="n">first</span><span class="p">(</span><span class="n">xdata</span><span class="p">)</span>
 <span class="n">ydata</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ydata</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">ydata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-<span class="n">first</span><span class="o">.</span><span class="n">FitToSpectroscopicData</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">)</span>
-<span class="n">first</span><span class="o">.</span><span class="n">DisplayFit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">iso1</span><span class="p">,</span> <span class="n">iso2</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="n">seperateResponse</span><span class="p">(</span><span class="n">xdata</span><span class="p">)</span>
+<span class="n">first</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">)</span>
+<span class="n">first</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">iso1</span><span class="p">,</span> <span class="n">iso2</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="n">seperate_response</span><span class="p">(</span><span class="n">xdata</span><span class="p">)</span>
 
 <span class="c"># Plot the results</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">first</span><span class="p">(</span><span class="n">xdata</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">iso1</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">iso2</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="s">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">first</span><span class="p">(</span><span class="n">xdata</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">iso1</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="n">iso2</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
 
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Frequency (MHz)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Counts&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
-
-<span class="n">seaborn</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -398,8 +394,8 @@ combining isomers/isotopes (<tt class="xref py py-class docutils literal"><span 
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.CombinedSpectrum.paramsFromVar">
-<tt class="descname">paramsFromVar</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.paramsFromVar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.paramsFromVar" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.CombinedSpectrum.params_from_var">
+<tt class="descname">params_from_var</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.params_from_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.params_from_var" title="Permalink to this definition">¶</a></dt>
 <dd><p>Combine the parameters from the subspectra into one Parameters
 instance.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -420,8 +416,8 @@ describing the shared parameters.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.CombinedSpectrum.sanitizeFitInput">
-<tt class="descname">sanitizeFitInput</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr=None</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.sanitizeFitInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.sanitizeFitInput" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.CombinedSpectrum.sanitize_input">
+<tt class="descname">sanitize_input</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr=None</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.sanitize_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.sanitize_input" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take the <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt>, <tt class="xref py py-attr docutils literal"><span class="pre">y</span></tt>, and <tt class="xref py py-attr docutils literal"><span class="pre">yerr</span></tt> inputs, and sanitize
 them for the fit, meaning it should convert <tt class="xref py py-attr docutils literal"><span class="pre">y</span></tt>/<tt class="xref py py-attr docutils literal"><span class="pre">yerr</span></tt> to
 the output format of the class, and <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt> to the input format of
@@ -429,8 +425,8 @@ the class.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.CombinedSpectrum.splitParams">
-<tt class="descname">splitParams</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.splitParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.splitParams" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.CombinedSpectrum.split_parameters">
+<tt class="descname">split_parameters</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.split_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.split_parameters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function to split the parameters of the IsomerSpectrum
 instance into a list of parameters suitable for each subspectrum.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -450,10 +446,10 @@ same entry in the attribute <tt class="xref py py-attr docutils literal"><span c
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.CombinedSpectrum.varFromParams">
-<tt class="descname">varFromParams</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.varFromParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.varFromParams" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.CombinedSpectrum.var_from_params">
+<tt class="descname">var_from_params</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#CombinedSpectrum.var_from_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.CombinedSpectrum.var_from_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a Parameters instance such as returned by the method
-<tt class="xref py py-meth docutils literal"><span class="pre">paramsFromVar()</span></tt>, set the parameters of the subspectra to the
+<tt class="xref py py-meth docutils literal"><span class="pre">params_from_var()</span></tt>, set the parameters of the subspectra to the
 appropriate values.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -483,8 +479,8 @@ hence the name of the class.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="satlas.spectrum.IsomerSpectrum.paramsFromVar">
-<tt class="descname">paramsFromVar</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.paramsFromVar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.paramsFromVar" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.IsomerSpectrum.params_from_var">
+<tt class="descname">params_from_var</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.params_from_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.params_from_var" title="Permalink to this definition">¶</a></dt>
 <dd><p>Combine the parameters from the subspectra into one Parameters
 instance.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -500,14 +496,14 @@ instance.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.IsomerSpectrum.sanitizeFitInput">
-<tt class="descname">sanitizeFitInput</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr=None</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.sanitizeFitInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.sanitizeFitInput" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.IsomerSpectrum.sanitize_input">
+<tt class="descname">sanitize_input</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr=None</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.sanitize_input"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.sanitize_input" title="Permalink to this definition">¶</a></dt>
 <dd><p>Doesn&#8217;t do anything yet.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.IsomerSpectrum.seperateResponse">
-<tt class="descname">seperateResponse</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.seperateResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.seperateResponse" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.IsomerSpectrum.seperate_response">
+<tt class="descname">seperate_response</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.seperate_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.seperate_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the response for each seperate spectrum for the values x,
 without background.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -524,13 +520,6 @@ without background.</p>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="satlas.spectrum.IsomerSpectrum.walk">
-<tt class="descname">walk</tt><big>(</big><em>x</em>, <em>y</em>, <em>showLikeli=False</em>, <em>showWalks=False</em>, <em>showTriangle=False</em>, <em>nsteps=2000</em>, <em>walkers=40</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#IsomerSpectrum.walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.IsomerSpectrum.walk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the default number of walkers to 40, for the higher number
-of parameters.</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -542,7 +531,7 @@ of parameters.</p>
 
 <dl class="class">
 <dt id="satlas.spectrum.SingleSpectrum">
-<em class="property">class </em><tt class="descclassname">satlas.spectrum.</tt><tt class="descname">SingleSpectrum</tt><big>(</big><em>I, J, ABC, df, fwhm=[50.0, 50.0], scale=1.0, background=0.0, shape='voigt', rAmp=True, sameFWHM=True</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">satlas.spectrum.</tt><tt class="descname">SingleSpectrum</tt><big>(</big><em>I, J, ABC, df, fwhm=[50.0, 50.0], scale=1.0, background=0.1, shape='voigt', racah_int=True, shared_fwhm=True</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><tt class="xref py py-class docutils literal"><span class="pre">satlas.spectrum.Spectrum</span></tt></a></p>
 <p>Class for the construction of a HFS spectrum, consisting of different
 peaks described by a certain profile. The number of peaks and their
@@ -574,11 +563,11 @@ amplitude of the spectrum.</li>
 Sets the transition shape. String is converted to lowercase. For
 possible values, see <tt class="xref py py-attr docutils literal"><span class="pre">Spectrum.__shapes__.keys()</span></tt>.
 Defaults to Voigt if an incorrect value is supplied.</li>
-<li><strong>rAmp</strong> (<em>Boolean, optional</em>) &#8211;
+<li><strong>racah_int</strong> (<em>Boolean, optional</em>) &#8211;
 If True, fixes the relative peak intensities to the Racah intensities.
 Otherwise, gives them equal intensities and allows them to vary during
 fitting.</li>
-<li><strong>sameFWHM</strong> (<em>Boolean, optional</em>) &#8211;
+<li><strong>shared_fwhm</strong> (<em>Boolean, optional</em>) &#8211;
 If True, the same FWHM is used for all peaks. Otherwise, give them all
 the same initial FWHM and let them vary during the fitting.</li>
 </ul>
@@ -590,7 +579,7 @@ the same initial FWHM and let them vary during the fitting.</li>
 <dt id="spectrum.SingleSpectrum.fwhm">
 <tt class="descname">fwhm</tt><a class="headerlink" href="#spectrum.SingleSpectrum.fwhm" title="Permalink to this definition">¶</a></dt>
 <dd><p><em>(list of) float or list of 2 floats</em></p>
-<p>Sets the FWHM for all the transtions. If <tt class="xref py py-attr docutils literal"><span class="pre">sameFWHM</span></tt> is True,
+<p>Sets the FWHM for all the transtions. If <tt class="xref py py-attr docutils literal"><span class="pre">shared_fwhm</span></tt> is True,
 this attribute is a list of FWHM values for each peak.</p>
 </dd></dl>
 
@@ -693,10 +682,51 @@ More are used, and should be looked up in the source code.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.calculateEnergy">
-<tt class="descname">calculateEnergy</tt><big>(</big><em>level</em>, <em>F</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.calculateEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.calculateEnergy" title="Permalink to this definition">¶</a></dt>
-<dd><p>The hyperfine addition to a central frequency (attribute <em>df</em>) for
-a specific level is calculated. The formula used is</p>
+<dt id="satlas.spectrum.SingleSpectrum.bootstrap">
+<tt class="descname">bootstrap</tt><big>(</big><em>x</em>, <em>y</em>, <em>bootstraps=100</em>, <em>samples=None</em>, <em>selected=True</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.bootstrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.bootstrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an experimental spectrum of counts, generate a number of
+bootstrapped resampled spectra, fit these, and return a pandas
+DataFrame containing result of fitting these resampled spectra.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Frequency in MHz.</li>
+<li><strong>y</strong> (<em>array_like</em>) &#8211; Counts corresponding to <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>bootstraps</strong> (<em>integer, optional</em>) &#8211;
+Number of bootstrap samples to generate, defaults to 100.</li>
+<li><strong>samples</strong> (<em>integer, optional</em>) &#8211;
+Number of counts in each bootstrapped spectrum, defaults to
+the number of counts in the supplied spectrum.</li>
+<li><strong>selected</strong> (<em>boolean, optional</em>) &#8211;
+Selects if only the parameters in <tt class="xref py py-attr docutils literal"><span class="pre">self.selected</span></tt> are saved
+in the DataFrame. Defaults to True (saving only the selected).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">DataFrame containing the results of fitting the bootstrapped
+samples.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.spectrum.SingleSpectrum.calculate_F_level_energy">
+<tt class="descname">calculate_F_level_energy</tt><big>(</big><em>level</em>, <em>F</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.calculate_F_level_energy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.calculate_F_level_energy" title="Permalink to this definition">¶</a></dt>
+<dd><p>The hyperfine addition to a central frequency (attribute <tt class="xref py py-attr docutils literal"><span class="pre">df</span></tt>)
+for a specific level is calculated. The formula comes from
+<a class="reference internal" href="references.html#schwartz1955" id="id1">[Sch55]</a> and in a simplified form, reads</p>
 <div class="math">
 <p><img src="_images/math/728a256e650647a1c12d4730a1798fe55c17918c.png" alt="C_F &amp;= F(F+1) - I(I+1) - J(J+1)
 
@@ -708,11 +738,11 @@ E_F &amp;= \frac{10 (\frac{C_F}{2})^3 + 20(\frac{C_F}{2})^2 + C_F(-3I(I
 1)(2I - 1)J(J - 1)(2J - 1)}
 
 E &amp;= df + \frac{A C_F}{2} + \frac{B D_F}{4} + C E_F"/></p>
-</div><p>A, B and C are the dipole, quadrupole and octupole hyperfine parameters.
-Octupole contributions are calculated when both the nuclear and
-electronic spin is greater than 1, quadrupole contributions when they
-are greater than 1/2, and dipole contributions when they are greater
-than 0.</p>
+</div><p>A, B and C are the dipole, quadrupole and octupole hyperfine
+parameters. Octupole contributions are calculated when both the
+nuclear and electronic spin is greater than 1, quadrupole contributions
+when they are greater than 1/2, and dipole contributions when they are
+greater than 0.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -736,27 +766,8 @@ Energy in MHz.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.lnprior">
-<tt class="descname">lnprior</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.lnprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.lnprior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the (uninformative) prior for all parameters.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>params</strong> (<em>Parameters</em>) &#8211; Instance of Parameters with values to be used in the fit/walk</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">If any of the parameters are out of bounds, returns <tt class="xref py py-data docutils literal"><span class="pre">-np.inf</span></tt>
-, otherwise 1.0 is returned</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.paramsFromVar">
-<tt class="descname">paramsFromVar</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.paramsFromVar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.paramsFromVar" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.SingleSpectrum.params_from_var">
+<tt class="descname">params_from_var</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.params_from_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.params_from_var" title="Permalink to this definition">¶</a></dt>
 <dd><p>Goes through all the relevant parameters of the spectrum,
 and returns a Parameters instance containing all the information. User-
 supplied information in the self._vary dictionary is used to set
@@ -767,7 +778,7 @@ do not allow it.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Instance suitable for the method <tt class="xref py py-meth docutils literal"><span class="pre">varFromParams()</span></tt>.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Instance suitable for the method <tt class="xref py py-meth docutils literal"><span class="pre">var_from_params()</span></tt>.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">Parameters</td>
 </tr>
@@ -776,8 +787,8 @@ do not allow it.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.seperateResponse">
-<tt class="descname">seperateResponse</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.seperateResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.seperateResponse" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.SingleSpectrum.seperate_response">
+<tt class="descname">seperate_response</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.seperate_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.seperate_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the response for each seperate spectrum for the values <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt>
 , without background.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -795,8 +806,8 @@ do not allow it.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.setVary">
-<tt class="descname">setVary</tt><big>(</big><em>varyDict</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.setVary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.setVary" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.SingleSpectrum.set_variation">
+<tt class="descname">set_variation</tt><big>(</big><em>varyDict</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.set_variation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.set_variation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the variation of the fitparameters as supplied in the
 dictionary.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -830,8 +841,8 @@ dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.SingleSpectrum.varFromParams">
-<tt class="descname">varFromParams</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.varFromParams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.varFromParams" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.SingleSpectrum.var_from_params">
+<tt class="descname">var_from_params</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#SingleSpectrum.var_from_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.SingleSpectrum.var_from_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a Parameters instance &#8216;params&#8217;, the value-fields for all the
 parameters are extracted and used to set the values of the spectrum.
 Will raise a KeyError exception if an unsuitable instance is
@@ -852,48 +863,76 @@ supplied.</p>
 <dt id="satlas.spectrum.Spectrum">
 <em class="property">class </em><tt class="descclassname">satlas.spectrum.</tt><tt class="descname">Spectrum</tt><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
-<p>Baseclass for all spectra, such as <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></tt>,
+<p>Abstract baseclass for all spectra, such as <tt class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></tt>,
 <tt class="xref py py-class docutils literal"><span class="pre">CombinedSpectrum</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">IsomerSpectrum</span></tt>. For input, see these
 classes.</p>
 <dl class="attribute">
 <dt id="spectrum.Spectrum.selected">
 <tt class="descname">selected</tt><a class="headerlink" href="#spectrum.Spectrum.selected" title="Permalink to this definition">¶</a></dt>
 <dd><p><em>list of strings</em></p>
-<p>When a walk is performed and a triangle plot is requested, the
-parameters with one of these strings in their name will be displayed in
-a seperate plot. Defaults to the hyperfine parameters and the centroid.</p>
+<p>When a walk is performed and a triangle plot is created from the data,
+the parameters with one of these strings in their name will be
+displayed. Defaults to the hyperfine parameters and the centroid.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="spectrum.Spectrum.loglikelifunc">
+<tt class="descname">loglikelifunc</tt><a class="headerlink" href="#spectrum.Spectrum.loglikelifunc" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>{&#8216;Poisson&#8217;, &#8216;Gaussian&#8217;}</em></p>
+<p>Indicates if the Maximum Likelihood Estimation uses Poissonian or
+Gaussian formulas for the loglikelihood. Defaults to &#8216;Poisson&#8217;.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.DisplayFit">
-<tt class="descname">DisplayFit</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.DisplayFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.DisplayFit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Display all relevent info of the least-squares fitting routine,
-if this has been performed.</p>
+<dt id="satlas.spectrum.Spectrum.calculate_confidence_intervals">
+<tt class="descname">calculate_confidence_intervals</tt><big>(</big><em>selected=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.calculate_confidence_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.calculate_confidence_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the confidence bounds for parameters by making use of
+lmfit&#8217;s <tt class="xref py py-func docutils literal"><span class="pre">conf_interval()</span></tt> function. Results are saved in
+<tt class="xref py py-attr docutils literal"><span class="pre">self.chisquare_ci</span></tt></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> (<em>misc</em>) &#8211; Keywords passed on to <tt class="xref py py-func docutils literal"><span class="pre">fit_report()</span></tt> from the LMFit package.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>selected</strong> (<em>boolean, optional</em>) &#8211; Boolean controlling if the used parameters are only the ones
+defined in the attribute <a class="reference internal" href="#spectrum.Spectrum.selected" title="spectrum.Spectrum.selected"><tt class="xref py py-attr docutils literal"><span class="pre">selected</span></tt></a> (True), or if all
+parameters are to be used.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.DisplayMLEFit">
-<tt class="descname">DisplayMLEFit</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.DisplayMLEFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.DisplayMLEFit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Give a readable overview of the result of the MLE fitting routine.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">The uncertainty shown is the largest of the asymmetrical errors! Work
-is being done to incorporate asymmetrical errors in the report; for
-now, rely on the triangle plot.</p>
-</div>
+<dt id="satlas.spectrum.Spectrum.chisquare_correlation_plot">
+<tt class="descname">chisquare_correlation_plot</tt><big>(</big><em>selected=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.chisquare_correlation_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.chisquare_correlation_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a chisquare fit has been performed, this method creates a figure
+for plotting the correlation maps between parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>selected</strong> (<em>boolean, optional</em>) &#8211; Controls if only the parameters defined in <a class="reference internal" href="#spectrum.Spectrum.selected" title="spectrum.Spectrum.selected"><tt class="xref py py-attr docutils literal"><span class="pre">selected</span></tt></a> are
+used (True) or if all parameters are used (False). Defaults to True</li>
+<li><strong>kwargs</strong> (<em>keywords</em>) &#8211; Other keywords are passed on to the <tt class="xref py py-func docutils literal"><span class="pre">conf_interval2d()</span></tt>
+function from lmfit. The exception is the keyword <tt class="xref py py-attr docutils literal"><span class="pre">limits</span></tt>,
+which is now a float that indicates how many standard deviations
+have to be traveled.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Returns the generated MatPlotLib figure</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plt.figure</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.FitToData">
-<tt class="descname">FitToData</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.FitToData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.FitToData" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.Spectrum.chisquare_fit">
+<tt class="descname">chisquare_fit</tt><big>(</big><em>x</em>, <em>y</em>, <em>yerr</em>, <em>errorByFit=False</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.chisquare_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.chisquare_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use a non-linear least squares minimization (Levenberg-Marquardt)
 algorithm to minimize the chi-square of the fit to data <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt> and
 <tt class="xref py py-attr docutils literal"><span class="pre">y</span></tt> with errorbars <tt class="xref py py-attr docutils literal"><span class="pre">yerr</span></tt>. Reasonable bounds are used on
@@ -915,15 +954,42 @@ consulted to see if a parameter should be varied or not.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.FitToSpectroscopicData">
-<tt class="descname">FitToSpectroscopicData</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.FitToSpectroscopicData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.FitToSpectroscopicData" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.Spectrum.chisquare_spectroscopic_fit">
+<tt class="descname">chisquare_spectroscopic_fit</tt><big>(</big><em>x</em>, <em>y</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.chisquare_spectroscopic_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.chisquare_spectroscopic_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use the <tt class="xref py py-meth docutils literal"><span class="pre">FitToData()</span></tt> method, automatically estimating the errors
 on the counts by the square root.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.LikelihoodSpectroscopicFit">
-<tt class="descname">LikelihoodSpectroscopicFit</tt><big>(</big><em>x</em>, <em>y</em>, <em>walking=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.LikelihoodSpectroscopicFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.LikelihoodSpectroscopicFit" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.spectrum.Spectrum.display_chisquare_fit">
+<tt class="descname">display_chisquare_fit</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.display_chisquare_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.display_chisquare_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display all relevent info of the least-squares fitting routine,
+if this has been performed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> (<em>misc</em>) &#8211; Keywords passed on to <tt class="xref py py-func docutils literal"><span class="pre">fit_report()</span></tt> from the LMFit package.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.spectrum.Spectrum.display_mle_fit">
+<tt class="descname">display_mle_fit</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.display_mle_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.display_mle_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Give a readable overview of the result of the MLE fitting routine.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The uncertainty shown is the largest of the asymmetrical errors! Work
+is being done to incorporate asymmetrical errors in the report; for
+now, rely on the triangle plot.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.spectrum.Spectrum.likelihood_fit">
+<tt class="descname">likelihood_fit</tt><big>(</big><em>x</em>, <em>y</em>, <em>walking=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.likelihood_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.likelihood_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit the spectrum to the spectroscopic data using the Maximum
 Likelihood technique. This is done by minimizing the negative sum of
 the loglikelihoods of the spectrum given the data (given by the method
@@ -951,6 +1017,59 @@ is requested, returns the value <tt class="xref py py-class docutils literal"><s
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">class:<cite>None</cite></p>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.spectrum.Spectrum.likelihood_walk">
+<tt class="descname">likelihood_walk</tt><big>(</big><em>x</em>, <em>y</em>, <em>nsteps=2000</em>, <em>walkers=20</em>, <em>burnin=10.0</em>, <em>verbose=True</em>, <em>store_walks=False</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.likelihood_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.likelihood_walk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a random walk in the parameter space to determine the
+distribution for the best fit of the parameters.</p>
+<p>A message is printed before and after the walk.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The errors calculated can be asymmetrical, but only the largest is
+saved as the overal uncertainty. This is a known issue, and work is
+being done to resolve this.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Frequency of the data, in MHz.</li>
+<li><strong>y</strong> (<em>array_like</em>) &#8211; Counts corresponding to <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt>.</li>
+<li><strong>nsteps</strong> (<em>int, optional</em>) &#8211; Number of steps to be taken, defaults to 2000.</li>
+<li><strong>walkers</strong> (<em>int, optional</em>) &#8211; Number of walkers to be used, defaults to 20.</li>
+<li><strong>burnin</strong> (<em>float, optional</em>) &#8211; Burn-in to be used for the walk. Expressed in percentage,
+defaults to 10.0.</li>
+<li><strong>verbose</strong> (<em>boolean, optional</em>) &#8211; Controls printing the status of the sampling to the stdout.
+Defaults to True.</li>
+<li><strong>store_walks</strong> (<em>boolean, optional</em>) &#8211; For deeper debugging, the data from the walks can be saved and
+viewed later on</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.spectrum.Spectrum.lnprior">
+<tt class="descname">lnprior</tt><big>(</big><em>params</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.lnprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.lnprior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the (uninformative) prior for all parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>params</strong> (<em>Parameters</em>) &#8211; Instance of Parameters with values to be used in the fit/walk</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">If any of the parameters are out of bounds, returns
+<tt class="xref py py-data docutils literal"><span class="pre">-np.inf</span></tt>, otherwise 1.0 is returned.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float</td>
 </tr>
 </tbody>
 </table>
@@ -985,10 +1104,12 @@ calculated.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.loglikeli">
-<tt class="descname">loglikeli</tt><big>(</big><em>params</em>, <em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.loglikeli"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.loglikeli" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assuming a Poisson-distribution for the error of the measurements,
-returns the loglikelihoods for the given parameter dictionary &#8216;params&#8217;.</p>
+<dt id="satlas.spectrum.Spectrum.loglikelihood">
+<tt class="descname">loglikelihood</tt><big>(</big><em>params</em>, <em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.loglikelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the total loglikelihood for the given parameter
+dictionary &#8216;params&#8217;. Uses the function defined in the attribute
+<a class="reference internal" href="#spectrum.Spectrum.loglikelifunc" title="spectrum.Spectrum.loglikelifunc"><tt class="xref py py-attr docutils literal"><span class="pre">loglikelifunc</span></tt></a> to calculate the loglikelihood. Defaultly,
+this is set to a Poisson distribution.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1006,50 +1127,22 @@ determined.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="satlas.spectrum.Spectrum.walk">
-<tt class="descname">walk</tt><big>(</big><em>x</em>, <em>y</em>, <em>showLikeli=False</em>, <em>showWalks=False</em>, <em>showTriangle=False</em>, <em>nsteps=2000</em>, <em>walkers=20</em>, <em>burnin=10.0</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.walk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs a random walk in the parameter space to determine the
-distribution for the best fit of the parameters.</p>
-<p>A message is printed before and after the walk.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">The errors calculated can be asymmetrical, but only the largest is
-saved as the overal uncertainty. This is a known issue, and work is
-being done to resolve this.</p>
-</div>
+<dt id="satlas.spectrum.Spectrum.vars">
+<tt class="descname">vars</tt><big>(</big><em>selection='any'</em><big>)</big><a class="reference internal" href="_modules/satlas/spectrum.html#Spectrum.vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.spectrum.Spectrum.vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the variable names, values and estimated error bars for the
+parameters.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>array_like</em>) &#8211; Frequency of the data, in MHz.</li>
-<li><strong>y</strong> (<em>array_like</em>) &#8211; Counts corresponding to <tt class="xref py py-attr docutils literal"><span class="pre">x</span></tt>.</li>
-<li><strong>showLikeli</strong> (<em>Boolean, optional</em>) &#8211; Set this to True if a plot depicting the 1D slice of the
-loglikelihood function for each parameter has to be plotted.</li>
-<li><strong>showWalks</strong> (<em>Boolean, optional</em>) &#8211; Set this to True if a plot depicting the random walk has to be
-plotted.</li>
-<li><strong>showTriangle</strong> (<em>Boolean, optional</em>) &#8211; Set this to True is a triangle plot depicting the distributions of
-the parameters in the random walk has to be plotted. Two plots are
-created if <tt class="xref py py-attr docutils literal"><span class="pre">showAll</span></tt> is set to True: one with all the
-parameters, one with only the parameters as filtered using
-<a class="reference internal" href="#spectrum.Spectrum.selected" title="spectrum.Spectrum.selected"><tt class="xref py py-attr docutils literal"><span class="pre">selected</span></tt></a>.</li>
-<li><strong>nsteps</strong> (<em>int, optional</em>) &#8211; Number of steps to be taken, defaults to 2000.</li>
-<li><strong>walkers</strong> (<em>int, optional</em>) &#8211; Number of walkers to be used, defaults to 20.</li>
-<li><strong>burnin</strong> (<em>float, optional</em>) &#8211; Burn-in to be used for the walk. Expressed in percentage,
-defaults to 10.0.</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>selection</strong> (<em>string, optional</em>) &#8211; Selects if the chisquare (&#8216;chisquare&#8217; or &#8216;any&#8217;) or MLE values are
+used. Defaults to &#8216;any&#8217;.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>returnfigs</strong> &#8211;
-If any plots have been made by setting booleans, the figure handles
-are returned as a tuple, ordered as
-<tt class="xref py py-attr docutils literal"><span class="pre">(Likelihood,</span> <span class="pre">walks,</span> <span class="pre">triangleComplete,</span> <span class="pre">triangleSelected)</span></tt>.
-Plots that have not been requested are not added. If no plots have
-been requested, returns an empty tuple.</p>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>names, values, uncertainties</strong> &#8211;
+Returns a 3-tuple of lists containing the names of the parameters,
+the values and the estimated uncertainties.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
-</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple of lists</td>
 </tr>
 </tbody>
 </table>

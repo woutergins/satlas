@@ -189,10 +189,10 @@ centimeters (cm-1).</li>
 
 <dl class="class">
 <dt id="satlas.utilities.ReleaseCurve">
-<em class="property">class </em><tt class="descclassname">satlas.utilities.</tt><tt class="descname">ReleaseCurve</tt><big>(</big><em>amp=40000000.0</em>, <em>a=0.9</em>, <em>tr=0.078</em>, <em>tf=0.396</em>, <em>ts=1.905</em>, <em>pulses=3</em>, <em>delay=10.0</em>, <em>cont=True</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">satlas.utilities.</tt><tt class="descname">ReleaseCurve</tt><big>(</big><em>amp=40000000.0</em>, <em>a=0.9</em>, <em>tr=0.078</em>, <em>tf=0.396</em>, <em>ts=1.905</em>, <em>pulses=3</em>, <em>delay=10.0</em>, <em>continued=True</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a callable object for the standard release curve. Formula
-based on J.P. Ramos et al. <a class="reference internal" href="references.html#ramos2014" id="id1">[RGM+14]</a>. Input parameters are initialized to an 35Ar release
-curve.</p>
+based on J.P. Ramos et al. <a class="reference internal" href="references.html#ramos2014" id="id1">[RGM+14]</a>. Input parameters are
+initialized to an 35Ar release curve.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -209,9 +209,9 @@ corresponding l-parameter. Default: 396 ms</li>
 <li><strong>ts</strong> (<em>float</em>) &#8211; Time constant parameter in seconds. The attribute is saved as the
 corresponding l-parameter. Default: 1905 ms</li>
 <li><strong>pulses</strong> (<em>integer</em>) &#8211; Number of pulses seperated by the delay parameter. Has no effect if the
-<tt class="xref py py-attr docutils literal"><span class="pre">cont</span></tt> parameter is True. Is also an attribute. Default: 3</li>
+<tt class="xref py py-attr docutils literal"><span class="pre">continued</span></tt> parameter is True. Is also an attribute. Default: 3</li>
 <li><strong>delay</strong> (<em>float</em>) &#8211; Seconds between pulses. Is also an attribute. Default: 10.0 s</li>
-<li><strong>cont</strong> (<em>bool</em>) &#8211; Continuously generate pulses seperated by the delay parameter if True,
+<li><strong>continued</strong> (<em>bool</em>) &#8211; Continuously generate pulses seperated by the delay parameter if True,
 else create the number of pulses given in the pulses parameter. Is also
 an attribute. Default: True</li>
 </ul>
@@ -228,8 +228,23 @@ an attribute. Default: True</li>
 \left(a\exp\left(-l_ft\right)+(1-a)\exp\left(-l_st\right)\right)"/></p>
 </div></div>
 <dl class="method">
-<dt id="satlas.utilities.ReleaseCurve.FitToData">
-<tt class="descname">FitToData</tt><big>(</big><em>t</em>, <em>y</em>, <em>yerr</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.FitToData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.FitToData" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.utilities.ReleaseCurve.__call__">
+<tt class="descname">__call__</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the evaluation of the formula, taking the pulses
+and delays into account.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> (<em>array_like</em>) &#8211; Times for which the yield is requested.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.utilities.ReleaseCurve.fit_to_data">
+<tt class="descname">fit_to_data</tt><big>(</big><em>t</em>, <em>y</em>, <em>yerr</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.fit_to_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.fit_to_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>If a release curve is measured as a function of time, this should
 fit the parameters to the given curve y(t) with errors yerr.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -251,21 +266,33 @@ fit the parameters to the given curve y(t) with errors yerr.</p>
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="satlas.utilities.ReleaseCurve.__call__">
-<tt class="descname">__call__</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#ReleaseCurve.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.ReleaseCurve.__call__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the evaluation of the formula, taking the pulses
-and delays into account.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.utilities.bootstrap_ci">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">bootstrap_ci</tt><big>(</big><em>dataframe</em>, <em>kind='basic'</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#bootstrap_ci"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.bootstrap_ci" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate confidence intervals on the 1-sigma level for bootstrapped data
+given in a DataFrame.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> (<em>array_like</em>) &#8211; Times for which the yield is requested.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataframe</strong> (<em>DataFrame</em>) &#8211; DataFrame with the results of each bootstrap fit on a row. If the
+t-method is to be used, a Panel is required, with the data in
+the panel labeled &#8216;data&#8217; and the uncertainties labeled &#8216;stderr&#8217;</li>
+<li><strong>kind</strong> (<em>str, optional</em>) &#8211; Selects which method to use: percentile, basic, or t-method (student).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Dataframe containing the left and right limits for each column as rows.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">DataFrame</p>
+</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="function">
@@ -288,6 +315,34 @@ if the entry is not callable.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">NumPy array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.utilities.generate_correlation_plot">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">generate_correlation_plot</tt><big>(</big><em>data</em>, <em>filter=None</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#generate_correlation_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.generate_correlation_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the random walk data, creates a triangle plot: distribution of
+a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
+3 sigma contours on the off-diagonal. The 1-sigma limits based on the
+percentile method are also indicated, as well as added to the title.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>DataFrame</em>) &#8211; DataFrame collecting all the information on the random walk for each
+parameter.</li>
+<li><strong>filter</strong> (<em>list of str, optional</em>) &#8211; If supplied, only this list of columns is used for the plot.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Returns the MatPlotLib figure created.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">figure</p>
 </td>
 </tr>
 </tbody>
@@ -345,8 +400,8 @@ a multi-dimensional array. Code copied from the QuTiP package.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="satlas.utilities.weightedAverage">
-<tt class="descclassname">satlas.utilities.</tt><tt class="descname">weightedAverage</tt><big>(</big><em>x</em>, <em>sigma</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#weightedAverage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.weightedAverage" title="Permalink to this definition">¶</a></dt>
+<dt id="satlas.utilities.weighted_average">
+<tt class="descclassname">satlas.utilities.</tt><tt class="descname">weighted_average</tt><big>(</big><em>x</em>, <em>sigma</em><big>)</big><a class="reference internal" href="_modules/satlas/utilities.html#weighted_average"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.weighted_average" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes the weighted average of an array of values and the associated
 errors. Calculates the scatter and statistical error, and returns
 the greater of these two values.</p>
@@ -376,7 +431,7 @@ uncertainty and the scattering uncertainty.</p>
 <p class="first admonition-title">Note</p>
 <p>The formulas used are</p>
 <div class="last math">
-<p><img src="_images/math/8e8a8e15907e5d464c1ea2120a037934290c7d41.png" alt="\left\langle x\right\rangle_{weighted} &amp;= \frac{\sum_{i=1}^N \frac{x_i}
+<p><img src="_images/math/a44f648051bf1e0a85851a2af27a0c6934a607e5.png" alt="\left\langle x\right\rangle_{weighted} &amp;= \frac{\sum_{i=1}^N \frac{x_i}
                                                          {\sigma_i^2}}
                                               {\sum_{i=1}^N \frac{1}
                                                         {\sigma_i^2}}
@@ -385,8 +440,8 @@ uncertainty and the scattering uncertainty.</p>
 
 \sigma_{scatter}^2 &amp;= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
                                             x\right\rangle_{weighted}}
-                                              {\sigma_i^2}\right)^2}
-       {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"/></p>
+                                              {\sigma_i}\right)^2}
+       {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"/></p>
 </div></div>
 </dd></dl>
 

@@ -20,7 +20,7 @@ Usage examples
 
 Spectrum creation
 -----------------
-Creating a simple hyperfinestructure uses the class :class:`SingleSpectrum` from the :mod:`spectrum` module. Fitting to a single dataset is also demonstrated.
+Creating a simple hyperfinestructure uses the class :class:`SingleSpectrum` from the :mod:`spectrum` module.
 
 .. plot:: pyplots/SingleSpectrumExample.py
     :include-source:
@@ -31,7 +31,7 @@ Multiple spectrum fitting
 Combination of single spectra
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The creation of a :class:`CombinedSpectrum` from :class:`SingleSpectra` is demonstrated. Fitting to two datasets is also demonstrated.
+The creation of a :class:`CombinedSpectrum` from :class:`SingleSpectra` is demonstrated.
 
 .. plot:: pyplots/CombinedSingleSpectrum.py
     :include-source:
@@ -39,7 +39,7 @@ The creation of a :class:`CombinedSpectrum` from :class:`SingleSpectra` is demon
 Combination of spectra with isomeric presence
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adding in isomeric peaks complicates the spectrum
+Isomeric peaks in the spectrum can be handled by creating another spectrum and adding it to the first.
 
 .. plot:: pyplots/IsomerExample.py
     :include-source:

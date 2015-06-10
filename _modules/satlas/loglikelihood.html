@@ -140,11 +140,11 @@
     <span class="sd">&quot;&quot;&quot;Returns the loglikelihood for a Poisson distribution.</span>
 <span class="sd">    In this calculation, it is assumed that the parameters</span>
 <span class="sd">    are true, and the loglikelihood that the data is drawn from</span>
-<span class="sd">    the distribution established by the parameters is calculated</span>
+<span class="sd">    the distribution established by the parameters is calculated.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    x : array_likes</span>
+<span class="sd">    x : array_like</span>
 <span class="sd">        Data that has to be tested.</span>
 <span class="sd">    l : array_like</span>
 <span class="sd">        Parameter for the Poisson distribution.</span>
@@ -156,9 +156,27 @@
     <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">-</span> <span class="n">l</span>
 
 </div>
-<span class="k">def</span> <span class="nf">Gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="n">l</span> <span class="o">**</span> <span class="mf">0.5</span>
-    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">*</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">l</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<div class="viewcode-block" id="Gaussian"><a class="viewcode-back" href="../../loglikelihood.html#satlas.loglikelihood.Gaussian">[docs]</a><span class="k">def</span> <span class="nf">Gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the loglikelihood for a Gaussian distribution,</span>
+<span class="sd">    assuming the variance is given by the square root of the data</span>
+<span class="sd">    points. It is assumed that the parameters are true, and the</span>
+<span class="sd">    loglikelihood that the data is drawn from the distribution</span>
+<span class="sd">    established by the parameters is calculated.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : array_like</span>
+<span class="sd">        Data that has to be tested.</span>
+<span class="sd">    l : array_like</span>
+<span class="sd">        Parameter for the Poisson distrbution.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array_like</span>
+<span class="sd">        Array with the loglikelihoods for the data&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="mf">0.5</span>
+    <span class="k">return</span> <span class="o">-</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">s</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="c"># return -np.log(np.sqrt(2*np.pi)*s)-(x-l)**2/(2.0*s**2)</span></div>
 </pre></div>
 
           </div>

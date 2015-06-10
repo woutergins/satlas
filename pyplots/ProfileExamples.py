@@ -1,11 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import satlas.profiles as p
-import seaborn
+import seaborn as sns
 
 
-seaborn.set_style('ticks')
-seaborn.set_palette('colorblind')
+sns.set_style('ticks', rc={'xtick.direction': 'in', 'ytick.direction': 'in'})
+sns.set_palette('colorblind')
 
 x = np.linspace(-6, 6, 1000)
 fwhm = 1.0
@@ -36,7 +36,5 @@ ax[1].legend(loc=0, fontsize=14)
 
 ax[0].set_title('Amplitude is height', fontsize=20)
 ax[1].set_title('Amplitude is area', fontsize=20)
-seaborn.despine(ax=ax[1], offset=10, trim=True)
-seaborn.despine(ax=ax[0], offset=10, trim=True, bottom=True)
 plt.tight_layout()
 plt.show()

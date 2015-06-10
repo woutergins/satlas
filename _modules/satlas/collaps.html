@@ -136,7 +136,7 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">satlas.spectrum</span> <span class="kn">import</span> <span class="n">Spectrum</span>
+<span class="kn">from</span> <span class="nn">satlas.spectrum</span> <span class="kn">import</span> <span class="n">SingleSpectrum</span>
 <span class="kn">import</span> <span class="nn">satlas.utilities</span> <span class="kn">as</span> <span class="nn">utilities</span>
 <span class="kn">import</span> <span class="nn">lmfit</span> <span class="kn">as</span> <span class="nn">lm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
@@ -180,18 +180,34 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">timeStamp</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">_updateProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># If the Track objects have the &#39;cecVoltage&#39; attribute,</span>
+        <span class="c"># it is a new styled file.</span>
         <span class="n">newFiles</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#39;cecVoltage&#39;</span><span class="p">)</span>
+        <span class="c"># If the tracks are a real measurement, the boolean</span>
+        <span class="c"># &#39;measurement&#39; will be True. If this is False,</span>
+        <span class="c"># it is a Kepco scan, which is dealt with differently.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">measurement</span><span class="p">:</span>
+            <span class="c"># Gather the spectra for the different scalars in a dictionary,</span>
+            <span class="c"># with the scalar number as key. The numbers are stored as the</span>
+            <span class="c"># keys of the spectrum in the track.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">spectrum</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                 <span class="n">dinkie</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+                <span class="c"># The value for x (the voltage) gets overwritten each</span>
+                <span class="c"># iteration over the scalars, but I don&#39;t know a better</span>
+                <span class="c"># implementation...</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+                <span class="c"># Store the Prema voltage</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">premaVoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
                 <span class="k">if</span> <span class="n">newFiles</span><span class="p">:</span>
+                    <span class="c"># Store the CEC voltage and cooler voltage if the</span>
+                    <span class="c"># files are the new style.</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">cecVoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">coolerVoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
                 <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
+                    <span class="c"># Generate the full voltage range.</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">voltage</span><span class="p">)</span>
+                    <span class="c"># Gather the prema voltages</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">premaVoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">premaVoltage</span><span class="p">,</span>
                                                   <span class="n">track</span><span class="o">.</span><span class="n">premaVoltage</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">newFiles</span><span class="p">:</span>
@@ -199,14 +215,21 @@
                                                     <span class="n">track</span><span class="o">.</span><span class="n">cecVoltage</span><span class="p">)</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">coolerVoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coolerVoltage</span><span class="p">,</span>
                                                        <span class="n">track</span><span class="o">.</span><span class="n">coolerVoltage</span><span class="p">)</span>
+                    <span class="c"># Gather the data in a temporary variable &#39;dinkie&#39;</span>
                     <span class="n">dinkie</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dinkie</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">spectrum</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                <span class="c"># Assign all the gathered data from all tracks to the</span>
+                <span class="c"># dictionary.</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">dinkie</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">channelNumbers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="c"># Assign the data from the highest scalar to &#39;self.y&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">channelNumbers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Save the voltages from a Kepco measurement</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">voltage</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">kepcoMeasurement</span> <span class="k">if</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">kepcoUsed</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">siclMeasurement</span>
+            <span class="c"># Never actually seen a Kepco measurement with multiple tracks,</span>
+            <span class="c"># but you never know...</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ySeperate</span><span class="p">[</span><span class="n">track</span><span class="o">.</span><span class="n">fluke</span><span class="p">]</span> <span class="o">=</span> <span class="n">track</span><span class="o">.</span><span class="n">kepcoMeasurement</span> <span class="k">if</span> <span class="p">(</span>
@@ -259,8 +282,8 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Track</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">isotope</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scans</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cycles</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scans</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">measurement</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kepco</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sicl</span> <span class="o">=</span> <span class="bp">False</span>
@@ -278,6 +301,8 @@
         <span class="k">return</span> <span class="n">s</span>
 
     <span class="k">def</span> <span class="nf">addObject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="c"># When adding an object to a track, check which object is being added,</span>
+        <span class="c"># and take steps accordingly.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">PM_SpectrumObj</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">measurement</span> <span class="o">=</span> <span class="bp">True</span>
@@ -341,6 +366,8 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sicl</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">siclMeasurement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">siclMeasurement</span>
 
+    <span class="c"># For Kepco measurements, make the linear fit with the data given.</span>
+    <span class="c"># Save this result.</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">kepcoMeasurement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kepcoMeasurement</span>
@@ -368,6 +395,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">bstderrKepco</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span>
             <span class="n">kepcoA</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aKepco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">astderrKepco</span><span class="p">)</span>
             <span class="n">kepcoB</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bKepco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bstderrKepco</span><span class="p">)</span>
+            <span class="c"># If the files are the new style files,</span>
+            <span class="c"># compare with the readout from the SICL reader</span>
+            <span class="c"># and use the one with the smallest error.</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;astderrSicl&#39;</span><span class="p">):</span>
                 <span class="n">siclA</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aSicl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">astderrSicl</span><span class="p">)</span>
                 <span class="n">siclB</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bSicl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bstderrSicl</span><span class="p">)</span>
@@ -381,6 +411,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">astderr</span> <span class="o">=</span> <span class="n">kepcoA</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bstderr</span> <span class="o">=</span> <span class="n">kepcoB</span>
 
+    <span class="c"># Do the exact same for the SICL readouts of a Kepco measurement</span>
+    <span class="c"># as for the normal results.</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">siclMeasurement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_siclMeasurement</span>
@@ -426,7 +458,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">KepcoEichungVoltageObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="c"># self.arg = arg</span>
+        <span class="c"># Automatically adjust the list of voltages from kV to V.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">voltageList</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="mi">3</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -438,7 +470,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">PremaVoltageObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span>
+        <span class="c"># Automatically adjust the list of voltages from kV to V.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">voltageList</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1000.0</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -447,6 +479,10 @@
 
 
 <span class="k">class</span> <span class="nc">LineVoltageSweepObj</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="c"># Creates a callable object for evaluating the</span>
+    <span class="c"># line voltage range with a given number of data points</span>
+    <span class="c"># between the minimum and maximum of the voltage values.</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">LineVoltageSweepObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
@@ -469,6 +505,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FlukeSwitchObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span>
+        <span class="c"># Store the Fluke number</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -490,21 +527,26 @@
 
 <span class="k">class</span> <span class="nc">PM_SpectrumObj</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="c"># &quot;&quot;&quot;Represents a spectrum object.</span>
+    <span class="c"># Represents a spectrum object.</span>
 
     <span class="c"># Attributes</span>
     <span class="c"># ----------</span>
 
     <span class="c"># number : int</span>
-    <span class="c">#     Channel number of the scalar. Typically, 0-3 represent the ungated photomultiplier tubes (L1, L2, R1, R2), 4-7 represent the gated photomultiplier tubes (L1, L2, R1, R2), the highest channel number represents the sum of the gated signals</span>
+    <span class="c">#     Channel number of the scalar. Typically, 0-3 represent</span>
+    <span class="c">#     the ungated photomultiplier tubes (L1, L2, R1, R2),</span>
+    <span class="c">#     4-7 represent the gated photomultiplier tubes (L1, L2, R1, R2),</span>
+    <span class="c">#     the highest channel number represents the sum of the gated signals</span>
     <span class="c"># data : NumPy array</span>
     <span class="c">#     Data of the spectrum</span>
     <span class="c"># bins : int</span>
     <span class="c">#     Amount of channels in the spectrum</span>
     <span class="c"># kind : &#39;normal&#39; or &#39;composite&#39;.</span>
-    <span class="c">#     If kind is &#39;normal&#39;, the scalar is the gated or ungated signal. If kind is &#39;composite&#39;, the scalar is a processed signal</span>
+    <span class="c">#     If kind is &#39;normal&#39;, the scalar is the gated or ungated signal.</span>
+    <span class="c">#     If kind is &#39;composite&#39;, the scalar is a processed signal.</span>
     <span class="c"># formula : string</span>
-    <span class="c">#     If kind is &#39;composite&#39;, this string represents the formula used to obtain the spectrum in function of the other channels and tracks&quot;&quot;&quot;</span>
+    <span class="c">#     If kind is &#39;composite&#39;, this string represents the formula used</span>
+    <span class="c">#     to obtain the spectrum in function of the other channels and tracks</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">PM_SpectrumObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
@@ -523,6 +565,11 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SiclReaderObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="c"># If the address is &#39;lan[A-34461A-06287]:inst0&#39;, the SICL reader read</span>
+        <span class="c"># the Charge Exchange Voltage (CEC). Otherwise, it is the ISCOOL</span>
+        <span class="c"># voltage.</span>
+        <span class="c"># Also automatically convert the numbers to voltages, and round to the</span>
+        <span class="c"># specified number of significant digits.</span>
         <span class="k">if</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;lan[A-34461A-06287]:inst0&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">measured</span> <span class="o">=</span> <span class="s">&#39;CEC&#39;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cecvoltage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="mi">3</span>
@@ -539,6 +586,9 @@
 
 <span class="k">class</span> <span class="nc">SiclStepObj</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
+    <span class="c"># List of applied voltages for the Kepco measurement based on the SICL</span>
+    <span class="c"># reader.</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SiclStepObj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">voltageList</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="mi">3</span>
@@ -554,24 +604,38 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MCPParser</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="c"># Define the start and stop symbols for objects and data.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">startDataSymbol</span> <span class="o">=</span> <span class="s">&#39;&lt;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stopDataSymbol</span> <span class="o">=</span> <span class="s">&#39;&gt;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">startObjectSymbol</span> <span class="o">=</span> <span class="s">&#39;[&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">endObjectSymbol</span> <span class="o">=</span> <span class="s">&#39;]&#39;</span>
+        <span class="c"># Make a translation table to convert the data to a Python list.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">string_class</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s">&#39;&lt;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;[]&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_startObject</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataString</span><span class="p">):</span>
         <span class="n">orig</span> <span class="o">=</span> <span class="n">dataString</span>
+        <span class="c"># Remove the first and last character from the string</span>
+        <span class="c"># (why did I do this?)</span>
         <span class="n">dataString</span> <span class="o">=</span> <span class="n">dataString</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c"># Remove any newlines and carriage returns from the string.</span>
         <span class="n">dataString</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;[</span><span class="se">\n\r</span><span class="s">]&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">dataString</span><span class="p">)</span>
+        <span class="c"># Split the string along each comma.</span>
         <span class="n">dataString</span> <span class="o">=</span> <span class="n">dataString</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c"># From the first part of the string, remove the &quot; characters from the</span>
+        <span class="c"># beginning and end. This will indicate the object to be created.</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">dataString</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+        <span class="c"># Collect the other parts of the string, and again join them using</span>
+        <span class="c"># a comma. This will be the arguments for the object creation.</span>
         <span class="n">arguments</span> <span class="o">=</span> <span class="n">dataString</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="n">args</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span>
+        <span class="c"># Remove all double quotes, double commas and convert a data list to a</span>
+        <span class="c"># Python list.</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;,,&#39;</span><span class="p">,</span> <span class="s">&#39;,&#39;</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>
+        <span class="c"># Replace the erroneous comma between the parenthesis and bracket.</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;)[&#39;</span><span class="p">,</span> <span class="s">&#39;),[&#39;</span><span class="p">)</span>
+        <span class="c"># Add in some comma&#39;s that went missing.</span>
         <span class="n">charRepl</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s">&#39;(&#39;</span><span class="p">:</span>
@@ -579,6 +643,7 @@
                     <span class="n">charRepl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">charRepl</span><span class="p">:</span>
             <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span> <span class="o">+</span> <span class="s">&#39;(&#39;</span><span class="p">,</span> <span class="n">char</span> <span class="o">+</span> <span class="s">&#39;,(&#39;</span><span class="p">)</span>
+        <span class="c"># Create the object</span>
         <span class="nb">input</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">+</span> <span class="s">&#39;(&#39;</span> <span class="o">+</span> <span class="n">args</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">eval</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
@@ -605,6 +670,8 @@
         <span class="n">tracks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">char</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataString</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
+                <span class="c"># If the sequence &#39;&lt;&lt;&#39; or &#39;&gt;,&lt;&#39; occurs, read until the object</span>
+                <span class="c"># definition of a Track ends at the newline.</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span><span class="p">)</span> <span class="ow">or</span> \
                    <span class="p">(</span><span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&gt;&#39;</span> <span class="ow">and</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;,&#39;</span>
                         <span class="ow">and</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span><span class="p">):</span>
@@ -612,16 +679,23 @@
                         <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">:</span>
                             <span class="n">pos</span> <span class="o">=</span> <span class="n">j</span>
                             <span class="k">break</span>
+                    <span class="c"># Strip the newline away</span>
                     <span class="n">args</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;[</span><span class="se">\n</span><span class="s">]&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="c"># Remove the extra comma and &lt;&gt; form beginning and end.</span>
                     <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;&lt;,&gt;&#39;</span><span class="p">)</span>
+                    <span class="c"># Create and append the Track.</span>
                     <span class="n">tracks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">eval</span><span class="p">(</span><span class="s">&#39;Track(&#39;</span> <span class="o">+</span> <span class="n">args</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span><span class="p">))</span>
+                <span class="c"># The sequence &#39;@&lt;&#39; indicates a timestamp follows.</span>
                 <span class="k">if</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;@&#39;</span> <span class="ow">and</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span><span class="p">:</span>
                     <span class="n">date</span> <span class="o">=</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">25</span><span class="p">]</span>
                     <span class="n">Time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="s">&#39;%a %b </span><span class="si">%d</span><span class="s"> %H:%M:%S %Y&#39;</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
                 <span class="k">pass</span>
+            <span class="c"># Check that a new object is started, but mind the address in the</span>
+            <span class="c"># SICL reader!</span>
             <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">startObjectSymbol</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">dataString</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;n&#39;</span><span class="p">:</span>
                 <span class="n">checkData</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="c"># Read in the data</span>
             <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">startDataSymbol</span> <span class="ow">and</span> <span class="n">checkData</span><span class="p">:</span>
                 <span class="n">closings</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">:]):</span>
@@ -632,6 +706,7 @@
                         <span class="n">closings</span> <span class="o">-=</span> <span class="mi">1</span>
                     <span class="k">if</span> <span class="n">closings</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="k">break</span>
+                <span class="c"># Create the object, and add it to the track.</span>
                 <span class="n">dinkie</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_startObject</span><span class="p">(</span><span class="n">dataString</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
                 <span class="n">tracks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">addObject</span><span class="p">(</span><span class="n">dinkie</span><span class="p">)</span>
                 <span class="n">checkData</span> <span class="o">=</span> <span class="bp">False</span>
@@ -1142,10 +1217,10 @@
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">laserFreq</span> <span class="o">*</span> <span class="n">dopp</span> <span class="o">-</span> <span class="n">transitionFreq</span>
 
-        <span class="n">test</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;lorentzian&#39;</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;lorentzian&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="n">test</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">test</span> <span class="o">=</span> <span class="n">Spectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;lorentzian&#39;</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s">&#39;lorentzian&#39;</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
         <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">mu</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">left</span> <span class="o">-</span> <span class="mi">600</span><span class="p">,</span> <span class="n">right</span> <span class="o">+</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
     <span class="n">test</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="mi">100</span>

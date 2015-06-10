@@ -132,18 +132,46 @@
 <span id="code-documentation"></span><h2>Code documentation<a class="headerlink" href="#module-satlas.loglikelihood" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-loglikelihood"></span><p><em>Module author: Wouter Gins &lt;<a class="reference external" href="mailto:wouter&#46;gins&#37;&#52;&#48;fys&#46;kuleuven&#46;be">wouter<span>&#46;</span>gins<span>&#64;</span>fys<span>&#46;</span>kuleuven<span>&#46;</span>be</a>&gt;</em></p>
 <dl class="function">
-<dt id="satlas.loglikelihood.Poisson">
-<tt class="descclassname">satlas.loglikelihood.</tt><tt class="descname">Poisson</tt><big>(</big><em>x</em>, <em>l</em><big>)</big><a class="reference internal" href="_modules/satlas/loglikelihood.html#Poisson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.loglikelihood.Poisson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the loglikelihood for a Poisson distribution.
-In this calculation, it is assumed that the parameters
-are true, and the loglikelihood that the data is drawn from
-the distribution established by the parameters is calculated</p>
+<dt id="satlas.loglikelihood.Gaussian">
+<tt class="descclassname">satlas.loglikelihood.</tt><tt class="descname">Gaussian</tt><big>(</big><em>x</em>, <em>l</em><big>)</big><a class="reference internal" href="_modules/satlas/loglikelihood.html#Gaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.loglikelihood.Gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the loglikelihood for a Gaussian distribution,
+assuming the variance is given by the square root of the data
+points. It is assumed that the parameters are true, and the
+loglikelihood that the data is drawn from the distribution
+established by the parameters is calculated.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>array_likes</em>) &#8211; Data that has to be tested.</li>
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Data that has to be tested.</li>
+<li><strong>l</strong> (<em>array_like</em>) &#8211; Parameter for the Poisson distrbution.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Array with the loglikelihoods for the data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">array_like</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="satlas.loglikelihood.Poisson">
+<tt class="descclassname">satlas.loglikelihood.</tt><tt class="descname">Poisson</tt><big>(</big><em>x</em>, <em>l</em><big>)</big><a class="reference internal" href="_modules/satlas/loglikelihood.html#Poisson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.loglikelihood.Poisson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the loglikelihood for a Poisson distribution.
+In this calculation, it is assumed that the parameters
+are true, and the loglikelihood that the data is drawn from
+the distribution established by the parameters is calculated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Data that has to be tested.</li>
 <li><strong>l</strong> (<em>array_like</em>) &#8211; Parameter for the Poisson distribution.</li>
 </ul>
 </td>
