@@ -112,10 +112,10 @@ class ReleaseCurve(object):
         corresponding l-parameter. Default: 1905 ms
     pulses : integer
         Number of pulses seperated by the delay parameter. Has no effect if the
-        :attr:`cont` parameter is True. Is also an attribute. Default: 3
+        :attr:`continued` parameter is True. Is also an attribute. Default: 3
     delay : float
         Seconds between pulses. Is also an attribute. Default: 10.0 s
-    cont : bool
+    continued : bool
         Continuously generate pulses seperated by the delay parameter if True,
         else create the number of pulses given in the pulses parameter. Is also
         an attribute. Default: True
@@ -132,7 +132,7 @@ class ReleaseCurve(object):
     def __init__(self, amp=4.0 * 10 ** 7, a=0.9,
                  tr=78 * (10 ** -3), tf=396 * (10 ** -3),
                  ts=1905 * (10 ** -3),
-                 pulses=3, delay=10.0, cont=True):
+                 pulses=3, delay=10.0, continued=True):
         super(ReleaseCurve, self).__init__()
         self.amp = amp
         self.a = a
@@ -143,9 +143,9 @@ class ReleaseCurve(object):
 
         self.pulses = pulses
         self.delay = delay
-        self.cont = cont
+        self.continued = continued
 
-    def FitToData(self, t, y, yerr):
+    def fit_to_data(self, t, y, yerr):
         """If a release curve is measured as a function of time, this should
         fit the parameters to the given curve y(t) with errors yerr.
 
@@ -176,9 +176,9 @@ class ReleaseCurve(object):
             self.lr = np.log(2) / params['tr']
             self.lf = np.log(2) / params['tf']
             self.ls = np.log(2) / params['ts']
-            return (y - self.EmpiricalFormula(t)) / yerr
+            return (y - self.empirical_formula(t)) / yerr
 
-        lm.minimize(resid, params)
+        return lm.minimize(resid, params)
 
     @property
     def pulses(self):
@@ -189,14 +189,14 @@ class ReleaseCurve(object):
         self._pulses = int(value)
 
     @property
-    def cont(self):
-        return self._cont
+    def continued(self):
+        return self._continued
 
-    @cont.setter
-    def cont(self, value):
-        self._cont = (value == 1)
+    @continued.setter
+    def continued(self, value):
+        self._continued = (value == 1)
 
-    def EmpiricalFormula(self, t):
+    def empirical_formula(self, t):
         amp = self.amp
         a = self.a
         lr = self.lr
@@ -217,32 +217,32 @@ class ReleaseCurve(object):
             Times for which the yield is requested."""
         pulses = self.pulses
         delay = self.delay
-        cont = self.cont
+        continued = self.continued
 
         pulses = np.arange(1.0, pulses) * delay
-        rc = self.EmpiricalFormula(t)
-        if not cont:
+        rc = self.empirical_formula(t)
+        if not continued:
             for pulsetime in pulses:
                 mask = t > pulsetime
                 try:
                     if any(mask):
-                        rc[mask] += self.EmpiricalFormula(t[mask] - pulsetime)
+                        rc[mask] += self.empirical_formula(t[mask] - pulsetime)
                 except TypeError:
                     if mask:
-                        rc += self.EmpiricalFormula(t - pulsetime)
+                        rc += self.empirical_formula(t - pulsetime)
         else:
             pulsetime = delay
             try:
                 number = (t // pulsetime).astype('int')
                 for pulses in range(1, max(number) + 1):
                     mask = (number >= pulses)
-                    rc[mask] += self.EmpiricalFormula(t[mask] -
-                                                      pulses * pulsetime)
+                    rc[mask] += self.empirical_formula(t[mask] -
+                                                       pulses * pulsetime)
             except AttributeError:
                 number = int(t // pulsetime)
                 if number > 0:
                     for i in range(number):
-                        rc += self.EmpiricalFormula(t - (i + 1) * pulsetime)
+                        rc += self.empirical_formula(t - (i + 1) * pulsetime)
         return rc
 
 
@@ -383,7 +383,7 @@ def round2SignifFigs(vals, n):
     return vals
 
 
-def weightedAverage(x, sigma):
+def weighted_average(x, sigma):
     r"""Takes the weighted average of an array of values and the associated
     errors. Calculates the scatter and statistical error, and returns
     the greater of these two values.
@@ -419,19 +419,36 @@ def weightedAverage(x, sigma):
 
         \sigma_{scatter}^2 &= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
                                                     x\right\rangle_{weighted}}
-                                                      {\sigma_i^2}\right)^2}
-               {\left(1-\frac{1}{N}\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
+                                                      {\sigma_i}\right)^2}
+               {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
     x = np.ravel(x)
     sigma = np.ravel(sigma)
     Xstat = (1 / sigma**2).sum()
     Xm = (x / sigma**2).sum() / Xstat
-    Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
+    # Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
     Xscatt = (((x - Xm) / sigma)**2).sum() / ((len(x) - 1) * Xstat)
     Xstat = 1 / Xstat
     return Xm, max(Xstat, Xscatt) ** 0.5
 
 
-def bootstrapCI(dataframe, kind='basic'):
+def bootstrap_ci(dataframe, kind='basic'):
+    """Generate confidence intervals on the 1-sigma level for bootstrapped data
+    given in a DataFrame.
+
+    Parameters
+    ----------
+    dataframe: DataFrame
+        DataFrame with the results of each bootstrap fit on a row. If the
+        t-method is to be used, a Panel is required, with the data in
+        the panel labeled 'data' and the uncertainties labeled 'stderr'
+    kind: str, optional
+        Selects which method to use: percentile, basic, or t-method (student).
+
+    Returns
+    -------
+    DataFrame
+        Dataframe containing the left and right limits for each column as rows.
+"""
     if isinstance(dataframe, pd.Panel):
         data = dataframe['data']
         stderrs = dataframe['stderr']
@@ -476,7 +493,7 @@ def bootstrapCI(dataframe, kind='basic'):
     return method(*args)
 
 
-def generateLikelihoodPlot(data):
+def generate_likelihood_plot(data):
     shape = int(np.ceil(np.sqrt(len(data.keys()))))
     figLikelih, axes = plt.subplots(shape, shape)
     axes = axes.flatten()
@@ -488,7 +505,24 @@ def generateLikelihoodPlot(data):
     return figLikelih, axes
 
 
-def generateCorrelationplot(data, filter=None):
+def generate_correlation_plot(data, filter=None):
+    """Given the random walk data, creates a triangle plot: distribution of
+    a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
+    3 sigma contours on the off-diagonal. The 1-sigma limits based on the
+    percentile method are also indicated, as well as added to the title.
+
+    Parameters
+    ----------
+    data: DataFrame
+        DataFrame collecting all the information on the random walk for each
+        parameter.
+    filter: list of str, optional
+        If supplied, only this list of columns is used for the plot.
+
+    Returns
+    -------
+    figure
+        Returns the MatPlotLib figure created."""
     if filter is None:
         g = WalkingGrid(data, diag_sharey=False,
                         despine=False)
@@ -503,8 +537,6 @@ def generateCorrelationplot(data, filter=None):
 
 
 def contour2d(x, y, ax=None, **kwargs):
-    """Creates a 2D contourmap from loglikelihood sampled data. Draws the
-    1, 2 and 3 sigma contours and fills them in."""
     if ax is None:
         ax = plt.gca()
     bins = kwargs.pop("bins", 50)
@@ -592,14 +624,15 @@ def addTruths(x, truth=None, ax=None, *args, **kwargs):
 class FittingGrid(sns.Grid):
 
     def __init__(self, minimizer, size=3, aspect=1,
-                 despine=True, nx=10, ny=10, selected=None,
-                 limit=5):
+                 despine=False, nx=10, ny=10, selected=None,
+                 limits=5, **kwargs):
         super(FittingGrid, self).__init__()
         # Sort out the variables that define the grid
         self.nx, self.ny = nx, ny
         self.minimizer = minimizer
         vars = []
-        self.limit = limit
+        self.extra_keywords = kwargs
+        self.limit = limits
         for key in minimizer.params:
             if minimizer.params[key].vary:
                 if selected is None:
@@ -628,8 +661,7 @@ class FittingGrid(sns.Grid):
             self.axes = np.array([axes]).reshape((1, 1))
         self._legend_data = {}
         self.remove_upper()
-        self.cm = sns.light_palette('navy', reverse=False, as_cmap=True)
-        self.cm = sns.diverging_palette(255, 133, l=60, n=3, center="dark", as_cmap=True)
+
         # Label the axes
         self._add_axis_labels()
 
@@ -646,13 +678,15 @@ class FittingGrid(sns.Grid):
             ax = self.axes[x, y]
             param1 = self.x_vars[y]
             param2 = self.y_vars[x]
-            limits = ((self.minimizer.params[param1].value + self.limit * self.minimizer.params[param1].stderr,
-                       self.minimizer.params[param1].value - self.limit * self.minimizer.params[param1].stderr),
-                      (self.minimizer.params[param2].value + self.limit * self.minimizer.params[param2].stderr,
-                       self.minimizer.params[param2].value - self.limit * self.minimizer.params[param2].stderr))
+            p1 = self.minimizer.params[param1]
+            p2 = self.minimizer.params[param2]
+            limits = ((p1.value + self.limit * p1.stderr,
+                       p1.value - self.limit * p1.stderr),
+                      (p2.value + self.limit * p2.stderr,
+                       p2.value - self.limit * p2.stderr))
             X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
                                           nx=self.nx, ny=self.ny,
-                                          )
+                                          limits=limits)
             # cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
             cf = ax.contourf(X, Y, GR, V, cmap=cmap, norm=norm)
             labels = ax.get_xticklabels()
@@ -713,7 +747,11 @@ class WalkingGrid(sns.PairGrid):
         self.fig = fig
         self.axes = axes
 
-        l, b, r, t = 0.25 * size *aspect / figsize[0], 0.4 * size / figsize[1], 1 - 0.1 * size * aspect / figsize[0], 1 - 0.2 * size * aspect / figsize[1]
+        l, b, r, t = (0.25 * size * aspect / figsize[0],
+                      0.4 * size / figsize[1],
+                      1 - 0.1 * size * aspect / figsize[0],
+                      1 - 0.2 * size * aspect / figsize[1])
+
         fig.subplots_adjust(left=l, bottom=b, right=r, top=t,
                             wspace=0.02, hspace=0.02)
         for ax in np.diag(self.axes):

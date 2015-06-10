@@ -14,11 +14,11 @@ def Poisson(x, l):
     """Returns the loglikelihood for a Poisson distribution.
     In this calculation, it is assumed that the parameters
     are true, and the loglikelihood that the data is drawn from
-    the distribution established by the parameters is calculated
+    the distribution established by the parameters is calculated.
 
     Parameters
     ----------
-    x : array_likes
+    x : array_like
         Data that has to be tested.
     l : array_like
         Parameter for the Poisson distribution.
@@ -31,5 +31,23 @@ def Poisson(x, l):
 
 
 def Gaussian(x, l):
-    s = l ** 0.5
-    return -np.log(np.sqrt(2*np.pi)*s)-(x-l)**2/(2.0*s**2)
+    """Returns the loglikelihood for a Gaussian distribution,
+    assuming the variance is given by the square root of the data
+    points. It is assumed that the parameters are true, and the
+    loglikelihood that the data is drawn from the distribution
+    established by the parameters is calculated.
+
+    Parameters
+    ----------
+    x : array_like
+        Data that has to be tested.
+    l : array_like
+        Parameter for the Poisson distrbution.
+
+    Returns
+    -------
+    array_like
+        Array with the loglikelihoods for the data"""
+    s = x ** 0.5
+    return -((x - l)/(2 * s)) ** 2
+    # return -np.log(np.sqrt(2*np.pi)*s)-(x-l)**2/(2.0*s**2)
