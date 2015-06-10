@@ -23,8 +23,12 @@ This package makes heavy use of the following packages::
 * [LMFIT](http://lmfit.github.io/lmfit-py/index.html)
 * [PyQtGraph](http://www.pyqtgraph.org/)
 * [emcee](http://dan.iel.fm/emcee/current/)
-* (Optionally: [seaborn](http://stanford.edu/~mwaskom/software/seaborn/))
+* [seaborn](http://stanford.edu/~mwaskom/software/seaborn/)
 
 Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the `sympy.physics.wigner` module, in order to calculate the Wigner symbols. Also included is the `triangle.py` script, written by Dan Foreman-Mackey et al.
 
 A detailed documentation of the code can be found [here](http://woutergins.github.io/satlas/).
+
+Installation
+------------
+At the moment, automatic installation is not yet possible. The best option is to download the master branch as a zip file, and unzip to your Python path.
