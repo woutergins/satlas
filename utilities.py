@@ -426,7 +426,9 @@ def weightedAverage(x, sigma):
     Xstat = (1 / sigma**2).sum()
     Xm = (x / sigma**2).sum() / Xstat
     Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
-    return Xm, max(Xstat, Xscatt)
+    Xscatt = (((x - Xm) / sigma)**2).sum() / ((len(x) - 1) * Xstat)
+    Xstat = 1 / Xstat
+    return Xm, max(Xstat, Xscatt) ** 0.5
 
 
 def bootstrapCI(dataframe, kind='basic'):
@@ -590,12 +592,14 @@ def addTruths(x, truth=None, ax=None, *args, **kwargs):
 class FittingGrid(sns.Grid):
 
     def __init__(self, minimizer, size=3, aspect=1,
-                 despine=True, nx=10, ny=10, selected=None):
+                 despine=True, nx=10, ny=10, selected=None,
+                 limit=5):
         super(FittingGrid, self).__init__()
         # Sort out the variables that define the grid
         self.nx, self.ny = nx, ny
         self.minimizer = minimizer
         vars = []
+        self.limit = limit
         for key in minimizer.params:
             if minimizer.params[key].vary:
                 if selected is None:
@@ -642,8 +646,13 @@ class FittingGrid(sns.Grid):
             ax = self.axes[x, y]
             param1 = self.x_vars[y]
             param2 = self.y_vars[x]
+            limits = ((self.minimizer.params[param1].value + self.limit * self.minimizer.params[param1].stderr,
+                       self.minimizer.params[param1].value - self.limit * self.minimizer.params[param1].stderr),
+                      (self.minimizer.params[param2].value + self.limit * self.minimizer.params[param2].stderr,
+                       self.minimizer.params[param2].value - self.limit * self.minimizer.params[param2].stderr))
             X, Y, GR = lm.conf_interval2d(self.minimizer, param1, param2,
-                                          nx=self.nx, ny=self.ny)
+                                          nx=self.nx, ny=self.ny,
+                                          )
             # cf = ax.contourf(X, Y, GR, V, cmap=self.cm)
             cf = ax.contourf(X, Y, GR, V, cmap=cmap, norm=norm)
             labels = ax.get_xticklabels()

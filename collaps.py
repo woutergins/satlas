@@ -10,7 +10,7 @@
 from datetime import datetime
 import re
 import sys
-from satlas.spectrum import Spectrum
+from satlas.spectrum import SingleSpectrum
 import satlas.utilities as utilities
 import lmfit as lm
 import numpy as np
@@ -156,8 +156,8 @@ class Track(object):
     def __init__(self, *arg):
         super(Track, self).__init__()
         self.isotope = arg[0]
-        self.scans = arg[2]
         self.cycles = arg[1]
+        self.scans = arg[2]
         self.measurement = False
         self.kepco = False
         self.sicl = False
@@ -1091,10 +1091,10 @@ def interactiveMode(I, J, ABC, f, filename=None, mass=None,
 
         x = laserFreq * dopp - transitionFreq
 
-        test = Spectrum(I, J, ABC, f, shape='lorentzian')
+        test = SingleSpectrum(I, J, ABC, f, shape='lorentzian', fwhm=50)
         test.scale = max(y)
     else:
-        test = Spectrum(I, J, ABC, f, shape='lorentzian')
+        test = SingleSpectrum(I, J, ABC, f, shape='lorentzian', fwhm=50)
         left, right = min(test.mu), max(test.mu)
         x = np.linspace(left - 600, right + 600, 1000)
     test.fwhm = 100

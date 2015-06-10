@@ -383,6 +383,15 @@ class Spectrum(object):
                               despine=False, **kwargs)
         return g
 
+    def CalculateConfidenceIntervals(self, selected=True, **kwargs):
+        names = [p for f in self.selected for p in self.ChiSquareFit.params if (f in self.ChiSquareFit.params[p].name and self.ChiSquareFit.params[p].vary)] if selected else None
+        self.ChiSquareCI = lm.conf_interval(self.ChiSquareFit,
+                                            p_names=names,
+                                            **kwargs)
+
+    def DisplayCI(self):
+        lm.report_ci(self.ChiSquareCI)
+
     def CalculateChisquareMap(self, params, fig=None, ax=None, **kwargs):
         """Creates and returns a chi-square map around the supplied two
         parameters. """
