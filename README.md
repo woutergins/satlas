@@ -26,3 +26,5 @@ This package makes heavy use of the following packages::
 * (Optionally: [seaborn](http://stanford.edu/~mwaskom/software/seaborn/))
 
 Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the `sympy.physics.wigner` module, in order to calculate the Wigner symbols. Also included is the `triangle.py` script, written by Dan Foreman-Mackey et al.
+
+A detailed documentation of the code can be found [here](http://woutergins.github.io/satlas/).
