@@ -1,6 +1,6 @@
 SATLAS -- Simulation and Analysis Toolbox for Laser Spectroscopy and NMR Experiments
 ====================================================================================
-![alt text](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.15497-blue.svg 'DOI Identifier')
+![alt text](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18444-blue.svg 'DOI Identifier')
 ![alt text](https://img.shields.io/badge/License-MIT-blue.svg 'License')
 ![alt text](https://img.shields.io/badge/Python-3.4-green.svg 'Python version')
 ![alt text](https://img.shields.io/badge/Tested_on-Windows-green.svg 'Supported platform')
