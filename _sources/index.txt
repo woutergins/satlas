@@ -6,7 +6,7 @@
 ************************************************************************************
 SATLAS -- Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments
 ************************************************************************************
-.. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.15497-blue.svg
+.. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18444-blue.svg
     :alt: DOI Identifier
     :scale: 100%
 
@@ -59,7 +59,7 @@ This package makes heavy use of the following packages:
     * `sympy <http://www.sympy.org/>`_
     * (optionally: `seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_)
 
-Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the :mod:`sympy.physics.wigner` module, in order to calculate the Wigner symbols. Also included is the `triangle.py` script, written by Dan Foreman-Mackey et al. :cite:`Foreman-Mackey2014`.
+Code can be downloaded `here <https://github.com/woutergins/satlas>`_. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the :mod:`sympy.physics.wigner` module, in order to calculate the Wigner symbols. inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al. :cite:`Foreman-Mackey2014`.
 
 Indices and tables
 ==================
