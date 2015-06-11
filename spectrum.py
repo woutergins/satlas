@@ -856,6 +856,8 @@ class SingleSpectrum(Spectrum):
         self.ratio = [None, None, None]
 
         self.calculateLevels()
+        self.relAmp = [f * scale for f in self.relAmp]
+        self.calculateLevels()
         self.fwhm = fwhm
 
     def set_variation(self, varyDict):
@@ -1257,8 +1259,8 @@ class SingleSpectrum(Spectrum):
         par.add('Background', value=self.background, vary=True, min=0)
         par.add('N', value=self._n, vary=False)
         if self._n > 0:
-            par.add('Poisson', value=self._Poisson, vary=True, min=0)
-            par.add('Offset', value=self._Offset, vary=True, max=0)
+            par.add('Poisson', value=self._poisson, vary=True, min=0)
+            par.add('Offset', value=self._offset, vary=True, min=None, max=-0.01)
         for key in self._vary.keys():
             if key in par.keys():
                 par[key].vary = self._vary[key]
