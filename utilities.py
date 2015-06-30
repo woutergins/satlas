@@ -932,10 +932,3 @@ class WalkingGrid(sns.PairGrid):
             except (ValueError, TypeError):
                 pass
         return numeric_cols
-
-
-def concat_results(list_of_results, index=None):
-    if index is None:
-        index = range(1, len(list_of_results) + 1)
-    result = pd.concat(list_of_results, keys=index)
-    return result

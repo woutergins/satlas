@@ -492,7 +492,8 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         lm.report_ci(self.chisquare_ci)
 
     def get_result_frame(self, method='chisquare',
-                         selected=False, bounds=False):
+                         selected=False, bounds=False,
+                         vary=False):
         if method.lower() == 'chisquare':
             values = self.chisquare_result.params.values()
         elif method.lower() == 'mle':
@@ -501,6 +502,8 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             raise KeyError
         if selected:
             values = [v for n in self.selected for v in values if v.name in n]
+        if vary:
+            values = [v for v in values if v.vary]
         if bounds:
             ind = ['Value', 'Uncertainty', 'Upper Bound', 'Lower Bound']
             data = np.array([[p.value, p.stderr, p.max, p.min] for p in values]).flatten()
@@ -866,7 +869,7 @@ class SingleSpectrum(Spectrum):
         self.fwhm_limit = 0.1
         self._df = df
 
-        self.scale = scale if racah_int else 1.0
+        self.scale = scale
         self._background = background
 
         self._energies = []
