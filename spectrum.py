@@ -392,7 +392,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
 
         result = lm.minimize(Model, params, args=(x, y, yerr, errorByFit))
 
-        self.chisquare_fit = result
+        self.chisquare_result = result
 
     def display_chisquare_fit(self, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
@@ -404,7 +404,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisquare_fit'):
             print('Scaled errors estimated from covariance matrix.')
-            print(lm.fit_report(self.chisquare_fit, **kwargs))
+            print(lm.fit_report(self.chisquare_result, **kwargs))
         else:
             print('Spectrum has not yet been fitted with this method!')
 
@@ -424,13 +424,13 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Returns a 3-tuple of lists containing the names of the parameters,
             the values and the estimated uncertainties."""
         var, var_names, varerr = [], [], []
-        if hasattr(self, 'chisquare_fit') and (selection.lower() == 'chisquare'
+        if hasattr(self, 'chisquare_result') and (selection.lower() == 'chisquare'
                                                or selection.lower() == 'any'):
-            for key in sorted(self.chisquare_fit.params.keys()):
-                if self.chisquare_fit.params[key].vary:
-                    var.append(self.chisquare_fit.params[key].value)
-                    var_names.append(self.chisquare_fit.params[key].name)
-                    varerr.append(self.chisquare_fit.params[key].stderr)
+            for key in sorted(self.chisquare_result.params.keys()):
+                if self.chisquare_result.params[key].vary:
+                    var.append(self.chisquare_result.params[key].value)
+                    var_names.append(self.chisquare_result.params[key].name)
+                    varerr.append(self.chisquare_result.params[key].stderr)
         elif hasattr(self, 'mle_fit'):
             for key in sorted(self.mle_fit.params.keys()):
                 if self.mle_fit.params[key].vary:
@@ -465,7 +465,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         -------
         figure
             Returns the generated MatPlotLib figure"""
-        g = utils.FittingGrid(self.chisquare_fit,
+        g = utils.FittingGrid(self.chisquare_result,
                               selected=self.selected if selected else None,
                               **kwargs)
         return g.fig
@@ -481,15 +481,35 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Boolean controlling if the used parameters are only the ones
             defined in the attribute :attr:`selected` (True), or if all
             parameters are to be used."""
-        names = [p for f in self.selected for p in self.chisquare_fit.params
-                 if (f in self.chisquare_fit.params[p].name and
-                     self.chisquare_fit.params[p].vary)] if selected else None
-        self.chisquare_ci = lm.conf_interval(self.chisquare_fit,
+        names = [p for f in self.selected for p in self.chisquare_result.params
+                 if (f in self.chisquare_result.params[p].name and
+                     self.chisquare_result.params[p].vary)] if selected else None
+        self.chisquare_ci = lm.conf_interval(self.chisquare_result,
                                              p_names=names,
                                              **kwargs)
 
     def display_ci(self):
         lm.report_ci(self.chisquare_ci)
+
+    def get_result_frame(self, method='chisquare', selected=False):
+        if method.lower() == 'chisquare':
+            values = self.chisquare_result.params.values()
+        elif method.lower() == 'mle':
+            values = self.mle_result.params.values()
+        else:
+            raise KeyError
+        if selected:
+            values = [v for n in self.selected for v in values if v.name in n]
+        result = pd.DataFrame.from_dict({p.name: {'Value': p.value,
+                                                  'Uncertainty': p.stderr,
+                                                  'Upper Bound': p.max,
+                                                  'Lower Bound': p.min}
+                                         if p.vary else {'Value': p.value}
+                                         for p in values})
+        result = pd.DataFrame.from_dict(result)
+        result = result.reindex(['Value', 'Uncertainty',
+                                 'Upper Bound', 'Lower Bound'])
+        return result
 
 
 class CombinedSpectrum(Spectrum):

@@ -383,7 +383,7 @@ def round2SignifFigs(vals, n):
     return vals
 
 
-def weighted_average(x, sigma):
+def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated
     errors. Calculates the scatter and statistical error, and returns
     the greater of these two values.
@@ -421,14 +421,14 @@ def weighted_average(x, sigma):
                                                     x\right\rangle_{weighted}}
                                                       {\sigma_i}\right)^2}
                {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
-    x = np.ravel(x)
-    sigma = np.ravel(sigma)
-    Xstat = (1 / sigma**2).sum()
-    Xm = (x / sigma**2).sum() / Xstat
+    # x = np.ravel(x)
+    # sigma = np.ravel(sigma)
+    Xstat = (1 / sigma**2).sum(axis=axis)
+    Xm = (x / sigma**2).sum(axis=axis) / Xstat
     # Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
-    Xscatt = (((x - Xm) / sigma)**2).sum() / ((len(x) - 1) * Xstat)
+    Xscatt = (((x - Xm) / sigma)**2).sum(axis=axis) / ((len(x) - 1) * Xstat)
     Xstat = 1 / Xstat
-    return Xm, max(Xstat, Xscatt) ** 0.5
+    return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
 
 
 def bootstrap_ci(dataframe, kind='basic'):
@@ -932,3 +932,10 @@ class WalkingGrid(sns.PairGrid):
             except (ValueError, TypeError):
                 pass
         return numeric_cols
+
+
+def concat_results(list_of_results, index=None):
+    if index is None:
+        index = range(1, len(list_of_results) + 1)
+    result = pd.concat(list_of_results, keys=index)
+    return result
