@@ -76,7 +76,7 @@ Note
     def fwhm(self, value):
         try:
             self._fwhm = value[0]
-        except IndexError:
+        except (IndexError, TypeError):
             self._fwhm = value
         self.sigma = self.fwhm / (2 * np.sqrt(2 * np.log(2)))
         if not self.ampIsArea:
@@ -131,7 +131,7 @@ http://mathworld.wolfram.com/LorentzianFunction.html:
     def fwhm(self, value):
         try:
             self._fwhm = value[0]
-        except IndexError:
+        except (IndexError, TypeError):
             self._fwhm = value
         self.gamma = 0.5 * self.fwhm
         if not self.ampIsArea:
@@ -256,7 +256,7 @@ code inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.
     def fwhm(self, value):
         try:
             self._fwhm = value[0]
-        except IndexError:
+        except (IndexError, TypeError):
             self._fwhm = value
         self.gamma = self.fwhm / np.sqrt(np.power(2, 2.0 / 3) - 1)
         if not self.ampIsArea:
@@ -310,7 +310,7 @@ Deyan Yordanov :cite:`Yordanov2007`.
     def fwhm(self, value):
         try:
             self._fwhm = value[0]
-        except IndexError:
+        except (IndexError, TypeError):
             self._fwhm = value
         self.gamma = self.fwhm / (2 * np.log(np.sqrt(2) + 1))
         if not self.ampIsArea:
@@ -371,7 +371,7 @@ lineshapes:
     def fwhm(self, value):
         try:
             self._fwhm = value[0]
-        except IndexError:
+        except (IndexError, TypeError):
             self._fwhm = value
         self._fwhm = value
         self.L.fwhm = value
