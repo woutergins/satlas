@@ -6,11 +6,13 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
+import emcee as mcmc
 import lmfit as lm
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy.integrate as integrate
 import seaborn as sns
 
 c = 299792458.0
@@ -932,3 +934,23 @@ class WalkingGrid(sns.PairGrid):
             except (ValueError, TypeError):
                 pass
         return numeric_cols
+
+
+def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
+    binsize = x[1] - x[0]
+    def lnprob(x, left, right):
+        if x > right + binsize / 2 or x < left - binsize / 2:
+            return -np.inf
+        else:
+            return np.log(spectrum(x))
+    ndim = 1
+    pos = (np.random.rand(nwalkers) * (x.max() - x.min()) + x.min()).reshape((nwalkers, ndim))
+    sampler = mcmc.EnsembleSampler(nwalkers, ndim, lnprob, args=(x.min(), x.max()))
+    pos, prob, state = sampler.run_mcmc(pos, 1000)
+    sampler.reset()
+    sampler.run_mcmc(pos, np.ceil(number_of_counts / nwalkers))
+    samples = sampler.flatchain[-number_of_counts:]
+    bins = x - binsize / 2
+    bins = np.append(bins, bins[-1] + binsize)
+    y, _ = np.histogram(samples, bins)
+    return y
