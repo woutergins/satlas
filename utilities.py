@@ -12,7 +12,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.integrate as integrate
 import seaborn as sns
 
 c = 299792458.0
@@ -937,19 +936,48 @@ class WalkingGrid(sns.PairGrid):
 
 
 def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
-    binsize = x[1] - x[0]
+    """Generates a spectrum by random sampling from the provided hyperfine
+    spectrum and range. The total number of counts for the generated spectrum
+    is required.
+
+    Parameters
+    ----------
+    spectrum: SingleSpectrum
+        An instance of SingleSpectrum, which gives the probability distribution
+        from which the random samples are drawn.
+    x: NumPy array
+        NumPy array representing the bin centers for the spectrum.
+    number_of_counts: int
+        Parameter controlling the total number of counts in the spectrum.
+    nwalkers: int, optional
+        Number of walkers for the random sampling algorithm from emcee.
+
+    Returns
+    -------
+    y: NumPy array
+        Array containing the number of counts corresponding to each value
+        in x.
+    """
+    binsize = x[1] - x[0]  # Need the binsize for accurate lnprob boundaries
+
     def lnprob(x, left, right):
         if x > right + binsize / 2 or x < left - binsize / 2:
-            return -np.inf
+            return -np.inf  # Make sure only to draw from the provided range
         else:
-            return np.log(spectrum(x))
+            return np.log(spectrum(x))  # No need to normalize lnprob!
     ndim = 1
-    pos = (np.random.rand(nwalkers) * (x.max() - x.min()) + x.min()).reshape((nwalkers, ndim))
-    sampler = mcmc.EnsembleSampler(nwalkers, ndim, lnprob, args=(x.min(), x.max()))
+    pos = (np.random.rand(nwalkers) * (x.max() - x.min())
+           + x.min()).reshape((nwalkers, ndim))
+    sampler = mcmc.EnsembleSampler(nwalkers, ndim, lnprob,
+                                   args=(x.min(), x.max()))
+    # Burn-in
     pos, prob, state = sampler.run_mcmc(pos, 1000)
     sampler.reset()
+    # Making sure not to do too much work! Divide requested number of samples
+    # by number of walkers, make sure it's a higher integer.
     sampler.run_mcmc(pos, np.ceil(number_of_counts / nwalkers))
     samples = sampler.flatchain[-number_of_counts:]
+    # Bin the samples
     bins = x - binsize / 2
     bins = np.append(bins, bins[-1] + binsize)
     y, _ = np.histogram(samples, bins)
