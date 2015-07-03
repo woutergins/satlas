@@ -219,7 +219,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Defaults to True.
         store_walks: boolean, optional
             For deeper debugging, the data from the walks can be saved and
-            viewed later on"""
+            viewed later on."""
 
         params = self.params_from_var()
         self.mle_fit = self.params_from_var()
@@ -230,7 +230,6 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                 var_names.append(key)
                 vars.append(params[key].value)
         ndim = len(vars)
-        # pos = [vars + 1e-4 * np.random.randn(ndim) for i in range(walkers)]
         pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
         x, y, _ = self.sanitize_input(x, y)
 
@@ -252,6 +251,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         if verbose:
             print('Starting burn-in ({} steps)...'.format(burn))
         sampler.run_mcmc(pos, burn, storechain=False)
+        sampler.reset()
         if verbose:
             print('Starting walk ({} steps)...'.format(nsteps - burn))
         sampler.run_mcmc(pos, nsteps - burn)
@@ -283,6 +283,19 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             self.walks = None
 
     def generate_walks(self):
+        """If the result of walks has been stored, plot them as
+        seperate lines for each parameter. Raises a KeyError if no walks
+        have been performed yet.
+
+        Returns
+        -------
+        figure, axes
+            Returns a new figure and axes containing the plot of the
+            random walks.
+        Raises
+        ------
+        KeyError
+            When this function is called without walks being saved."""
         if self.walks is not None:
             var_names, _, _ = self.vars()
             shape = int(np.ceil(np.sqrt(len(var_names))))
@@ -295,9 +308,24 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                 a.set_ylabel(n)
             return figWalks, axes
         else:
-            return None
+            raise KeyError("No instance of 'walks' found!")
 
     def generate_likelihood(self, x, y):
+        """Given the data x and y, generate approximate likelihood functions
+        for all parameters.
+
+        Parameters
+        ----------
+        x, y: array_like
+            The frequency (x) and counts (y) in the data.
+
+        Returns
+        -------
+        data: dict of dicts
+            A dictionary containing the x and y values for the likelihood
+            functions for each variable. The first dictionary has all the
+            variable names as keys, the second dictionary has 'x' and 'y'
+            as keys."""
         params = self.params_from_var()
         var_names = []
         vars = []
@@ -362,7 +390,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         yerr[np.isclose(yerr, 0.0)] = 1.0
         return self.chisquare_fit(x, y, yerr, **kwargs)
 
-    def chisquare_fit(self, x, y, yerr, errorByFit=False):
+    def chisquare_fit(self, x, y, yerr, pierson=False):
         """Use a non-linear least squares minimization (Levenberg-Marquardt)
         algorithm to minimize the chi-square of the fit to data :attr:`x` and
         :attr:`y` with errorbars :attr:`yerr`. Reasonable bounds are used on
@@ -376,21 +404,25 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         y: array_like
             Counts corresponding to :attr:`x`.
         yerr: array_like
-            Error bars on :attr:`y`."""
+            Error bars on :attr:`y`.
+        pierson: boolean, optional
+            Selects if the normal or Pierson chi-square statistic is used.
+            The Pierson chi-square uses the model value to estimate the
+            uncertainty. Defaults to :attr:`False`."""
 
         x, y, yerr = self.sanitize_input(x, y, yerr)
 
-        def Model(params, x, y, yerr, errorByFit):
+        def Model(params, x, y, yerr, pierson):
             self.var_from_params(params)
             model = self(x)
-            if errorByFit:
+            if pierson:
                 yerr = np.sqrt(model)
                 yerr[np.isclose(yerr, 0.0)] = 1.0
             return (y - model) / yerr
 
         params = self.params_from_var()
 
-        result = lm.minimize(Model, params, args=(x, y, yerr, errorByFit))
+        result = lm.minimize(Model, params, args=(x, y, yerr, pierson))
 
         self.chisquare_result = result
 
@@ -489,11 +521,34 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                                              **kwargs)
 
     def display_ci(self):
+        """If the confidence bounds for the parameters have been calculated
+        with the method :meth:`calculate_confidence_intervals`, print the
+        results to stdout."""
         lm.report_ci(self.chisquare_ci)
 
     def get_result_frame(self, method='chisquare',
                          selected=False, bounds=False,
                          vary=False):
+        """Returns the data from the fit in a pandas DataFrame.
+
+        Parameters
+        ----------
+        method: str, optional
+            Selects which fitresults have to be loaded. Can be 'chisquare' or
+            'mle'. Defaults to 'chisquare'.
+        selected: boolean, optional
+            Selects if only the parameters in :attr:`selected` have to be
+            given or not. Defaults to :attr:`False`.
+        bounds: boolean, optional
+            Selects if the boundary also has to be given. Defaults to
+            :attr:`False`.
+        vary: boolean, optional
+            Selects if only the parameters that have been varied have to
+            be supplied. Defaults to :attr:`False`.
+
+        Returns
+        -------
+        DataFrame"""
         if method.lower() == 'chisquare':
             values = self.chisquare_result.params.values()
         elif method.lower() == 'mle':
