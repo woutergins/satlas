@@ -389,6 +389,7 @@ class Polar(object):
             Mf.append(mf)
         F = np.array(F)
         Mf = np.array(Mf)
+        self.F = F
 
         # F_z component of the different states.
         sM = np.array([])
@@ -622,7 +623,9 @@ class Polar(object):
         for n, ncs in zip(self.Nlev, self.Nlevcs):
             pop.append(y[ncs - n:ncs].sum())
         pop = np.array(pop)
-        y = 100.0 * (pop / pop.sum())
+        # y = 100.0 * (pop / pop.sum())
+        y = np.array(y)
+        y = 100.0 * (y / y.sum())
         y = np.append(pol, y)
         return y
 
@@ -758,6 +761,7 @@ class Polar(object):
         try:
             # If a range of f-values is given, the try block will call
             # self(F) for each F in f, and save all results, then return them
+            # print(len(f[0]) > 0)
             assert len(f[0]) > 0
             if self.n >= 2:
                 if isinstance(f[1], np.ndarray):
@@ -772,7 +776,7 @@ class Polar(object):
                     f.append(a)
             else:
                 f = np.meshgrid(*f)
-            resp = np.zeros(np.shape(f[0]) + (len(self.levels) + 1,))
+            resp = np.zeros(np.shape(f[0]) + (len(self.F.flatten()) + 1,))
             indices = util.state_number_enumerate(np.shape(f[0]))
             for inds in indices:
                 resp[inds] = self._produce([F[inds] for F in f])

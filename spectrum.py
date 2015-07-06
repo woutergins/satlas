@@ -552,7 +552,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         if method.lower() == 'chisquare':
             values = self.chisquare_result.params.values()
         elif method.lower() == 'mle':
-            values = self.mle_result.params.values()
+            values = self.mle_fit.values()
         else:
             raise KeyError
         if selected:
