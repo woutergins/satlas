@@ -710,7 +710,7 @@ class SingleSpectrum(Spectrum):
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
 
-        if no_of_points is None:
+        if x is None:
             ranges = []
 
             ## Hack alert!!!!
@@ -723,21 +723,24 @@ class SingleSpectrum(Spectrum):
             for pos in self.mu:
                 r = np.linspace(pos - 4 * fwhm,
                             pos + 4 * fwhm, 
-                            10**2)
+                            2*10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-            print(self.mu,superx)
                 
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
         
-        ax.errorbar(x, y, yerr, fmt='o', markersize=5)
+        if not x is None and not y is None:
+            ax.errorbar(x, y, yerr, fmt='o', markersize=5)
         ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
         ax.set_xlabel('Frequency (MHz)', fontsize=16)
         ax.set_ylabel('Counts', fontsize=16)
 
         plt.show()
 
-    def plot_spectroscopic(self,x,y,no_of_points=None,ax=None):
-        yerr = np.sqrt(y + 1)
+    def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None):
+        if not y is None:
+            yerr = np.sqrt(y + 1)
+        else:
+            yerr = None
         self.plot(x,y,yerr,no_of_points,ax)
