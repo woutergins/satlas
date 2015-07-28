@@ -1370,12 +1370,18 @@ class SingleSpectrum(Spectrum):
 
         if self._I in self.I_value:
             Al, Au, Bl, Bu, Cl, Cu = self.I_value[self._I]
-            par['Al'].vary, par['Al'].value = Al
-            par['Au'].vary, par['Au'].value = Au
-            par['Bl'].vary, par['Bl'].value = Bl
-            par['Bu'].vary, par['Bu'].value = Bu
-            par['Cl'].vary, par['Cl'].value = Cl
-            par['Cu'].vary, par['Cu'].value = Cu
+            if not Al[0]:
+                par['Al'].vary, par['Al'].value = Al
+            if not Au[0]:
+                par['Au'].vary, par['Au'].value = Au
+            if not Bl[0]:
+                par['Bl'].vary, par['Bl'].value = Bl
+            if not Bu[0]:
+                par['Bu'].vary, par['Bu'].value = Bu
+            if not Cl[0]:
+                par['Cl'].vary, par['Cl'].value = Cl
+            if not Cu[0]:
+                par['Cu'].vary, par['Cu'].value = Cu
         if self._J[0] in self.J_lower_value:
             Al, Bl, Cl = self.J_lower_value[self._J[0]]
             if not Al[0]:
