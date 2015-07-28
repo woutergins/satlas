@@ -511,6 +511,24 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                                  'Upper Bound', 'Lower Bound'])
         return result
 
+    ###############################
+    #      PLOTTING ROUTINES      #
+    ###############################
+
+    def plot(self,x,y,yerr,no_of_points=10**4):
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.errorbar(x, y, yerr, fmt='o', markersize=5)
+        superx = np.linspace(x.min(), x.max(), no_of_points)
+        ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
+        ax.set_xlabel('Frequency (MHz)', fontsize=16)
+        ax.set_ylabel('Counts', fontsize=16)
+
+        plt.show()
+
+    def plot_spectroscopic(self,x,y,no_of_points):
+        yerr = np.sqrt(y + 1)
+        self.plot(x,y,yerr,no_of_points)
 
 class CombinedSpectrum(Spectrum):
 
