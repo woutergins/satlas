@@ -912,6 +912,26 @@ class SingleSpectrum(Spectrum):
             shape = 'voigt'
             fwhm = [50.0, 50.0]
 
+        self.I_value = {0.0: ((False, 0), (False, 0), (False, 0),
+                              (False, 0), (False, 0), (False, 0)),
+                        0.5: ((True, 1), (True, 1),
+                              (False, 0), (False, 0), (False, 0), (False, 0)),
+                        1.0: ((True, 1), (True, 1),
+                              (True, 1), (True, 1),
+                              (False, 0), (False, 0))
+                        }
+        self.J_lower_value = {0.0: ((False, 0), (False, 0), (False, 0)),
+                              0.5: ((True, 1),
+                                    (False, 0), (False, 0)),
+                              1.0: ((True, 1),
+                                    (True, 1), (False, 0))
+                              }
+        self.J_upper_value = {0.0: ((False, 0), (False, 0), (False, 0)),
+                              0.5: ((True, 1),
+                                    (False, 0), (False, 0)),
+                              1.0: ((True, 1),
+                                    (True, 1), (False, 0))
+                              }
         self.shape = shape
         self._relAmp = []
         self._racah_int = racah_int
@@ -1347,33 +1367,32 @@ class SingleSpectrum(Spectrum):
             if key in par.keys():
                 par[key].vary = self._vary[key]
         par['N'].vary = False
-        if self._I == 0.0:
-            par['Al'].vary = False
-            par['Al'].value = 0
-            par['Au'].vary = False
-            par['Au'].value = 0
-        if self._I <= 0.5:
-            par['Bl'].vary = False
-            par['Bl'].value = 0
-            par['Bu'].vary = False
-            par['Bu'].value = 0
-        if self._J[0] <= 0.5:
-            par['Bl'].vary = False
-            par['Bl'].value = 0
-        if self._J[1] <= 0.5:
-            par['Bu'].vary = False
-            par['Bu'].value = 0
-        if self._I <= 1.0:
-            par['Cl'].vary = False
-            par['Cl'].value = 0
-            par['Cu'].vary = False
-            par['Cu'].value = 0
-        if self._J[0] <= 1.0:
-            par['Cl'].vary = False
-            par['Cl'].value = 0
-        if self._J[1] <= 1.0:
-            par['Cu'].vary = False
-            par['Cu'].value = 0
+
+        if self._I in self.I_value:
+            Al, Au, Bl, Bu, Cl, Cu = self.I_value[self._I]
+            par['Al'].vary, par['Al'].value = Al
+            par['Au'].vary, par['Au'].value = Au
+            par['Bl'].vary, par['Bl'].value = Bl
+            par['Bu'].vary, par['Bu'].value = Bu
+            par['Cl'].vary, par['Cl'].value = Cl
+            par['Cu'].vary, par['Cu'].value = Cu
+        if self._J[0] in self.J_lower_value:
+            Al, Bl, Cl = self.J_lower_value[self._J[0]]
+            if not Al[0]:
+                par['Al'].vary, par['Al'].value = Al
+            if not Bl[0]:
+                par['Bl'].vary, par['Bl'].value = Bl
+            if not Cl[0]:
+                par['Cl'].vary, par['Cl'].value = Cl
+        if self._J[1] in self.J_upper_value:
+            Au, Bu, Cu = self.J_upper_value[self._J[1]]
+            if not Au[0]:
+                par['Au'].vary, par['Au'].value = Au
+            if not Bu[0]:
+                par['Bu'].vary, par['Bu'].value = Bu
+            if not Cu[0]:
+                par['Cu'].vary, par['Cu'].value = Cu
+
         return par
 
     def bootstrap(self, x, y, bootstraps=100, samples=None, selected=True):
