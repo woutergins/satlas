@@ -957,6 +957,10 @@ class SingleSpectrum(Spectrum):
         self._vary = {}
         self.ratio = [None, None, None]
 
+        self.ratioA = (None, 'lower')
+        self.ratioB = (None, 'lower')
+        self.ratioC = (None, 'lower')
+
         self.calculateLevels()
         self.relAmp = [f * scale for f in self.relAmp]
         self.calculateLevels()
@@ -1120,6 +1124,30 @@ class SingleSpectrum(Spectrum):
     @offset.setter
     def offset(self, value):
         self._offset = value
+
+    def fix_ratio(self, value, target='upper', parameter='A'):
+        """Fixes the ratio for a given hyperfine parameter to the given value.
+
+        Parameters
+        ----------
+        value: float
+            Value to which the ratio is set
+        target: {'upper', 'lower'}
+            Sets the target level. If 'upper', the upper parameter is
+            calculated as lower * ratio, 'lower' calculates the lower
+            parameter as upper * ratio.
+        parameter: {'A', 'B', 'C'}
+            Selects which hyperfine parameter to set the ratio for."""
+        if target.lower() not in ['lower', 'upper']:
+            raise KeyError("Target must be 'lower' or 'upper'.")
+        if parameter.lower() not in ['a', 'b', 'c']:
+            raise KeyError("Parameter must be 'A', 'B' or 'C'.")
+        if parameter.lower() == 'a':
+            self.ratioA = (value, target)
+        if parameter.lower() == 'b':
+            self.ratioB = (value, target)
+        if parameter.lower() == 'c':
+            self.ratioC = (value, target)
 
     def calculateLevels(self):
         self._F = [np.arange(abs(self._I - self._J[0]),
@@ -1346,15 +1374,17 @@ class SingleSpectrum(Spectrum):
         par.add('Cl', value=self._ABC[4], vary=True, min=b[0], max=b[1])
         par.add('Cu', value=self._ABC[5], vary=True, min=b[0], max=b[1])
 
-        if self.ratio[0] is not None:
-            par['Au'].expr = str(self.ratio[0]) + '*Al'
-            par['Au'].vary = False
-        if self.ratio[1] is not None:
-            par['Bu'].expr = str(self.ratio[1]) + '*Bl'
-            par['Bu'].vary = False
-        if self.ratio[2] is not None:
-            par['Cu'].expr = str(self.ratio[2]) + '*Cl'
-            par['Cu'].vary = False
+        ratios = (self.ratioA, self.ratioB, self.ratioC)
+        labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
+        for r, (l, u) in zip(ratios, labels):
+            if r[0] is not None:
+                if r[1].lower() == 'lower':
+                    fixed, free = l, u
+                else:
+                    fixed, free = u, l
+                par[fixed].expr = str(r[0]) + '*' + free
+                par[fixed].vary = False
+
 
         par.add('df', value=self._df, vary=True)
 
