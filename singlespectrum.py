@@ -705,17 +705,39 @@ class SingleSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x,y,yerr,no_of_points=10**4):
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
+    def plot(self,x,y,yerr,no_of_points,ax):
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 1, 1)
+
+        if no_of_points is None:
+            ranges = []
+
+            ## Hack alert!!!!
+            if type(self.fwhm) == list:
+                fwhm = np.sqrt(self.fwhm[0]**2 + self.fwhm[0]**2)
+            else:
+                fwhm = self.fwhm
+            ## end of hack
+
+            for pos in self.mu:
+                r = np.linspace(pos - 4 * fwhm,
+                            pos + 4 * fwhm, 
+                            10**2)
+                ranges.append(r)
+            superx = np.sort(np.concatenate(ranges))
+            print(self.mu,superx)
+                
+        else:
+            superx = np.linspace(x.min(), x.max(), no_of_points)
+        
         ax.errorbar(x, y, yerr, fmt='o', markersize=5)
-        superx = np.linspace(x.min(), x.max(), no_of_points)
         ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
         ax.set_xlabel('Frequency (MHz)', fontsize=16)
         ax.set_ylabel('Counts', fontsize=16)
 
         plt.show()
 
-    def plot_spectroscopic(self,x,y,no_of_points):
+    def plot_spectroscopic(self,x,y,no_of_points=None,ax=None):
         yerr = np.sqrt(y + 1)
-        self.plot(x,y,yerr,no_of_points)
+        self.plot(x,y,yerr,no_of_points,ax)
