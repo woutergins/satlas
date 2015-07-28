@@ -705,7 +705,7 @@ class SingleSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x,y,yerr,no_of_points,ax):
+    def plot(self,x,y,yerr,no_of_points,ax,show):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
@@ -735,12 +735,12 @@ class SingleSpectrum(Spectrum):
         ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
         ax.set_xlabel('Frequency (MHz)', fontsize=16)
         ax.set_ylabel('Counts', fontsize=16)
+        if show:
+            plt.show()
 
-        plt.show()
-
-    def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None):
+    def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None,show=True):
         if not y is None:
             yerr = np.sqrt(y + 1)
         else:
             yerr = None
-        self.plot(x,y,yerr,no_of_points,ax)
+        self.plot(x,y,yerr,no_of_points,ax,show)

@@ -66,6 +66,7 @@ class CombinedSpectrum(Spectrum):
         Black magic going on in here, especially in the block of code
         describing the shared parameters."""
         params = lm.Parameters()
+        from satlas.isomerspectrum import IsomerSpectrum
         for i, s in enumerate(self.spectra):
             p = s.params_from_var()
             keys = list(p.keys())
@@ -115,6 +116,8 @@ class CombinedSpectrum(Spectrum):
         params: Parameters
             Parameters instance containing the information for the variables.
         """
+        from satlas.isomerspectrum import IsomerSpectrum
+
         for i, s in enumerate(self.spectra):
             p = lm.Parameters()
             if isinstance(s, IsomerSpectrum):
@@ -195,21 +198,28 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x,y,yerr,no_of_points=10**4):
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.errorbar(x, y, yerr, fmt='o', markersize=5)
-        superx = np.linspace(x.min(), x.max(), no_of_points)
-        ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
-        ax.set_xlabel('Frequency (MHz)', fontsize=16)
-        ax.set_ylabel('Counts', fontsize=16)
+    def plot(self,xs,ys,yerrs,no_of_points,ax):
+        if ax is None:
+            fig, ax = plt.subplots(2, 1, sharex=True)
 
+        for i,(x,y,yerr,spec) in enumerate(zip(xs,ys,yerrs,self.spectra)):
+            print(i)
+            if x is not None and y is not None:
+                ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
+            spec.plot(x,y,yerr,no_of_points,ax[i],show=False)
+
+        ax[len(xs)-1].set_xlabel('Frequency (MHz)', fontsize=16)
+        ax[0].set_ylabel('Counts', fontsize=16)
+
+        plt.tight_layout()
         plt.show()
-
-    def plot_spectroscopic(self,x,y,no_of_points):
-        yerr = np.sqrt(y + 1)
-        self.plot(x,y,yerr,no_of_points)
-
+        
+    def plot_spectroscopic(self,xs=None,ys=None,no_of_points=10**4,ax=None):
+        if not ys is None and not any([y is None for y in ys]):
+            yerrs = [np.sqrt(y + 1) for y in ys]
+        else:
+            yerrs = [None for y in ys]
+        self.plot(xs,ys,yerrs,no_of_points,ax)
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
