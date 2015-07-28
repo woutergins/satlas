@@ -705,7 +705,32 @@ class SingleSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x,y,yerr,no_of_points,ax,show):
+    def plot(self,x=None,y=None,yerr=None,
+            no_of_points=10**4,ax=None,show=True):
+        """Routine that plots the hfs, possibly on top of experimental data.
+
+        Parameters
+        ----------
+        x: array
+            Experimental x-data. If None, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: array
+            Experimental y-data.
+        yerr: array
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+            
+        Returns
+        -------
+        None
+
+        """
+
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
@@ -739,6 +764,29 @@ class SingleSpectrum(Spectrum):
             plt.show()
 
     def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None,show=True):
+        """Routine that plots the hfs, possibly on top of 
+        experimental data. It assumes that the y data is drawn from
+        a Poisson distribution (e.g. counting data).
+
+        Parameters
+        ----------
+        x: array
+            Experimental x-data. If None, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: array
+            Experimental y-data.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+            
+        Returns
+        -------
+        None
+
+        """
         if not y is None:
             yerr = np.sqrt(y + 1)
         else:

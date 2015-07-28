@@ -198,7 +198,31 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,xs,ys,yerrs,no_of_points,ax):
+    def plot(self,xs=[None],ys=[None],yerrs=[None],no_of_points=10**4,ax=None):
+        """Routine that plots the hfs of all the spectra, 
+        possibly on top of experimental data.
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+            
+        Returns
+        -------
+        None
+
+        """
         if ax is None:
             fig, ax = plt.subplots(2, 1, sharex=True)
 
@@ -213,8 +237,34 @@ class CombinedSpectrum(Spectrum):
 
         plt.tight_layout()
         plt.show()
-        
+
     def plot_spectroscopic(self,xs=None,ys=None,no_of_points=10**4,ax=None):
+                """Routine that plots the hfs of all the spectra, 
+        possibly on top of experimental data. It assumes that the y data is drawn from
+        a Poisson distribution (e.g. counting data).
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+            
+        Returns
+        -------
+        None
+
+        """
+
         if not ys is None and not any([y is None for y in ys]):
             yerrs = [np.sqrt(y + 1) for y in ys]
         else:
