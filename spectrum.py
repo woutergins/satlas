@@ -8,16 +8,13 @@
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import abc
 import emcee as mcmc
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.loglikelihood as llh
-import satlas.profiles as p
 import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
 
 
 class PriorParameter(lm.Parameter):
@@ -34,7 +31,7 @@ class PriorParameter(lm.Parameter):
         self.priormax = priormax
 
 
-class Spectrum(object, metaclass=abc.ABCMeta):
+class Spectrum(object):
 
     """Abstract baseclass for all spectra, such as :class:`SingleSpectrum`,
     :class:`CombinedSpectrum` and :class:`IsomerSpectrum`. For input, see these
@@ -67,9 +64,8 @@ class Spectrum(object, metaclass=abc.ABCMeta):
         mapping = {'poisson': llh.Poisson, 'gaussian': llh.Gaussian}
         self._loglikelifunc = mapping.get(value.lower(), llh.Poisson)
 
-    @abc.abstractmethod
     def sanitize_input(self, x, y, yerr=None):
-        return
+        raise NotImplemented
 
     ##########################################
     # MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #

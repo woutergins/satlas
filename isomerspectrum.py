@@ -2,23 +2,14 @@
 .. module:: CombinedSpectrum
     :platform: Windows
     :synopsis: Implementation of classes for the analysis of hyperfine
-     structure spectra, including simultaneous fitting, various fitting
-     routines and isomeric presence.
+     structure spectra with isomeric presence.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import abc
-import emcee as mcmc
-import lmfit as lm
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import satlas.loglikelihood as llh
-import satlas.profiles as p
-import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
 from satlas.combinedspectrum import CombinedSpectrum
+
 
 class IsomerSpectrum(CombinedSpectrum):
 
@@ -78,12 +69,12 @@ class IsomerSpectrum(CombinedSpectrum):
     def __add__(self, other):
         if isinstance(other, IsomerSpectrum):
             spectra = self.spectra + other.spectra
-        elif isinstance(other, SingleSpectrum):
-            spectra = self.spectra
-            spectra.append(other)
+            return IsomerSpectrum(spectra)
         else:
-            raise TypeError('unsupported operand type(s)')
-        return IsomerSpectrum(spectra)
+            try:
+                return other.__add__(self)
+            except:
+                raise TypeError('unsupported operand type(s)')
 
     def __call__(self, x):
         return np.sum([s(x) for s in self.spectra], axis=0)

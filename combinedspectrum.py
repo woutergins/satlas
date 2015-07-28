@@ -1,24 +1,17 @@
 """
 .. module:: CombinedSpectrum
     :platform: Windows
-    :synopsis: Implementation of classes for the analysis of hyperfine
-     structure spectra, including simultaneous fitting, various fitting
-     routines and isomeric presence.
+    :synopsis: Implementation of class for the simultaneous fitting of hyperfine
+     structure spectra.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import abc
-import emcee as mcmc
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import satlas.loglikelihood as llh
-import satlas.profiles as p
-import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
 from satlas.spectrum import Spectrum
+
 
 class CombinedSpectrum(Spectrum):
 
@@ -198,8 +191,8 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,xs=[None],ys=[None],yerrs=[None],no_of_points=10**4,ax=None):
-        """Routine that plots the hfs of all the spectra, 
+    def plot(self, xs=[None], ys=[None], yerrs=[None], no_of_points=10**4, ax=None):
+        """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
 
         Parameters
@@ -217,7 +210,7 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
+
         Returns
         -------
         None
@@ -226,11 +219,11 @@ class CombinedSpectrum(Spectrum):
         if ax is None:
             fig, ax = plt.subplots(2, 1, sharex=True)
 
-        for i,(x,y,yerr,spec) in enumerate(zip(xs,ys,yerrs,self.spectra)):
-            print(i)
+        for i, (x, y, yerr, spec) in enumerate(zip(xs, ys, yerrs,
+                                                   self.spectra)):
             if x is not None and y is not None:
                 ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
-            spec.plot(x,y,yerr,no_of_points,ax[i],show=False)
+            spec.plot(x, y, yerr, no_of_points, ax[i], show=False)
 
         ax[len(xs)-1].set_xlabel('Frequency (MHz)', fontsize=16)
         ax[0].set_ylabel('Counts', fontsize=16)
@@ -238,9 +231,10 @@ class CombinedSpectrum(Spectrum):
         plt.tight_layout()
         plt.show()
 
-    def plot_spectroscopic(self,xs=None,ys=None,no_of_points=10**4,ax=None):
-                """Routine that plots the hfs of all the spectra, 
-        possibly on top of experimental data. It assumes that the y data is drawn from
+    def plot_spectroscopic(self, xs=None, ys=None,
+                           no_of_points=10**4, ax=None):
+        """Routine that plots the hfs of all the spectra, possibly on
+        top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
         Parameters
@@ -258,18 +252,16 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
+
         Returns
         -------
-        None
+        None"""
 
-        """
-
-        if not ys is None and not any([y is None for y in ys]):
+        if ys is not None and not any([y is None for y in ys]):
             yerrs = [np.sqrt(y + 1) for y in ys]
         else:
             yerrs = [None for y in ys]
-        self.plot(xs,ys,yerrs,no_of_points,ax)
+        self.plot(xs, ys, yerrs, no_of_points, ax)
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])

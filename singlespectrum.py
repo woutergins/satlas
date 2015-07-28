@@ -1,24 +1,21 @@
 """
 .. module:: SingleSpectrum
     :platform: Windows
-    :synopsis: Implementation of classes for the analysis of hyperfine
-     structure spectra, including simultaneous fitting, various fitting
-     routines and isomeric presence.
+    :synopsis: Implementation of class for the analysis of hyperfine
+     structure spectra, including various fitting routines.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import abc
-import emcee as mcmc
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import satlas.loglikelihood as llh
 import satlas.profiles as p
-import satlas.utilities as utils
 from satlas.wigner import wigner_6j as W6J
 from satlas.spectrum import Spectrum
+from satlas.isomerspectrum import IsomerSpectrum
+
 
 class SingleSpectrum(Spectrum):
 
@@ -587,14 +584,14 @@ class SingleSpectrum(Spectrum):
                 par[fixed].expr = str(r[0]) + '*' + free
                 par[fixed].vary = False
 
-
         par.add('df', value=self._df, vary=True)
 
         par.add('Background', value=self.background, vary=True, min=0)
         par.add('N', value=self._n, vary=False)
         if self._n > 0:
             par.add('Poisson', value=self._poisson, vary=True, min=0)
-            par.add('Offset', value=self._offset, vary=True, min=None, max=-0.01)
+            par.add('Offset', value=self._offset, vary=True, min=None,
+                    max=-0.01)
         for key in self._vary.keys():
             if key in par.keys():
                 par[key].vary = self._vary[key]
@@ -710,6 +707,8 @@ class SingleSpectrum(Spectrum):
             An Isomerspectrum combining both spectra."""
         if isinstance(other, SingleSpectrum):
             l = [self, other]
+        elif isinstance(other, IsomerSpectrum):
+            l = [self] + other.spectra
         return IsomerSpectrum(l)
 
     def __radd__(self, other):
@@ -760,8 +759,8 @@ class SingleSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x=None,y=None,yerr=None,
-            no_of_points=10**4,ax=None,show=True):
+    def plot(self, x=None, y=None, yerr=None,
+             no_of_points=10**4, ax=None, show=True):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -779,12 +778,10 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
+
         Returns
         -------
-        None
-
-        """
+        None"""
 
         if ax is None:
             fig = plt.figure()
@@ -802,15 +799,15 @@ class SingleSpectrum(Spectrum):
 
             for pos in self.mu:
                 r = np.linspace(pos - 4 * fwhm,
-                            pos + 4 * fwhm,
-                            2*10**2)
+                                pos + 4 * fwhm,
+                                2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
 
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
-        if not x is None and not y is None:
+        if x is not None and y is not None:
             ax.errorbar(x, y, yerr, fmt='o', markersize=5)
         ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
         ax.set_xlabel('Frequency (MHz)', fontsize=16)
@@ -818,8 +815,9 @@ class SingleSpectrum(Spectrum):
         if show:
             plt.show()
 
-    def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None,show=True):
-        """Routine that plots the hfs, possibly on top of 
+    def plot_spectroscopic(self, x=None, y=None, no_of_points=10**4,
+                           ax=None, show=True):
+        """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
@@ -836,14 +834,14 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
+
         Returns
         -------
         None
 
         """
-        if not y is None:
+        if y is not None:
             yerr = np.sqrt(y + 1)
         else:
             yerr = None
-        self.plot(x,y,yerr,no_of_points,ax,show)
+        self.plot(x, y, yerr, no_of_points, ax, show)
