@@ -191,7 +191,8 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self, xs=[None], ys=[None], yerrs=[None], no_of_points=10**4, ax=None):
+    def plot(self, xs=None, ys=None, yerrs=None,
+             no_of_points=10**4, ax=None):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
 
@@ -217,13 +218,19 @@ class CombinedSpectrum(Spectrum):
 
         """
         if ax is None:
-            fig, ax = plt.subplots(2, 1, sharex=True)
+            fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
+        if xs is None:
+            xs = [None] * len(self.spectra)
+        if ys is None:
+            ys = [None] * len(self.spectra)
+        if yerrs is None:
+            yerrs = [None] * len(self.spectra)
 
         for i, (x, y, yerr, spec) in enumerate(zip(xs, ys, yerrs,
                                                    self.spectra)):
             if x is not None and y is not None:
                 ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
-            spec.plot(x, y, yerr, no_of_points, ax[i], show=False)
+            spec.plot(x, y, yerr, no_of_points, ax[i], show=False, label=False)
 
         ax[len(xs)-1].set_xlabel('Frequency (MHz)', fontsize=16)
         ax[0].set_ylabel('Counts', fontsize=16)

@@ -8,6 +8,7 @@
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from satlas.combinedspectrum import CombinedSpectrum
 
 
@@ -50,6 +51,107 @@ class IsomerSpectrum(CombinedSpectrum):
                 params[new_key].vary = False
                 params[new_key].expr = None
         return params
+
+    ###############################
+    #      PLOTTING ROUTINES      #
+    ###############################
+
+    def plot(self, x=None, y=None, yerrs=None,
+             no_of_points=10**4, ax=None, label=False,
+             show=True):
+        """Routine that plots the hfs of all the spectra,
+        possibly on top of experimental data.
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+
+        Returns
+        -------
+        None
+
+        """
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, sharex=True)
+
+        if x is None:
+            ranges = []
+
+            ## Hack alert!!!!
+            if type(self.spectra[0].fwhm) == list:
+                fwhm = np.sqrt(self.spectra[0].fwhm[0]**2 + self.spectra[0].fwhm[0]**2)
+            else:
+                fwhm = self.spectra[0].fwhm
+            ## end of hack
+
+            for pos in [positions for spectrum in self.spectra for positions in spectrum.mu]:
+                r = np.linspace(pos - 4 * fwhm,
+                                pos + 4 * fwhm,
+                                2 * 10**2)
+                ranges.append(r)
+            superx = np.sort(np.concatenate(ranges))
+
+        else:
+            superx = np.linspace(x.min(), x.max(), no_of_points)
+
+        if x is not None and y is not None:
+            ax.errorbar(x, y, yerr, fmt='o', markersize=3)
+        resp = self.seperate_response(superx)
+        for i, r in enumerate(resp):
+            ax.plot(superx, r, lw=3.0, label='I=' + str(self.spectra[i].I))
+        ax.plot(superx, self(superx), lw=3.0, label='Total')
+
+        if label:
+            ax.set_xlabel('Frequency (MHz)', fontsize=16)
+            ax.set_ylabel('Counts', fontsize=16)
+
+        plt.tight_layout()
+        if show:
+            plt.show()
+
+    def plot_spectroscopic(self, xs=None, ys=None,
+                           no_of_points=10**4, ax=None):
+        """Routine that plots the hfs of all the spectra, possibly on
+        top of experimental data. It assumes that the y data is drawn from
+        a Poisson distribution (e.g. counting data).
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+
+        Returns
+        -------
+        None"""
+
+        if ys is not None and not any([y is None for y in ys]):
+            yerrs = [np.sqrt(y + 1) for y in ys]
+        else:
+            yerrs = [None for y in ys]
+        self.plot(xs, ys, yerrs, no_of_points, ax)
 
     def seperate_response(self, x):
         """Get the response for each seperate spectrum for the values x,

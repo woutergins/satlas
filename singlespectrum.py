@@ -760,7 +760,7 @@ class SingleSpectrum(Spectrum):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True):
+             no_of_points=10**4, ax=None, show=True, label=True):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -777,7 +777,9 @@ class SingleSpectrum(Spectrum):
         ax: matplotlib axes object
             If provided, plots on this axis
         show: Boolean
-            if True, the plot will be shown at the end.
+            If True, the plot will be shown at the end.
+        label: Boolean
+            If True, the plot will be labeled.
 
         Returns
         -------
@@ -810,8 +812,9 @@ class SingleSpectrum(Spectrum):
         if x is not None and y is not None:
             ax.errorbar(x, y, yerr, fmt='o', markersize=5)
         ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
-        ax.set_xlabel('Frequency (MHz)', fontsize=16)
-        ax.set_ylabel('Counts', fontsize=16)
+        if label:
+            ax.set_xlabel('Frequency (MHz)', fontsize=16)
+            ax.set_ylabel('Counts', fontsize=16)
         if show:
             plt.show()
 
