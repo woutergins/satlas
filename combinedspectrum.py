@@ -192,7 +192,7 @@ class CombinedSpectrum(Spectrum):
     ###############################
 
     def plot(self, xs=None, ys=None, yerrs=None,
-             no_of_points=10**4, ax=None):
+             no_of_points=10**4, ax=None, show=True):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
 
@@ -219,6 +219,9 @@ class CombinedSpectrum(Spectrum):
         """
         if ax is None:
             fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
+            toReturn = fig, ax
+        else:
+            toReturn = None
         if xs is None:
             xs = [None] * len(self.spectra)
         if ys is None:
@@ -236,7 +239,10 @@ class CombinedSpectrum(Spectrum):
         ax[0].set_ylabel('Counts', fontsize=16)
 
         plt.tight_layout()
-        plt.show()
+        if show:
+            plt.show()
+        else:
+            return toReturn
 
     def plot_spectroscopic(self, xs=None, ys=None,
                            no_of_points=10**4, ax=None):

@@ -84,7 +84,10 @@ class IsomerSpectrum(CombinedSpectrum):
 
         """
         if ax is None:
-            fig, ax = plt.subplots(1, 1, sharex=True)
+            fig, ax = plt.subplots(1, 1)
+            toReturn = fig, ax
+        else:
+            toReturn = None
 
         if x is None:
             ranges = []
@@ -120,6 +123,8 @@ class IsomerSpectrum(CombinedSpectrum):
         plt.tight_layout()
         if show:
             plt.show()
+        else:
+            return toReturn
 
     def plot_spectroscopic(self, xs=None, ys=None,
                            no_of_points=10**4, ax=None):

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
+from fractions import Fraction
 from satlas.wigner import wigner_6j as W6J
 from satlas.spectrum import Spectrum
 from satlas.isomerspectrum import IsomerSpectrum
@@ -298,7 +299,7 @@ class SingleSpectrum(Spectrum):
         if len(value) is len(self.parts):
             self._mu = value
             for prof, val in zip(self.parts, value):
-                prof.mu = val
+                prof.mu = val[-1]
 
     @property
     def n(self):
@@ -364,15 +365,21 @@ class SingleSpectrum(Spectrum):
                            for F in self._F[1]]]
 
         mu = []
+        f1 = []
+        f2 = []
         for i, F1 in enumerate(self._F[0]):
             for j, F2 in enumerate(self._F[1]):
                 if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
+                    dummy = Fraction(F1).limit_denominator()
+                    f1.append(str(dummy.numerator) + '_' + str(dummy.denominator))
+                    dummy = Fraction(F2).limit_denominator()
+                    f2.append(str(dummy.numerator) + '_' + str(dummy.denominator))
                     mu.append(self._energies[1][j] - self._energies[0][i])
 
         if not len(self.parts) is len(mu):
             self.parts = tuple(
                 self.__shapes__[self.shape]() for _ in range(len(mu)))
-        self.mu = mu
+        self.mu = np.array(list(zip(f1, f2, mu)), dtype=object)
 
     def _calculate_intensities(self):
         ampl = []
@@ -497,8 +504,8 @@ class SingleSpectrum(Spectrum):
                              for i in range(len(self.parts))]
 
         self.scale = params['scale'].value
-        self.relAmp = [params['Amp' + str(i)].value
-                       for i in range(len(self.parts))]
+        self.relAmp = [params['Amp' + transition[0] + '__' + transition[1]].value
+                       for transition in self.mu]
 
         self.ABC = [params['Al'].value, params['Au'].value,
                     params['Bl'].value, params['Bu'].value,
@@ -560,8 +567,9 @@ class SingleSpectrum(Spectrum):
                                  '**2+FWHMG' + str(i) + '**2)')
 
         par.add('scale', value=self.scale, vary=self.racah_int, min=0)
-        for i, prof in enumerate(self.parts):
-            par.add('Amp' + str(i), value=self._relAmp[i],
+        for i, transition in enumerate(self.mu):
+            label = transition[0] + '__' + transition[1]
+            par.add('Amp' + label, value=self._relAmp[i],
                     vary=not self.racah_int, min=0)
 
         b = (None, None) if self.abc_limit is None else (-self.abc_limit,
@@ -760,7 +768,8 @@ class SingleSpectrum(Spectrum):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True, label=True):
+             no_of_points=10**4, ax=None, show=True, label=True,
+             legend=None, data_legend=None):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -780,14 +789,21 @@ class SingleSpectrum(Spectrum):
             If True, the plot will be shown at the end.
         label: Boolean
             If True, the plot will be labeled.
+        legend: String, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: String, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
 
         Returns
         -------
         None"""
 
         if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(1, 1, 1)
+            fig, ax = plt.subplots(1, 1)
+            toReturn = fig, ax
+        else:
+            toReturn = None
 
         if x is None:
             ranges = []
@@ -799,7 +815,7 @@ class SingleSpectrum(Spectrum):
                 fwhm = self.fwhm
             ## end of hack
 
-            for pos in self.mu:
+            for pos in self.mu[:, -1]:
                 r = np.linspace(pos - 4 * fwhm,
                                 pos + 4 * fwhm,
                                 2 * 10**2)
@@ -810,16 +826,16 @@ class SingleSpectrum(Spectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerr, fmt='o', markersize=5)
-        ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
+            ax.errorbar(x, y, yerr, fmt='o', markersize=5, label=data_legend)
+        ax.plot(superx, self(superx), lw=3.0, label=legend)
         if label:
             ax.set_xlabel('Frequency (MHz)', fontsize=16)
             ax.set_ylabel('Counts', fontsize=16)
         if show:
             plt.show()
+        return toReturn
 
-    def plot_spectroscopic(self, x=None, y=None, no_of_points=10**4,
-                           ax=None, show=True):
+    def plot_spectroscopic(self, **kwargs):
         """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -843,8 +859,10 @@ class SingleSpectrum(Spectrum):
         None
 
         """
+        y = kwargs.get('y', None)
         if y is not None:
             yerr = np.sqrt(y + 1)
         else:
             yerr = None
-        self.plot(x, y, yerr, no_of_points, ax, show)
+        kwargs['yerr'] = yerr
+        self.plot(**kwargs)
