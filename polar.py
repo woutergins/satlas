@@ -437,7 +437,8 @@ class Polar(object):
                                               fe, fg, mze, mzg,
                                               self.lifetime[i, j])
                             if not np.isclose(A[x, y], 0):
-                                self.pos.append([fg, fe, E[x]-E[y]])
+                                if [fg, fe, E[x]-E[y]] not in self.pos:
+                                    self.pos.append([fg, fe, E[x]-E[y]])
                             # Fill the D-matrix for each laser.
                             # The lasers use the first dimension of the array!
                             for z in range(self.n):
@@ -623,8 +624,8 @@ class Polar(object):
         for n, ncs in zip(self.Nlev, self.Nlevcs):
             pop.append(y[ncs - n:ncs].sum())
         pop = np.array(pop)
-        # y = 100.0 * (pop / pop.sum())
-        y = np.array(y)
+        y = 100.0 * (pop / pop.sum())
+        # y = np.array(y)
         y = 100.0 * (y / y.sum())
         y = np.append(pol, y)
         return y
