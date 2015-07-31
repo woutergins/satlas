@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.stats import chi2
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -989,3 +990,15 @@ def concat_results(list_of_results, index=None):
         index = range(1, len(list_of_results) + 1)
     result = pd.concat(list_of_results, keys=index)
     return result
+
+
+def poisson_interval(list_of_data, alpha=0.32):
+    a = alpha
+    low = np.zeros(len(list_of_data))
+    high = np.zeros(len(list_of_data))
+    for x in range(len(list_of_data)):
+        low[x], high[x] = (chi2.ppf(a / 2, 2 * list_of_data[x]) / 2,
+                           chi2.ppf(1 - a / 2, 2 * list_of_data[x] + 2) / 2)
+        if list_of_data[x] == 0:
+            low[x] = 0.0
+    return low, high
