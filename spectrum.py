@@ -13,6 +13,10 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+try:
+    import progressbar
+except:
+    pass
 import satlas.loglikelihood as llh
 import satlas.utilities as utils
 
@@ -229,9 +233,23 @@ class Spectrum(object):
         pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
         x, y, _ = self.sanitize_input(x, y)
 
-        def lnprobList(fvars, x, y, groupParams):
+        if verbose:
+            try:
+                widgets = ['Walk:', progressbar.Percentage(), ' ',
+                           progressbar.Bar(marker=progressbar.RotatingMarker()),
+                           ' ', progressbar.AdaptiveETA()]
+                pbar = progressbar.ProgressBar(widgets=widgets,
+                                               maxval=walkers * nsteps).start()
+            except:
+                pass
+
+        def lnprobList(fvars, x, y, groupParams, pbar):
             for val, n in zip(fvars, var_names):
                 groupParams[n].value = val
+            try:
+                pbar += 1
+            except:
+                pass
             return self.lnprob(groupParams, x, y)
         groupParams = lm.Parameters()
         for key in params.keys():
@@ -242,17 +260,15 @@ class Spectrum(object):
                                               priormin=params[key].min,
                                               priormax=params[key].max)
         sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                       args=(x, y, groupParams))
+                                       args=(x, y, groupParams, pbar))
         burn = int(nsteps * burnin / 100)
-        if verbose:
-            print('Starting burn-in ({} steps)...'.format(burn))
         sampler.run_mcmc(pos, burn, storechain=False)
         sampler.reset()
-        if verbose:
-            print('Starting walk ({} steps)...'.format(nsteps - burn))
         sampler.run_mcmc(pos, nsteps - burn)
-        if verbose:
-            print('Done.')
+        try:
+            pbar.finish()
+        except:
+            pass
         samples = sampler.flatchain
         val = []
         err = []
