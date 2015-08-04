@@ -128,7 +128,9 @@ class CombinedSpectrum(Spectrum):
                 for key in params.keys():
                     if key.startswith('s' + str(i) + '_'):
                         dinkie = params[key]
-                        new_name = key.split('_')[-1]
+                        new_name = key.find('_') + 1
+                        new_name = key[new_name:]
+                        # new_name = ''.join(key.split('_')[1:])
                         p.add(new_name, value=dinkie.value, vary=dinkie.vary,
                               min=dinkie.min, max=dinkie.max, expr=dinkie.expr)
             s.var_from_params(p)

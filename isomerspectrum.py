@@ -99,7 +99,7 @@ class IsomerSpectrum(CombinedSpectrum):
                 fwhm = self.spectra[0].fwhm
             ## end of hack
 
-            for pos in [positions for spectrum in self.spectra for positions in spectrum.mu]:
+            for pos in [positions[-1] for spectrum in self.spectra for positions in spectrum.mu]:
                 r = np.linspace(pos - 4 * fwhm,
                                 pos + 4 * fwhm,
                                 2 * 10**2)

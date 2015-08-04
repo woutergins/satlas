@@ -37,8 +37,8 @@ class SingleSpectrum(Spectrum):
         fine level. The list should be given as [A :sub:`lower`,
         A :sub:`upper`, B :sub:`lower`, B :sub:`upper`, C :sub:`upper`,
         C :sub:`lower`].
-    df: float
-        Center of Gravity of the spectrum.
+    centroid: float
+        Centroid of the spectrum.
     fwhm: float or list of 2 floats, optional
         Depending on the used shape, the FWHM is defined by one or two floats.
         Defaults to [50.0, 50.0]
@@ -101,7 +101,7 @@ class SingleSpectrum(Spectrum):
                   'pseudovoigt': p.PseudoVoigt,
                   'voigt': p.Voigt}
 
-    def __init__(self, I, J, ABC, df, fwhm=[50.0, 50.0], scale=1.0,
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  background=0.1, shape='voigt', racah_int=True,
                  shared_fwhm=True):
         super(SingleSpectrum, self).__init__()
@@ -142,7 +142,7 @@ class SingleSpectrum(Spectrum):
         self._ABC = ABC
         self.abc_limit = 30000.0
         self.fwhm_limit = 0.1
-        self._df = df
+        self._centroid = centroid
 
         self.scale = scale
         self._background = background
@@ -189,7 +189,7 @@ class SingleSpectrum(Spectrum):
         * :attr:`Bu`
         * :attr:`Cl`
         * :attr:`Cu`
-        * :attr:`df`
+        * :attr:`Centroid`
         * :attr:`Background`
         * :attr:`Poisson` (only if the attribute *n* is greater than 0)
         * :attr:`Offset` (only if the attribute *n* is greater than 0)"""
@@ -232,12 +232,12 @@ class SingleSpectrum(Spectrum):
         self._calculate_transitions()
 
     @property
-    def df(self):
-        return self._df
+    def centroid(self):
+        return self._centroid
 
-    @df.setter
-    def df(self, value):
-        self._df = value
+    @centroid.setter
+    def centroid(self, value):
+        self._centroid = value
         self._calculate_transitions()
 
     @property
@@ -444,7 +444,7 @@ class SingleSpectrum(Spectrum):
         if level == 0:
             df = 0
         else:
-            df = self._df
+            df = self._centroid
 
         if (I == 0 or J == 0):
             C_F = 0
@@ -511,7 +511,7 @@ class SingleSpectrum(Spectrum):
                     params['Bl'].value, params['Bu'].value,
                     params['Cl'].value, params['Cu'].value]
 
-        self.df = params['df'].value
+        self.centroid = params['Centroid'].value
 
         self.background = params['Background'].value
         self.n = params['N'].value
@@ -592,7 +592,7 @@ class SingleSpectrum(Spectrum):
                 par[fixed].expr = str(r[0]) + '*' + free
                 par[fixed].vary = False
 
-        par.add('df', value=self._df, vary=True)
+        par.add('Centroid', value=self._centroid, vary=True)
 
         par.add('Background', value=self.background, vary=True, min=0)
         par.add('N', value=self._n, vary=False)
