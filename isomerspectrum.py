@@ -110,7 +110,7 @@ class IsomerSpectrum(CombinedSpectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerr, fmt='o', markersize=3)
+            ax.errorbar(x, y, yerrs, fmt='o', markersize=3)
         resp = self.seperate_response(superx)
         for i, r in enumerate(resp):
             ax.plot(superx, r, lw=3.0, label='I=' + str(self.spectra[i].I))
@@ -152,10 +152,10 @@ class IsomerSpectrum(CombinedSpectrum):
         -------
         None"""
 
-        if ys is not None and not any([y is None for y in ys]):
-            yerrs = [np.sqrt(y + 1) for y in ys]
+        if ys is not None:
+            yerrs = np.sqrt(ys + 1)
         else:
-            yerrs = [None for y in ys]
+            yerrs = None
         self.plot(xs, ys, yerrs, no_of_points, ax)
 
     def seperate_response(self, x):

@@ -15,6 +15,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import chi2
 
+sns.set_style('ticks', rc={'xtick.direction': 'in', 'ytick.direction': 'in'})
+sns.set_palette('colorblind')
+
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
