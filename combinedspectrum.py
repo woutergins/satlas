@@ -239,7 +239,7 @@ class CombinedSpectrum(Spectrum):
         plt.show()
 
     def plot_spectroscopic(self,xs=None,ys=None,no_of_points=10**4,ax=None):
-                """Routine that plots the hfs of all the spectra, 
+        """Routine that plots the hfs of all the spectra, 
         possibly on top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
