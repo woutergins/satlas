@@ -1,8 +1,9 @@
 from satlas.singlespectrum import SingleSpectrum
 from satlas.combinedspectrum import CombinedSpectrum
 from copy import deepcopy
+from collections import OrderedDict
 
-class Analysis(list):
+class Analysis(OrderedDict):
     """
     Class that contains references to (several) spectra that can 
     be tied to data for later analysis. Notes can also be added
@@ -50,26 +51,26 @@ class Analysis(list):
     def analyse(self):
         pass
 
-    def addSingleSpectrum(self,copy_previous = True,
+    def addSingleSpectrum(self,name,to_copy = None,
             isomers=0,**kwargs):
 
-        if copy_previous:
-            try:
-                new_spectrum = deepcopy(self[-1]) 
-            except:
-                raise 
+        if to_copy is not None:
+            if not to_copy in self.keys():
+                raise IndexError('Spectrum {} does not exist.'.format(to_copy))
+            else:
+                new_spectrum = deepcopy(self[to_copy]) 
                 
         else:
             new_spectrum = SingleSpectrum(**kwargs)
 
-        self.addSpectrum(new_spectrum)
+        self.addSpectrum(name,new_spectrum)
 
-    def addCombinedSpectrum(self,copy_previous = True,
+    def addCombinedSpectrum(self,name,to_copy = True,
             isomers=0,Is=[],Js=[],ABCs=[],dfs=[],**kwargs):
 
-        if copy_previous:
+        if to_copy:
             try:
-                new_spectrum = deepcopy(self[-1]) 
+                new_spectrum = deepcopy(self[to_copy]) 
             except:
                 raise 
 
@@ -81,10 +82,10 @@ class Analysis(list):
                     )
             new_spectrum = CombinedSpectrum(spectra)
 
-        self.addSpectrum(new_spectrum)
+        self.addSpectrum(name,new_spectrum)
 
-    def addSpectrum(self,new_spectrum):
-        self.append(new_spectrum)
+    def addSpectrum(self,name,new_spectrum):
+        self[name] = new_spectrum
         self.notes.append([])
 
     def plot_spectrum(self,index=-1):
@@ -111,10 +112,10 @@ class Analysis(list):
     def __repr__(self):
         ret = '' 
         ret += 'Data path:\n'
-        ret += str(self.dataPath) + '\n'
+        ret += '\t' + str(self.dataPath) + '\n'
         ret += 'Analysis history:\n'
-        for i,spec in enumerate(self):
-            ret += '\tHistory {}\n'.format(i)
-            for name,par in spec.params_from_var().items():
-                ret += '\t\t{}:{}+-{}\n'.format(name,par.value,par.stderr)
+        for name,spec in self.items():
+            ret += '\t {}\n'.format(name)
+            for n,par in spec.params_from_var().items():
+                ret += '\t\t{}:{}+-{}\n'.format(n,par.value,par.stderr)
         return ret
