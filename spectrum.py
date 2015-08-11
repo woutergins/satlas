@@ -396,7 +396,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
 
         self.chisq_res_par = result.params
         self.chisq_res_report = lm.fit_report(result)
-        # self.chisquare_result = result
+        return result
 
     def display_chisquare_fit(self, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
@@ -450,48 +450,6 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                     varerr.append(None)
         return var_names, var, varerr
 
-    # def chisquare_correlation_plot(self, selected=True, **kwargs):
-    #     """If a chisquare fit has been performed, this method creates a figure
-    #     for plotting the correlation maps between parameters.
-
-    #     Parameters
-    #     ----------
-    #     selected: boolean, optional
-    #         Controls if only the parameters defined in :attr:`selected` are
-    #         used (True) or if all parameters are used (False). Defaults to True
-    #     kwargs: keywords
-    #         Other keywords are passed on to the :func:`conf_interval2d`
-    #         function from lmfit. The exception is the keyword :attr:`limits`,
-    #         which is now a float that indicates how many standard deviations
-    #         have to be traveled.
-
-    #     Returns
-    #     -------
-    #     figure
-    #         Returns the generated MatPlotLib figure"""
-    #     g = utils.FittingGrid(self.chisq_res_par,
-    #                           selected=self.selected if selected else None,
-    #                           **kwargs)
-    #     return g.fig
-
-    # def calculate_confidence_intervals(self, selected=True, **kwargs):
-    #     """Calculates the confidence bounds for parameters by making use of
-    #     lmfit's :func:`conf_interval` function. Results are saved in
-    #     :attr:`self.chisquare_ci`
-
-    #     Parameters
-    #     ----------
-    #     selected: boolean, optional
-    #         Boolean controlling if the used parameters are only the ones
-    #         defined in the attribute :attr:`selected` (True), or if all
-    #         parameters are to be used."""
-    #     names = [p for f in self.selected for p in self.chisq_res_par
-    #              if (f in self.chisq_res_par[p].name and
-    #                  self.chisq_res_par[p].vary)] if selected else None
-    #     self.chisquare_ci = lm.conf_interval(self.chisquare_result,
-    #                                          p_names=names,
-    #                                          **kwargs)
-
     def display_ci(self):
         lm.report_ci(self.chisquare_ci)
 
@@ -517,3 +475,45 @@ class Spectrum(object, metaclass=abc.ABCMeta):
 
 
 
+
+def chisquare_correlation_plot(spectrum, result, selected=True, **kwargs):
+    """If a chisquare fit has been performed, this method creates a figure
+    for plotting the correlation maps between parameters.
+
+    Parameters
+    ----------
+    selected: boolean, optional
+        Controls if only the parameters defined in :attr:`selected` are
+        used (True) or if all parameters are used (False). Defaults to True
+    kwargs: keywords
+        Other keywords are passed on to the :func:`conf_interval2d`
+        function from lmfit. The exception is the keyword :attr:`limits`,
+        which is now a float that indicates how many standard deviations
+        have to be traveled.
+
+    Returns
+    -------
+    figure
+        Returns the generated MatPlotLib figure"""
+    g = utils.FittingGrid(result,
+                          selected=spectrum.selected if selected else None,
+                          **kwargs)
+    return g.fig
+
+def calculate_confidence_intervals(spectrum, selected=True, **kwargs):
+    """Calculates the confidence bounds for parameters by making use of
+    lmfit's :func:`conf_interval` function. Results are saved in
+    :attr:`self.chisquare_ci`
+
+    Parameters
+    ----------
+    selected: boolean, optional
+        Boolean controlling if the used parameters are only the ones
+        defined in the attribute :attr:`selected` (True), or if all
+        parameters are to be used."""
+    names = [p for f in spectrum.selected for p in result.params
+             if (f in result.params[p].name and
+                 result.params[p].vary)] if selected else None
+    spectrum.chisquare_ci = lm.conf_interval(result,
+                                         p_names=names,
+                                         **kwargs)
