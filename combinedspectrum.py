@@ -198,10 +198,10 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,xs=[None],ys=[None],yerrs=[None],no_of_points=10**4,ax=None):
-        """Routine that plots the hfs of all the spectra, 
+    def plot(self, xs=None, ys=None, yerrs=None,
+             no_of_points=10**4, ax=None, show=True):
+        """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
-
         Parameters
         ----------
         x: list of arrays
@@ -217,31 +217,42 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
         Returns
         -------
         None
-
         """
         if ax is None:
-            fig, ax = plt.subplots(2, 1, sharex=True)
+            fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
+            toReturn = fig, ax
+        else:
+            toReturn = None
+        if xs is None:
+            xs = [None] * len(self.spectra)
+        if ys is None:
+            ys = [None] * len(self.spectra)
+        if yerrs is None:
+            yerrs = [None] * len(self.spectra)
 
-        for i,(x,y,yerr,spec) in enumerate(zip(xs,ys,yerrs,self.spectra)):
+        for i, (x, y, yerr, spec) in enumerate(zip(xs, ys, yerrs,
+                                                   self.spectra)):
             if x is not None and y is not None:
                 ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
-            spec.plot(x,y,yerr,no_of_points,ax[i],show=False)
+            spec.plot(x, y, yerr, no_of_points, ax[i], show=False, label=False)
 
         ax[len(xs)-1].set_xlabel('Frequency (MHz)', fontsize=16)
         ax[0].set_ylabel('Counts', fontsize=16)
 
         plt.tight_layout()
-        plt.show()
+        if show:
+            plt.show()
+        else:
+            return toReturn
 
-    def plot_spectroscopic(self,xs=[None],ys=[None],no_of_points=10**4,ax=None):
-        """Routine that plots the hfs of all the spectra, 
-        possibly on top of experimental data. It assumes that the y data is drawn from
+    def plot_spectroscopic(self, xs=None, ys=None,
+                           no_of_points=10**4, ax=None):
+        """Routine that plots the hfs of all the spectra, possibly on
+        top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
-
         Parameters
         ----------
         x: list of arrays
@@ -257,20 +268,15 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
         Returns
         -------
-        None
+        None"""
 
-        """
-
-        if not ys is None and not any([y is None for y in ys]):
+        if ys is not None and not any([y is None for y in ys]):
             yerrs = [np.sqrt(y + 1) for y in ys]
         else:
-            xs = [None for i in self.spectra]
-            ys = [None for i in self.spectra]
-            yerrs = [None for y in ys]
-        self.plot(xs,ys,yerrs,no_of_points,ax)
+            yerrs = [None for i in self.spectra]
+        self.plot(xs, ys, yerrs, no_of_points, ax)
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
