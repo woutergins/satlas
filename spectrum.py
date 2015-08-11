@@ -500,7 +500,7 @@ def chisquare_correlation_plot(spectrum, result, selected=True, **kwargs):
                           **kwargs)
     return g.fig
 
-def calculate_confidence_intervals(spectrum, selected=True, **kwargs):
+def calculate_confidence_intervals(spectrum, result, selected=True, **kwargs):
     """Calculates the confidence bounds for parameters by making use of
     lmfit's :func:`conf_interval` function. Results are saved in
     :attr:`self.chisquare_ci`
