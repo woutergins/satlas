@@ -473,9 +473,6 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                                  'Upper Bound', 'Lower Bound'])
         return result
 
-
-
-
 def chisquare_correlation_plot(spectrum, result, selected=True, **kwargs):
     """If a chisquare fit has been performed, this method creates a figure
     for plotting the correlation maps between parameters.

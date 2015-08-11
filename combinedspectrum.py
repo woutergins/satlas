@@ -227,7 +227,6 @@ class CombinedSpectrum(Spectrum):
             fig, ax = plt.subplots(2, 1, sharex=True)
 
         for i,(x,y,yerr,spec) in enumerate(zip(xs,ys,yerrs,self.spectra)):
-            print(i)
             if x is not None and y is not None:
                 ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
             spec.plot(x,y,yerr,no_of_points,ax[i],show=False)
@@ -238,7 +237,7 @@ class CombinedSpectrum(Spectrum):
         plt.tight_layout()
         plt.show()
 
-    def plot_spectroscopic(self,xs=None,ys=None,no_of_points=10**4,ax=None):
+    def plot_spectroscopic(self,xs=[None],ys=[None],no_of_points=10**4,ax=None):
         """Routine that plots the hfs of all the spectra, 
         possibly on top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -268,6 +267,8 @@ class CombinedSpectrum(Spectrum):
         if not ys is None and not any([y is None for y in ys]):
             yerrs = [np.sqrt(y + 1) for y in ys]
         else:
+            xs = [None for i in self.spectra]
+            ys = [None for i in self.spectra]
             yerrs = [None for y in ys]
         self.plot(xs,ys,yerrs,no_of_points,ax)
 

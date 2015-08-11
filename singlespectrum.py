@@ -752,8 +752,7 @@ class SingleSpectrum(Spectrum):
             else:
                 fwhm = self.fwhm
             ## end of hack
-
-            for pos in self.mu[:, -1]:
+            for pos in self.mu:
                 r = np.linspace(pos - 4 * fwhm,
                                 pos + 4 * fwhm,
                                 2 * 10**2)
