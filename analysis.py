@@ -1,5 +1,5 @@
-from satlas.singlespectrum import SingleSpectrum
-from satlas.combinedspectrum import CombinedSpectrum
+from singlespectrum import SingleSpectrum
+from combinedspectrum import CombinedSpectrum
 from copy import deepcopy
 import pickle
 import numpy as np
@@ -58,8 +58,12 @@ class Analysis(dict):
         except FileNotFoundError:
             print('One or more of the files was not found...')
 
-    def analyse(self,name=None):
+    def analyse_chisq(self,name=None):
         chisq = self[name].chisquare_spectroscopic_fit(x=self._x,y=self._y)
+        return chisq
+
+    def analyse_mle(self,name,**kwargs):
+        ## rough for now of course
         self[name].likelihood_fit(x=self._x,y=self._y,
                            walking=True,  # Perform the walk
                            walkers=200,  # Number of walkers,
@@ -68,7 +72,6 @@ class Analysis(dict):
                            nsteps=20,  # Number of steps for each walker
                            burnin=10.0,  # Defines the percentage of burnin
                            )
-        return chisq
 
     def plot_spectrum(self,name=None):
         if not self.data_loaded:

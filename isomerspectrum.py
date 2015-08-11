@@ -14,11 +14,11 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import satlas.loglikelihood as llh
-import satlas.profiles as p
-import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
-from satlas.combinedspectrum import CombinedSpectrum
+import loglikelihood as llh
+import profiles as p
+import utilities as utils
+from wigner import wigner_6j as W6J
+from combinedspectrum import CombinedSpectrum
 
 class IsomerSpectrum(CombinedSpectrum):
 

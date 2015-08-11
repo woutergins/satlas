@@ -1,8 +1,8 @@
 import pickle
-from satlas.analysis import Analysis
-from satlas.singlespectrum import SingleSpectrum
-from satlas.combinedspectrum import CombinedSpectrum
-from satlas.isomerspectrum import IsomerSpectrum
+from analysis import Analysis
+from singlespectrum import SingleSpectrum
+from combinedspectrum import CombinedSpectrum
+from isomerspectrum import IsomerSpectrum
 
 def save(analysis, filename):
     with open(filename + '.analysis','wb') as f:

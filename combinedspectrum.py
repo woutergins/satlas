@@ -14,11 +14,11 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import satlas.loglikelihood as llh
-import satlas.profiles as p
-import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
-from satlas.spectrum import Spectrum
+import loglikelihood as llh
+import profiles as p
+import utilities as utils
+from wigner import wigner_6j as W6J
+from spectrum import Spectrum
 
 class CombinedSpectrum(Spectrum):
 
@@ -66,7 +66,7 @@ class CombinedSpectrum(Spectrum):
         Black magic going on in here, especially in the block of code
         describing the shared parameters."""
         params = lm.Parameters()
-        from satlas.isomerspectrum import IsomerSpectrum
+        from isomerspectrum import IsomerSpectrum
         for i, s in enumerate(self.spectra):
             p = s.params_from_var()
             keys = list(p.keys())
@@ -116,7 +116,7 @@ class CombinedSpectrum(Spectrum):
         params: Parameters
             Parameters instance containing the information for the variables.
         """
-        from satlas.isomerspectrum import IsomerSpectrum
+        from isomerspectrum import IsomerSpectrum
 
         for i, s in enumerate(self.spectra):
             p = lm.Parameters()
