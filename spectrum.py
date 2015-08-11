@@ -20,6 +20,16 @@ import satlas.utilities as utils
 from satlas.wigner import wigner_6j as W6J
 
 
+def model(params, spectrum, x, y, yerr, errorByFit):
+    spectrum.var_from_params(params)
+    model = spectrum(x)
+    if errorByFit:
+        yerr = np.sqrt(model)
+        yerr[np.isclose(yerr, 0.0)] = 1.0
+    return (y - model) / yerr
+
+
+
 class PriorParameter(lm.Parameter):
 
     """Extended the Parameter class from LMFIT to incorporate prior boundaries.
@@ -380,19 +390,13 @@ class Spectrum(object, metaclass=abc.ABCMeta):
 
         x, y, yerr = self.sanitize_input(x, y, yerr)
 
-        def Model(params, x, y, yerr, errorByFit):
-            self.var_from_params(params)
-            model = self(x)
-            if errorByFit:
-                yerr = np.sqrt(model)
-                yerr[np.isclose(yerr, 0.0)] = 1.0
-            return (y - model) / yerr
-
         params = self.params_from_var()
 
-        result = lm.minimize(Model, params, args=(x, y, yerr, errorByFit))
+        result = lm.minimize(model, params, args=(self, x, y, yerr, errorByFit))
 
-        self.chisquare_result = result
+        self.chisq_res_par = result.params
+        self.chisq_res_report = lm.fit_report(result)
+        # self.chisquare_result = result
 
     def display_chisquare_fit(self, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
@@ -404,7 +408,7 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisquare_fit'):
             print('Scaled errors estimated from covariance matrix.')
-            print(lm.fit_report(self.chisquare_result, **kwargs))
+            print(self.chisq_res_report)
         else:
             print('Spectrum has not yet been fitted with this method!')
 
@@ -424,13 +428,13 @@ class Spectrum(object, metaclass=abc.ABCMeta):
             Returns a 3-tuple of lists containing the names of the parameters,
             the values and the estimated uncertainties."""
         var, var_names, varerr = [], [], []
-        if hasattr(self, 'chisquare_result') and (selection.lower() == 'chisquare'
+        if hasattr(self, 'chisq_res_par') and (selection.lower() == 'chisquare'
                                                or selection.lower() == 'any'):
-            for key in sorted(self.chisquare_result.params.keys()):
-                if self.chisquare_result.params[key].vary:
-                    var.append(self.chisquare_result.params[key].value)
-                    var_names.append(self.chisquare_result.params[key].name)
-                    varerr.append(self.chisquare_result.params[key].stderr)
+            for key in sorted(self.chisq_res_par.keys()):
+                if self.chisq_res_par[key].vary:
+                    var.append(self.chisq_res_par[key].value)
+                    var_names.append(self.chisq_res_par[key].name)
+                    varerr.append(self.chisq_res_par[key].stderr)
         elif hasattr(self, 'mle_fit'):
             for key in sorted(self.mle_fit.params.keys()):
                 if self.mle_fit.params[key].vary:
@@ -446,54 +450,54 @@ class Spectrum(object, metaclass=abc.ABCMeta):
                     varerr.append(None)
         return var_names, var, varerr
 
-    def chisquare_correlation_plot(self, selected=True, **kwargs):
-        """If a chisquare fit has been performed, this method creates a figure
-        for plotting the correlation maps between parameters.
+    # def chisquare_correlation_plot(self, selected=True, **kwargs):
+    #     """If a chisquare fit has been performed, this method creates a figure
+    #     for plotting the correlation maps between parameters.
 
-        Parameters
-        ----------
-        selected: boolean, optional
-            Controls if only the parameters defined in :attr:`selected` are
-            used (True) or if all parameters are used (False). Defaults to True
-        kwargs: keywords
-            Other keywords are passed on to the :func:`conf_interval2d`
-            function from lmfit. The exception is the keyword :attr:`limits`,
-            which is now a float that indicates how many standard deviations
-            have to be traveled.
+    #     Parameters
+    #     ----------
+    #     selected: boolean, optional
+    #         Controls if only the parameters defined in :attr:`selected` are
+    #         used (True) or if all parameters are used (False). Defaults to True
+    #     kwargs: keywords
+    #         Other keywords are passed on to the :func:`conf_interval2d`
+    #         function from lmfit. The exception is the keyword :attr:`limits`,
+    #         which is now a float that indicates how many standard deviations
+    #         have to be traveled.
 
-        Returns
-        -------
-        figure
-            Returns the generated MatPlotLib figure"""
-        g = utils.FittingGrid(self.chisquare_result,
-                              selected=self.selected if selected else None,
-                              **kwargs)
-        return g.fig
+    #     Returns
+    #     -------
+    #     figure
+    #         Returns the generated MatPlotLib figure"""
+    #     g = utils.FittingGrid(self.chisq_res_par,
+    #                           selected=self.selected if selected else None,
+    #                           **kwargs)
+    #     return g.fig
 
-    def calculate_confidence_intervals(self, selected=True, **kwargs):
-        """Calculates the confidence bounds for parameters by making use of
-        lmfit's :func:`conf_interval` function. Results are saved in
-        :attr:`self.chisquare_ci`
+    # def calculate_confidence_intervals(self, selected=True, **kwargs):
+    #     """Calculates the confidence bounds for parameters by making use of
+    #     lmfit's :func:`conf_interval` function. Results are saved in
+    #     :attr:`self.chisquare_ci`
 
-        Parameters
-        ----------
-        selected: boolean, optional
-            Boolean controlling if the used parameters are only the ones
-            defined in the attribute :attr:`selected` (True), or if all
-            parameters are to be used."""
-        names = [p for f in self.selected for p in self.chisquare_result.params
-                 if (f in self.chisquare_result.params[p].name and
-                     self.chisquare_result.params[p].vary)] if selected else None
-        self.chisquare_ci = lm.conf_interval(self.chisquare_result,
-                                             p_names=names,
-                                             **kwargs)
+    #     Parameters
+    #     ----------
+    #     selected: boolean, optional
+    #         Boolean controlling if the used parameters are only the ones
+    #         defined in the attribute :attr:`selected` (True), or if all
+    #         parameters are to be used."""
+    #     names = [p for f in self.selected for p in self.chisq_res_par
+    #              if (f in self.chisq_res_par[p].name and
+    #                  self.chisq_res_par[p].vary)] if selected else None
+    #     self.chisquare_ci = lm.conf_interval(self.chisquare_result,
+    #                                          p_names=names,
+    #                                          **kwargs)
 
     def display_ci(self):
         lm.report_ci(self.chisquare_ci)
 
     def get_result_frame(self, method='chisquare', selected=False):
         if method.lower() == 'chisquare':
-            values = self.chisquare_result.params.values()
+            values = self.chisq_res_par.values()
         elif method.lower() == 'mle':
             values = self.mle_result.params.values()
         else:

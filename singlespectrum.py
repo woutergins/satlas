@@ -705,8 +705,9 @@ class SingleSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self,x=None,y=None,yerr=None,
-            no_of_points=10**4,ax=None,show=True):
+    def plot(self, x=None, y=None, yerr=None,
+             no_of_points=10**4, ax=None, show=True, label=True,
+             legend=None, data_legend=None):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -723,17 +724,24 @@ class SingleSpectrum(Spectrum):
         ax: matplotlib axes object
             If provided, plots on this axis
         show: Boolean
-            if True, the plot will be shown at the end.
-            
+            If True, the plot will be shown at the end.
+        label: Boolean
+            If True, the plot will be labeled.
+        legend: String, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: String, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
+
         Returns
         -------
-        None
-
-        """
+        None"""
 
         if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(1, 1, 1)
+            fig, ax = plt.subplots(1, 1)
+            toReturn = fig, ax
+        else:
+            toReturn = None
 
         if x is None:
             ranges = []
@@ -745,26 +753,28 @@ class SingleSpectrum(Spectrum):
                 fwhm = self.fwhm
             ## end of hack
 
-            for pos in self.mu:
+            for pos in self.mu[:, -1]:
                 r = np.linspace(pos - 4 * fwhm,
-                            pos + 4 * fwhm, 
-                            2*10**2)
+                                pos + 4 * fwhm,
+                                2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-                
+
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
-        
-        if not x is None and not y is None:
-            ax.errorbar(x, y, yerr, fmt='o', markersize=5)
-        ax.plot(superx, self(superx), lw=3.0, label=r'$\chi^2$')
-        ax.set_xlabel('Frequency (MHz)', fontsize=16)
-        ax.set_ylabel('Counts', fontsize=16)
+
+        if x is not None and y is not None:
+            ax.errorbar(x, y, yerr, fmt='o', markersize=5, label=data_legend)
+        ax.plot(superx, self(superx), lw=3.0, label=legend)
+        if label:
+            ax.set_xlabel('Frequency (MHz)', fontsize=16)
+            ax.set_ylabel('Counts', fontsize=16)
         if show:
             plt.show()
+        return toReturn
 
-    def plot_spectroscopic(self,x=None,y=None,no_of_points=10**4,ax=None,show=True):
-        """Routine that plots the hfs, possibly on top of 
+    def plot_spectroscopic(self, **kwargs):
+        """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
@@ -781,14 +791,16 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-            
+
         Returns
         -------
         None
 
         """
-        if not y is None:
+        y = kwargs.get('y', None)
+        if y is not None:
             yerr = np.sqrt(y + 1)
         else:
             yerr = None
-        self.plot(x,y,yerr,no_of_points,ax,show)
+        kwargs['yerr'] = yerr
+        return self.plot(**kwargs)

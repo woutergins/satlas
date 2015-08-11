@@ -1,9 +1,8 @@
 from satlas.singlespectrum import SingleSpectrum
 from satlas.combinedspectrum import CombinedSpectrum
 from copy import deepcopy
-from collections import OrderedDict
 
-class Analysis(OrderedDict):
+class Analysis(object):
     """
     Class that contains references to (several) spectra that can 
     be tied to data for later analysis. Notes can also be added
@@ -27,7 +26,9 @@ class Analysis(OrderedDict):
         self._dataPath = ''
 
         self.data_loaded = False
-        self.notes = []
+        self.spectra = {}
+        self.spectra_params = {}
+        self.notes = {}
 
         self.dataPath = path
 
@@ -58,7 +59,7 @@ class Analysis(OrderedDict):
             if not to_copy in self.keys():
                 raise IndexError('Spectrum {} does not exist.'.format(to_copy))
             else:
-                new_spectrum = deepcopy(self[to_copy]) 
+                new_spectrum = deepcopy(self.spectra[to_copy]) 
                 
         else:
             new_spectrum = SingleSpectrum(**kwargs)
@@ -70,7 +71,7 @@ class Analysis(OrderedDict):
 
         if to_copy:
             try:
-                new_spectrum = deepcopy(self[to_copy]) 
+                new_spectrum = deepcopy(self.spectra[to_copy]) 
             except:
                 raise 
 
@@ -85,29 +86,14 @@ class Analysis(OrderedDict):
         self.addSpectrum(name,new_spectrum)
 
     def addSpectrum(self,name,new_spectrum):
-        self[name] = new_spectrum
-        self.notes.append([])
+        self.spectra[name] = new_spectrum
+        self.notes[name] = []
 
     def plot_spectrum(self,index=-1):
         spectrum = self.getSpectrum(index)
         if not self.data_loaded:
             self.loadData()
         spectrum.plot_spectroscopic(self._x,self._y)
-
-    def save(self,raw = True, txt = True, include_data = False):
-        if raw:
-            self.save_raw(include_data)
-        if txt:
-            self.save_txt(include_data)
-
-    def save_raw(self,include_data=False):
-        pass
-
-    def save_txt(self,include_data=False):
-        pass
-
-    def load(self):
-        pass
 
     def __str__(self):
         ret = '' 
@@ -120,3 +106,25 @@ class Analysis(OrderedDict):
                 ret += '\t\t{}:{}+-{}\n'.format(n,par.value,par.stderr)
         return ret
 
+
+def save(analysis):
+    import pickle
+    analysis.spectra_params = {n:v.params_from_var() for n,v in analysis.spectra.items()}
+    toSave = {n:v for n,v in analysis.__dict__.items() if not n == 'spectra'}
+
+    return pickle.dumps(toSave)
+
+def load(p_dump):
+    import pickle
+    d = pickle.loads(p_dump)
+
+    a = Analysis(path = d['_dataPath'])
+    a.data_loaded = d['data_loaded']
+    a.spectra_params = d['spectra_params']
+    for n,pars in a.spectra_params.items():
+        a.addSingleSpectrum(n,I=0,J=[0,0],ABC=[0,0,0,0,0,0],df=0)
+        a.spectra[n].var_from_params(pars)
+
+    a.notes = d['notes']
+
+    return a
