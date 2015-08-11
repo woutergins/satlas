@@ -14,11 +14,11 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import loglikelihood as llh
-import profiles as p
-import utilities as utils
-from wigner import wigner_6j as W6J
-from spectrum import Spectrum
+import satlas.loglikelihood as llh
+import satlas.profiles as p
+import satlas.utilities as utils
+from satlas.wigner import wigner_6j as W6J
+from satlas.spectrum import Spectrum
 
 class SingleSpectrum(Spectrum):
 
@@ -655,7 +655,7 @@ class SingleSpectrum(Spectrum):
             An Isomerspectrum combining both spectra."""
         if isinstance(other, SingleSpectrum):
             l = [self, other]
-        from isomerspectrum import IsomerSpectrum
+        from satlas.isomerspectrum import IsomerSpectrum
         return IsomerSpectrum(l)
 
     def __radd__(self, other):

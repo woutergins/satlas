@@ -4,7 +4,7 @@ import numpy as np
 
 from analysisIO import load
 
-b = load('test')
+b = load('test.analysis')
 b['no_1'].display_chisquare_fit()
 b.plot_spectrum('no_1')
 

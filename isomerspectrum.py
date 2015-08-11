@@ -14,11 +14,11 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import loglikelihood as llh
-import profiles as p
-import utilities as utils
-from wigner import wigner_6j as W6J
-from combinedspectrum import CombinedSpectrum
+import satlas.loglikelihood as llh
+import satlas.profiles as p
+import satlas.utilities as utils
+from satlas.wigner import wigner_6j as W6J
+from satlas.combinedspectrum import CombinedSpectrum
 
 class IsomerSpectrum(CombinedSpectrum):
 
@@ -147,7 +147,7 @@ class IsomerSpectrum(CombinedSpectrum):
             return toReturn
 
     def plot_spectroscopic(self, xs=None, ys=None,
-                           no_of_points=10**4, ax=None):
+                           no_of_points=10**4, ax=None,show = True):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).

@@ -1,13 +1,13 @@
 import pickle
 from analysis import Analysis
-from singlespectrum import SingleSpectrum
-from combinedspectrum import CombinedSpectrum
-from isomerspectrum import IsomerSpectrum
+from satlas.singlespectrum import SingleSpectrum
+from satlas.combinedspectrum import CombinedSpectrum
+from satlas.isomerspectrum import IsomerSpectrum
 
 def save(analysis, filename):
     with open(filename + '.analysis','wb') as f:
         pickle.dump(analysis, f)
 
 def load(filename):
-    with open('test.analysis','rb') as f:
+    with open(filename,'rb') as f:
         return pickle.load(f)

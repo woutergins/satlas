@@ -1,5 +1,5 @@
-from singlespectrum import SingleSpectrum
-from combinedspectrum import CombinedSpectrum
+from satlas.singlespectrum import SingleSpectrum
+from satlas.combinedspectrum import CombinedSpectrum
 from copy import deepcopy
 import pickle
 import numpy as np
@@ -73,10 +73,18 @@ class Analysis(dict):
                            burnin=10.0,  # Defines the percentage of burnin
                            )
 
-    def plot_spectrum(self,name=None):
+    def plot_spectrum(self,name=None, **kwargs):
         if not self.data_loaded:
             self.loadData()
-        self[name].plot_spectroscopic(self._x,self._y)
+        return self[name].plot_spectroscopic(self._x,self._y, **kwargs)
+
+    def add_spectrum(self,name,spectrum=None,copy_name=None):
+        if copy_name is not None:
+            self[name] = deepcopy(self[copy_name])
+        elif spectrum is not None:
+            self[name] = spectrum
+        else:
+            print('You did not provide a spectrum, or a name of a spectrum to copy.')
 
     def __str__(self):
         ret = '' 

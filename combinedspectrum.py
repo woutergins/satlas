@@ -14,11 +14,11 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import loglikelihood as llh
-import profiles as p
-import utilities as utils
-from wigner import wigner_6j as W6J
-from spectrum import Spectrum
+import satlas.loglikelihood as llh
+import satlas.profiles as p
+import satlas.utilities as utils
+from satlas.wigner import wigner_6j as W6J
+from satlas.spectrum import Spectrum
 
 class CombinedSpectrum(Spectrum):
 
@@ -66,7 +66,7 @@ class CombinedSpectrum(Spectrum):
         Black magic going on in here, especially in the block of code
         describing the shared parameters."""
         params = lm.Parameters()
-        from isomerspectrum import IsomerSpectrum
+        from satlas.isomerspectrum import IsomerSpectrum
         for i, s in enumerate(self.spectra):
             p = s.params_from_var()
             keys = list(p.keys())
@@ -116,7 +116,7 @@ class CombinedSpectrum(Spectrum):
         params: Parameters
             Parameters instance containing the information for the variables.
         """
-        from isomerspectrum import IsomerSpectrum
+        from satlas.isomerspectrum import IsomerSpectrum
 
         for i, s in enumerate(self.spectra):
             p = lm.Parameters()
@@ -249,7 +249,7 @@ class CombinedSpectrum(Spectrum):
             return toReturn
 
     def plot_spectroscopic(self, xs=None, ys=None,
-                           no_of_points=10**4, ax=None):
+                           no_of_points=10**4, ax=None, show=True):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -276,7 +276,7 @@ class CombinedSpectrum(Spectrum):
             yerrs = [np.sqrt(y + 1) for y in ys]
         else:
             yerrs = [None for i in self.spectra]
-        self.plot(xs, ys, yerrs, no_of_points, ax)
+        return self.plot(xs, ys, yerrs, no_of_points, ax, show)
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
