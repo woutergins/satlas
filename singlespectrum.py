@@ -241,7 +241,6 @@ class SingleSpectrum(Spectrum):
 
     @relAmp.setter
     def relAmp(self, value):
-        print(value)
         if len(value) is len(self.parts):
             value = np.array(value, dtype='float')
             self._relAmp = np.abs(value)

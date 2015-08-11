@@ -109,7 +109,7 @@ class Analysis(OrderedDict):
     def load(self):
         pass
 
-    def __repr__(self):
+    def __str__(self):
         ret = '' 
         ret += 'Data path:\n'
         ret += '\t' + str(self.dataPath) + '\n'
@@ -119,3 +119,4 @@ class Analysis(OrderedDict):
             for n,par in spec.params_from_var().items():
                 ret += '\t\t{}:{}+-{}\n'.format(n,par.value,par.stderr)
         return ret
+
