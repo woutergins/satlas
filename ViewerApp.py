@@ -1,68 +1,106 @@
 from PyQt4 import QtCore,QtGui
-from satlas.analysisIO import load
+from satlas.analysisIO import save,load
 from PyQt4 import QtCore,QtGui
 import sys
+import matplotlib.pyplot as plt
 
 class Viewer(QtGui.QMainWindow):
     def __init__(self):
         super(Viewer, self).__init__()
+        self.analysis = None
+        self.figs = []
 
         menubar = self.menuBar()
 
-        self.openAction = QtGui.QAction('&Open',self)
-        self.openAction.setShortcut('Ctrl+O')
-        self.openAction.setStatusTip('Choose analysis file to open')
-        self.openAction.triggered.connect(self.open)
+        self.splitter = QtGui.QSplitter()
+        self.setCentralWidget(self.splitter)
 
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(self.openAction)
+        self.model = QtGui.QFileSystemModel()
+        path = str(QtGui.QFileDialog.getExistingDirectory(self, "Select Directory"))
+        self.model.setRootPath(path)
+        filters = ["*.analysis"]
+        self.model.setNameFilters(filters)
+        self.model.setNameFilterDisables(False)
+        
+        self.view = QtGui.QTreeView()
+        self.view.setModel(self.model)
+        self.view.setRootIndex(self.model.index(path))
+        self.view.setColumnHidden(1, True)
+        self.view.setColumnHidden(2, True)
+        self.view.setColumnHidden(3, True)
+        self.view.doubleClicked.connect(self.open)
+        self.view.setMaximumWidth(500)
+        self.splitter.addWidget(self.view)
+
 
         self.tabs = QtGui.QTabWidget()
-        self.setCentralWidget(self.tabs)
+        self.splitter.addWidget(self.tabs)
 
         self.setGeometry(QtCore.QRect(128, 128, 800, 600))
 
         self.show()
 
-        self.open()
+    def open(self,index):
+        self.tabs.clear()
 
-    def open(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
-                            filter = "Analysis (*.analysis)")
+        for f in self.figs:
+            plt.close(f[0])
 
-        self.analysis = load(fname)
-
+        path = self.model.filePath(index)
+        self.analysisName = self.model.fileName(index)
+        self.analysis = load(path)
         self.make_analysis_view()
 
     def make_analysis_view(self):
-        self.tabs.clear()
+        print(self.analysis._dataPaths)
         for n,s in sorted(self.analysis.items()):
-            fig, ax = self.analysis.plot_spectrum(n,show=False)
-            self.tabs.addTab(ApproachOverview(s,fig),n)
+            try:
+                self.make_approach_oVerview(n,s)
+            except FileNotFoundError:
+                for i,p in enumerate(self.analysis._dataPaths):
+                    error = QtGui.QErrorMessage()
+                    error.showMessage('Data File not found. Original location: {}'.format(p))
+                    error.exec_()
+
+                    filename = QtGui.QFileDialog.getOpenFileName(
+                            self, 'Select missing data file', '')
+                    self.analysis._dataPaths[i] = filename
+                    save(self.analysis,self.analysisName)
+
+                try:
+                    self.make_approach_oVerview()
+                except FileNotFoundError as e:
+                    error = QtGui.QErrorMessage()
+                    error.showMessage(str(e))
+                    error.exec_()
+
+
+    def make_approach_oVerview(self,n,s):
+        fig, ax = self.analysis.plot_spectrum(n,show=False)
+        self.figs.append((fig,ax))                
+        self.tabs.addTab(ApproachOverview(s,fig),n)
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-
-class ApproachOverview(QtGui.QWidget):
+class ApproachOverview(QtGui.QSplitter):
     def __init__(self,spectrum,fig):
         super(ApproachOverview,self).__init__()
         
         self.spectrum = spectrum
 
-        self.layout = QtGui.QGridLayout(self)
         self.parWidget = QtGui.QTableWidget()
-        self.layout.addWidget(self.parWidget,0,0)
+        self.addWidget(self.parWidget)
         self.populateTable()
 
         figureWidget = QtGui.QWidget()
-        figureLayout = QtGui.QVBoxLayout()
+        figureLayout = QtGui.QVBoxLayout(figureWidget)
         
         canvas = FigureCanvas(fig)
         toolbar = NavigationToolbar(canvas, self)
         figureLayout.addWidget(canvas)
         figureLayout.addWidget(toolbar)
 
-        self.layout.addLayout(figureLayout,0,1)
+        self.addWidget(figureWidget)
 
     def populateTable(self):
         names,values,errors = self.spectrum.vars()

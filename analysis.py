@@ -46,23 +46,24 @@ class Analysis(dict):
     ### Methods
     def loadData(self):
         ## load from paths
-        try:
-            self._x = []
-            self._y = []
-            for path in self.dataPaths:
-                data = np.loadtxt(path)
-                self._x.append(data.T[0])
-                self._y.append(data.T[1])
+        self._x = []
+        self._y = []
+        for path in self.dataPaths:
+            data = np.loadtxt(path)
+            self._x.append(data.T[0])
+            self._y.append(data.T[1])
 
-            self.data_loaded = True
-        except FileNotFoundError:
-            print('One or more of the files was not found...')
+        self.data_loaded = True
 
     def analyse_chisq(self,name=None):
+        if not self.data_loaded:
+            self.loadData()
         chisq = self[name].chisquare_spectroscopic_fit(x=self._x,y=self._y)
         return chisq
 
     def analyse_mle(self,name,**kwargs):
+        if not self.data_loaded:
+            self.loadData()
         ## rough for now of course
         self[name].likelihood_fit(x=self._x,y=self._y,
                            walking=True,  # Perform the walk
