@@ -6,7 +6,7 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-from satlas.profiles import Lorentzian
+from .profiles import Lorentzian
 from wigner import wigner_3j as W3J
 from wigner import wigner_6j as W6J
 import satlas.utilities as util

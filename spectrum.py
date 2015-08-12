@@ -17,7 +17,7 @@ import pandas as pd
 import satlas.loglikelihood as llh
 import satlas.profiles as p
 import satlas.utilities as utils
-from satlas.wigner import wigner_6j as W6J
+from .wigner import wigner_6j as W6J
 
 
 def model(params, spectrum, x, y, yerr, errorByFit):

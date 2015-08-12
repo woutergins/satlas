@@ -5,8 +5,8 @@ from itertools import cycle
 import os
 
 import numpy as np
-from satlas.polar import Polar
-from satlas.utilities import Level
+from .polar import Polar
+from .utilities import Level
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.dockarea import *

@@ -10,7 +10,7 @@
 from datetime import datetime
 import re
 import sys
-from satlas.spectrum import SingleSpectrum
+from .spectrum import SingleSpectrum
 import satlas.utilities as utilities
 import lmfit as lm
 import numpy as np

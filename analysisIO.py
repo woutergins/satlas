@@ -1,8 +1,10 @@
 import pickle
-from satlas.analysis import Analysis
-from satlas.singlespectrum import SingleSpectrum
-from satlas.combinedspectrum import CombinedSpectrum
-from satlas.isomerspectrum import IsomerSpectrum
+from .analysis import Analysis
+from .unit import DataUnit
+from .singlespectrum import SingleSpectrum
+from .combinedspectrum import CombinedSpectrum
+from .isomerspectrum import IsomerSpectrum
+from .spectrum import Spectrum
 
 def save(analysis, filename, include_data = False):
     if not include_data:
