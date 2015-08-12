@@ -1,5 +1,5 @@
 import pickle
-from analysis import Analysis
+from satlas.analysis import Analysis
 from satlas.singlespectrum import SingleSpectrum
 from satlas.combinedspectrum import CombinedSpectrum
 from satlas.isomerspectrum import IsomerSpectrum
