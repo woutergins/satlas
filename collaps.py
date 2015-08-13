@@ -10,8 +10,8 @@
 from datetime import datetime
 import re
 import sys
-from satlas.singlespectrum import SingleSpectrum
-import satlas.utilities as utilities
+from .spectrum import SingleSpectrum
+import .utilities as utilities
 import lmfit as lm
 import numpy as np
 from scipy.optimize import root

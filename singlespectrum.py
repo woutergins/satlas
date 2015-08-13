@@ -12,10 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
-from fractions import Fraction
-from satlas.wigner import wigner_6j as W6J
-from satlas.spectrum import Spectrum
-from satlas.isomerspectrum import IsomerSpectrum
+from .isomerspectrum import IsomerSpectrum
+from .spectrum import Spectrum
 
 
 class SingleSpectrum(Spectrum):
@@ -771,7 +769,6 @@ class SingleSpectrum(Spectrum):
              no_of_points=10**4, ax=None, show=True, label=True,
              legend=None, data_legend=None):
         """Routine that plots the hfs, possibly on top of experimental data.
-
         Parameters
         ----------
         x: array
@@ -794,7 +791,6 @@ class SingleSpectrum(Spectrum):
         data_legend: String, optional
             If given, an entry in the legend will be made for the experimental
             data.
-
         Returns
         -------
         None"""
@@ -839,7 +835,6 @@ class SingleSpectrum(Spectrum):
         """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
-
         Parameters
         ----------
         x: array
@@ -853,11 +848,9 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-
         Returns
         -------
         None
-
         """
         y = kwargs.get('y', None)
         if y is not None:
