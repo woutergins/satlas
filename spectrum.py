@@ -17,8 +17,8 @@ try:
     import progressbar
 except:
     pass
-import .loglikelihood as llh
-import .utilities as utils
+from . import loglikelihood as llh
+from . import utilities as utils
 from .wigner import wigner_6j as W6J
 
 

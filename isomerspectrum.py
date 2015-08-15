@@ -215,12 +215,7 @@ class IsomerSpectrum(CombinedSpectrum):
         if x is None:
             ranges = []
 
-            ## Hack alert!!!!
-            if type(self.spectra[0].fwhm) == list:
-                fwhm = np.sqrt(self.spectra[0].fwhm[0]**2 + self.spectra[0].fwhm[0]**2)
-            else:
-                fwhm = self.spectra[0].fwhm
-            ## end of hack
+            fwhm = max([s.fwhm for s in self.spectra])
 
             for pos in [positions for spectrum in self.spectra for positions in spectrum.mu]:
                 r = np.linspace(pos - 4 * fwhm,

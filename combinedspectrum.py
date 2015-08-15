@@ -11,9 +11,9 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import .loglikelihood as llh
-import .profiles as p
-import .utilities as utils
+from . import loglikelihood as llh
+from . import profiles as p
+from . import utilities as utils
 from .wigner import wigner_6j as W6J
 from .spectrum import Spectrum
 

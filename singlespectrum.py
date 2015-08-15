@@ -12,8 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
+from fractions import Fraction
+
 from .isomerspectrum import IsomerSpectrum
 from .spectrum import Spectrum
+from .wigner import wigner_6j, wigner_3j
+W6J = wigner_6j
+W3J = wigner_3j
 
 
 class SingleSpectrum(Spectrum):
@@ -369,9 +374,15 @@ class SingleSpectrum(Spectrum):
             for j, F2 in enumerate(self._F[1]):
                 if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
                     dummy = Fraction(F1).limit_denominator()
-                    f1.append(str(dummy.numerator) + '_' + str(dummy.denominator))
+                    if dummy.denominator == 1:
+                        f1.append(str(dummy.numerator))
+                    else:
+                        f1.append(str(dummy.numerator) + '_' + str(dummy.denominator))
                     dummy = Fraction(F2).limit_denominator()
-                    f2.append(str(dummy.numerator) + '_' + str(dummy.denominator))
+                    if dummy.denominator == 1:
+                        f2.append(str(dummy.numerator))
+                    else:
+                        f2.append(str(dummy.numerator) + '_' + str(dummy.denominator))
                     mu.append(self._energies[1][j] - self._energies[0][i])
 
         if not len(self.parts) is len(mu):
@@ -803,13 +814,7 @@ class SingleSpectrum(Spectrum):
 
         if x is None:
             ranges = []
-
-            ## Hack alert!!!!
-            if type(self.fwhm) == list:
-                fwhm = np.sqrt(self.fwhm[0]**2 + self.fwhm[0]**2)
-            else:
-                fwhm = self.fwhm
-            ## end of hack
+            fwhm = self.fwhm
 
             for pos in self.mu[:, -1]:
                 r = np.linspace(pos - 4 * fwhm,
@@ -854,7 +859,8 @@ class SingleSpectrum(Spectrum):
         """
         y = kwargs.get('y', None)
         if y is not None:
-            yerr = np.sqrt(y + 1)
+            yerr = np.sqrt(y)
+            yerr[np.isclose(yerr, 0)] = 1.0
         else:
             yerr = None
         kwargs['yerr'] = yerr
