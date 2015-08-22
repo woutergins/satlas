@@ -103,7 +103,22 @@ class Spectrum(object):
         if any([np.isclose(X.min(), X.max(), atol=self.atol)
                 for X in self.seperate_response(x)]) or any(self(x) < 0):
             return -np.inf
-        return self._loglikelifunc(y, self(x))
+        if params['sigma_x'].value > 0:
+            # integrate for each datapoint over a range
+            s = params['sigma_x'].value
+            s = s / np.sqrt(2 * np.log(2))
+            p = profiles.Gaussian(fwhm=s, mu=0, amp=1, ampIsArea=True)
+
+            @np.vectorize
+            def x_err_calculation(x, y, s):
+                def integrand(theta):
+                    return self._loglikelifunc(y, self(x + theta)) * p(theta)
+                return quad(integrand, -5*s, 5*s)[0]
+
+            return_value = np.exp(x_err_calculation(x, y, s))
+        else:
+            return_value = self._loglikelifunc(y, self(x))
+        return return_value
 
     def lnprior(self, params):
         """Defines the (uninformative) prior for all parameters.
