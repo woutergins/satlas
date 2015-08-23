@@ -21,13 +21,19 @@ from . import loglikelihood as llh
 from . import utilities as utils
 from .wigner import wigner_6j as W6J
 
+def memoize(f):
+    memo = {}
+    def helper(x):
+        if x not in memo:            
+            memo[x] = f(x)
+        return memo[x]
+    return helper
 
-def model(params, spectrum, x, y, yerr, pierson):
+def model(params, spectrum, x, y, yerr, pearson):
     spectrum.var_from_params(params)
     model = spectrum(x)
-    if pierson:
+    if pearson:
         yerr = np.sqrt(model)
-        yerr[np.isclose(yerr, 0.0)] = 1.0
     return (y - model) / yerr
 
 
@@ -77,6 +83,12 @@ class Spectrum(object):
     def loglikelifunc(self, value):
         mapping = {'poisson': llh.Poisson, 'gaussian': llh.Gaussian}
         self._loglikelifunc = mapping.get(value.lower(), llh.Poisson)
+        @np.vectorize
+        def x_err_calculation(x, y, s):
+            def integrand(theta):
+                return np.exp(self._loglikelifunc(y, self(x + theta))) * np.exp(-(theta / s)**2 / 2) / s
+            return quad(integrand, -5*s, 5*s)[0]
+        self._likelifunc_xerr = x_err_calculation
 
     def sanitize_input(self, x, y, yerr=None):
         raise NotImplemented
@@ -109,13 +121,7 @@ class Spectrum(object):
             s = s / np.sqrt(2 * np.log(2))
             p = profiles.Gaussian(fwhm=s, mu=0, amp=1, ampIsArea=True)
 
-            @np.vectorize
-            def x_err_calculation(x, y, s):
-                def integrand(theta):
-                    return self._loglikelifunc(y, self(x + theta)) * p(theta)
-                return quad(integrand, -5*s, 5*s)[0]
-
-            return_value = np.exp(x_err_calculation(x, y, s))
+            return_value = np.log(self._likelifunc_xerr(x, y, s))
         else:
             return_value = self._loglikelifunc(y, self(x))
         return return_value
@@ -170,7 +176,7 @@ class Spectrum(object):
         res = lp + np.sum(self.loglikelihood(params, x, y))
         return res
 
-    def likelihood_fit(self, x, y, walking=True, **kwargs):
+    def likelihood_fit(self, x, y, xerr=0, vary_sigma=True, walking=True, **kwargs):
         """Fit the spectrum to the spectroscopic data using the Maximum
         Likelihood technique. This is done by minimizing the negative sum of
         the loglikelihoods of the spectrum given the data (given by the method
@@ -202,6 +208,7 @@ class Spectrum(object):
 
         x, y, _ = self.sanitize_input(x, y)
         params = self.params_from_var()
+        params.add('sigma_x', value=xerr, vary=vary_sigma)
         result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(x, y))
         result.scalar_minimize(method='Nelder-Mead')
         self.var_from_params(result.params)
@@ -427,7 +434,7 @@ class Spectrum(object):
         yerr[np.isclose(yerr, 0.0)] = 1.0
         return self.chisquare_fit(x, y, yerr, **kwargs)
 
-    def chisquare_fit(self, x, y, yerr, pierson=False):
+    def chisquare_fit(self, x, y, yerr, pearson=True):
         """Use a non-linear least squares minimization (Levenberg-Marquardt)
         algorithm to minimize the chi-square of the fit to data :attr:`x` and
         :attr:`y` with errorbars :attr:`yerr`. Reasonable bounds are used on
@@ -442,16 +449,20 @@ class Spectrum(object):
             Counts corresponding to :attr:`x`.
         yerr: array_like
             Error bars on :attr:`y`.
-        pierson: boolean, optional
-            Selects if the normal or Pierson chi-square statistic is used.
-            The Pierson chi-square uses the model value to estimate the
-            uncertainty. Defaults to :attr:`False`."""
+        pearson: boolean, optional
+            Selects if the normal or Pearson chi-square statistic is used.
+            The Pearson chi-square uses the model value to estimate the
+            uncertainty. Defaults to :attr:`True`."""
 
         x, y, yerr = self.sanitize_input(x, y, yerr)
 
         params = self.params_from_var()
+        try:
+            params['sigma_x'].vary = False
+        except:
+            pass
 
-        result = lm.minimize(model, params, args=(self, x, y, yerr, pierson))
+        result = lm.minimize(model, params, args=(self, x, y, yerr, pearson))
 
         self.chisq_res_par = result.params
         self.chisq_res_report = lm.fit_report(result)

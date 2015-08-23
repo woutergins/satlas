@@ -8,8 +8,9 @@
 """
 
 import numpy as np
+from numba import autojit
 
-
+@autojit
 def Poisson(x, l):
     """Returns the loglikelihood for a Poisson distribution.
     In this calculation, it is assumed that the parameters
@@ -30,6 +31,7 @@ def Poisson(x, l):
     return x * np.log(l) - l
 
 
+@autojit
 def Gaussian(x, l):
     """Returns the loglikelihood for a Gaussian distribution,
     assuming the variance is given by the square root of the data
