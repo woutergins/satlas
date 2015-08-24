@@ -11,7 +11,7 @@ from datetime import datetime
 import re
 import sys
 from .spectrum import SingleSpectrum
-import .utilities as utilities
+from . import utilities as utilities
 import lmfit as lm
 import numpy as np
 from scipy.optimize import root
@@ -900,11 +900,6 @@ def predictspectrum(mass, I, J, ABC, isotopeshift, lifetime, transitionFreq,
         except ImportError:
             try:
                 import matplotlib.pyplot as plt
-                try:
-                    import seaborn
-                    seaborn.set()
-                except ImportError:
-                    pass
 
                 fig = plt.figure()
                 ax = fig.add_subplot(1, 1, 1)

@@ -814,7 +814,7 @@ class SingleSpectrum(Spectrum):
 
         if x is None:
             ranges = []
-            fwhm = self.fwhm
+            fwhm = self.parts[0].fwhm
 
             for pos in self.mu[:, -1]:
                 r = np.linspace(pos - 4 * fwhm,
@@ -827,11 +827,11 @@ class SingleSpectrum(Spectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerr, fmt='o', markersize=5, label=data_legend)
-        ax.plot(superx, self(superx), lw=3.0, label=legend)
+            ax.errorbar(x, y, yerr, fmt='o', label=data_legend)
+        ax.plot(superx, self(superx), label=legend)
         if label:
-            ax.set_xlabel('Frequency (MHz)', fontsize=16)
-            ax.set_ylabel('Counts', fontsize=16)
+            ax.set_xlabel('Frequency (MHz)')
+            ax.set_ylabel('Counts')
         if show:
             plt.show()
         return toReturn
