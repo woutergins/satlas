@@ -11,6 +11,9 @@ import numpy as np
 from scipy.special import wofz
 
 
+__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt',
+           'ExtendedVoigt', 'Irrational', 'HyperbolicSquared']
+
 class Profile(object):
 
     def __init__(self, fwhm=None, mu=None, amp=None, ampIsArea=False):
@@ -197,7 +200,7 @@ function, and the values supplied as FWHM are appropriately transformed to
             self.fwhmG, self.fwhmL = value, value
             self._fwhm = 0.6144031129489123 * value
             self.sigma, self.gamma = self._fwhm / self._fwhmNorm
-        
+
         if not self.ampIsArea:
             z = (0 + 1j * self.gamma) / (self.sigma * np.sqrt(2))
             top = wofz(z).real / (self.sigma * np.sqrt(2 * np.pi))

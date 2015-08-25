@@ -9,12 +9,9 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import satlas.loglikelihood as llh
-import satlas.profiles as p
-import satlas.utilities as utils
-from .wigner import wigner_6j as W6J
 from .combinedspectrum import CombinedSpectrum
+
+__all__ = ['IsomerSpectrum']
 
 
 class IsomerSpectrum(CombinedSpectrum):

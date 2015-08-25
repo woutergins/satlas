@@ -20,6 +20,8 @@ except:
 from . import loglikelihood as llh
 
 
+__all__ = []
+
 def memoize(f):
     memo = {}
 
@@ -78,13 +80,13 @@ class Spectrum(object):
 
     @property
     def loglikelifunc(self):
-        mapping = {llh.Poisson: 'Poisson', llh.Gaussian: 'Gaussian'}
+        mapping = {llh.poisson_llh: 'Poisson', llh.gaussian_llh: 'Gaussian'}
         return mapping[self._loglikelifunc]
 
     @loglikelifunc.setter
     def loglikelifunc(self, value):
-        mapping = {'poisson': llh.Poisson, 'gaussian': llh.Gaussian}
-        self._loglikelifunc = mapping.get(value.lower(), llh.Poisson)
+        mapping = {'poisson': llh.poisson_llh, 'gaussian': llh.gaussian_llh}
+        self._loglikelifunc = mapping.get(value.lower(), llh.poisson_llh)
 
         def x_err_calculation(x, y, s):
             x, theta = np.meshgrid(x, self._theta_array)
@@ -255,8 +257,7 @@ class Spectrum(object):
             For deeper debugging, the data from the walks can be saved and
             viewed later on."""
 
-        params = self.params_from_var()
-        self.mle_fit = self.params_from_var()
+        params = self.mle_fit
         var_names = []
         vars = []
         for key in params.keys():

@@ -13,6 +13,7 @@ import satlas.utilities as util
 import numpy as np
 from scipy import integrate
 
+__all__ = ['Polar']
 
 # Define constants
 C = 299792457.4  # Speed of light, m/s

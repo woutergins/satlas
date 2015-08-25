@@ -10,12 +10,8 @@
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from . import loglikelihood as llh
-from . import profiles as p
-from . import utilities as utils
-from .wigner import wigner_6j as W6J
 from .spectrum import Spectrum
+__all__ = ['CombinedSpectrum']
 
 
 class CombinedSpectrum(Spectrum):

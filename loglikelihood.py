@@ -7,9 +7,10 @@
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
 import numpy as np
+__all__ = ['poisson_llh', 'gaussian_llh']
 
 
-def Poisson(x, l):
+def poisson_llh(x, l):
     """Returns the loglikelihood for a Poisson distribution.
     In this calculation, it is assumed that the parameters
     are true, and the loglikelihood that the data is drawn from
@@ -29,7 +30,7 @@ def Poisson(x, l):
     return x * np.log(l) - l
 
 
-def Gaussian(x, l):
+def gaussian_llh(x, l):
     """Returns the loglikelihood for a Gaussian distribution,
     assuming the variance is given by the square root of the data
     points. It is assumed that the parameters are true, and the

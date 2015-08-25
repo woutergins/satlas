@@ -20,6 +20,8 @@ from .wigner import wigner_6j, wigner_3j
 W6J = wigner_6j
 W3J = wigner_3j
 
+__all__ = ['SingleSpectrum']
+
 
 class SingleSpectrum(Spectrum):
 

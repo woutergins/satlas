@@ -22,6 +22,18 @@ q = 1.60217657 * (10 ** -19)
 cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
 invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
 
+__all__ = ['ReleaseCurve',
+           'Level',
+           'Energy',
+           'round_to_signif_figs',
+           'weighted_average',
+           'bootstrap_ci',
+           'generate_likelihood_plot',
+           'generate_correlation_plot',
+           'generate_spectrum',
+           'concat_results',
+           'poisson_interval']
+
 
 def state_number_enumerate(dims, state=None, idx=0):
     """Create the indices for the different entries in
@@ -350,7 +362,7 @@ class Energy(object):
         return val
 
 
-def round2SignifFigs(vals, n):
+def round_to_signif_figs(vals, n):
     """
     Code copied from
     http://stackoverflow.com/questions/18915378/rounding-to-significant-figures-in-numpy
