@@ -13,23 +13,22 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.integrate import quad
-from numba import autojit
 try:
     import progressbar
 except:
     pass
 from . import loglikelihood as llh
-from . import utilities as utils
-from .wigner import wigner_6j as W6J
+
 
 def memoize(f):
     memo = {}
+
     def helper(x):
         if x not in memo:
             memo[x] = f(x)
         return memo[x]
     return helper
+
 
 def model(params, spectrum, x, y, yerr, pearson):
     spectrum.var_from_params(params)
@@ -87,15 +86,13 @@ class Spectrum(object):
         mapping = {'poisson': llh.Poisson, 'gaussian': llh.Gaussian}
         self._loglikelifunc = mapping.get(value.lower(), llh.Poisson)
 
-        # @autojit
         def x_err_calculation(x, y, s):
             x, theta = np.meshgrid(x, self._theta_array)
             y, _ = np.meshgrid(y, self._theta_array)
-            p = self._loglikelifunc(y, x + theta)
+            p = self._loglikelifunc(y, self(x + theta))
             g = np.exp(-(theta / s)**2 / 2) / s
-            return np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1]
-            # return np.convolve(np.exp(self._loglikelifunc(y, self(x + self._theta_array))), np.exp(-(self._theta_array / s)**2 / 2) / s, 'valid')
-        self._likelifunc_xerr = x_err_calculation
+            return np.log(np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1])
+        self._loglikelifunc_xerr = x_err_calculation
 
     def sanitize_input(self, x, y, yerr=None):
         raise NotImplemented
@@ -126,7 +123,7 @@ class Spectrum(object):
             # integrate for each datapoint over a range
             s = params['sigma_x'].value
 
-            return_value = np.log(self._likelifunc_xerr(x, y, s))
+            return_value = self._loglikelifunc_xerr(x, y, s)
         else:
             return_value = self._loglikelifunc(y, self(x))
         return return_value
@@ -213,7 +210,7 @@ class Spectrum(object):
 
         x, y, _ = self.sanitize_input(x, y)
         params = self.params_from_var()
-        params.add('sigma_x', value=xerr, vary=vary_sigma)
+        params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
         result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(x, y))
         result.scalar_minimize(method='Nelder-Mead')
         self.var_from_params(result.params)
