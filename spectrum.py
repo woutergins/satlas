@@ -17,8 +17,25 @@ try:
     import progressbar
 except:
     pass
-import satlas.loglikelihood as llh
-import satlas.utilities as utils
+from . import loglikelihood as llh
+
+
+def memoize(f):
+    memo = {}
+
+    def helper(x):
+        if x not in memo:
+            memo[x] = f(x)
+        return memo[x]
+    return helper
+
+
+def model(params, spectrum, x, y, yerr, pearson):
+    spectrum.var_from_params(params)
+    model = spectrum(x)
+    if pearson:
+        yerr = np.sqrt(model)
+    return (y - model) / yerr
 
 
 class PriorParameter(lm.Parameter):
@@ -57,6 +74,7 @@ class Spectrum(object):
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'df']
         self.atol = 0.1
         self.loglikelifunc = 'poisson'
+        self._theta_array = np.linspace(-3, 3, 1000)
 
     @property
     def loglikelifunc(self):
@@ -67,6 +85,14 @@ class Spectrum(object):
     def loglikelifunc(self, value):
         mapping = {'poisson': llh.Poisson, 'gaussian': llh.Gaussian}
         self._loglikelifunc = mapping.get(value.lower(), llh.Poisson)
+
+        def x_err_calculation(x, y, s):
+            x, theta = np.meshgrid(x, self._theta_array)
+            y, _ = np.meshgrid(y, self._theta_array)
+            p = self._loglikelifunc(y, self(x + theta))
+            g = np.exp(-(theta / s)**2 / 2) / s
+            return np.log(np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1])
+        self._loglikelifunc_xerr = x_err_calculation
 
     def sanitize_input(self, x, y, yerr=None):
         raise NotImplemented
@@ -93,7 +119,14 @@ class Spectrum(object):
         if any([np.isclose(X.min(), X.max(), atol=self.atol)
                 for X in self.seperate_response(x)]) or any(self(x) < 0):
             return -np.inf
-        return self._loglikelifunc(y, self(x))
+        if params['sigma_x'].value > 0:
+            # integrate for each datapoint over a range
+            s = params['sigma_x'].value
+
+            return_value = self._loglikelifunc_xerr(x, y, s)
+        else:
+            return_value = self._loglikelifunc(y, self(x))
+        return return_value
 
     def lnprior(self, params):
         """Defines the (uninformative) prior for all parameters.
@@ -145,7 +178,7 @@ class Spectrum(object):
         res = lp + np.sum(self.loglikelihood(params, x, y))
         return res
 
-    def likelihood_fit(self, x, y, walking=True, **kwargs):
+    def likelihood_fit(self, x, y, xerr=0, vary_sigma=False, walking=True, **kwargs):
         """Fit the spectrum to the spectroscopic data using the Maximum
         Likelihood technique. This is done by minimizing the negative sum of
         the loglikelihoods of the spectrum given the data (given by the method
@@ -177,6 +210,7 @@ class Spectrum(object):
 
         x, y, _ = self.sanitize_input(x, y)
         params = self.params_from_var()
+        params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
         result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(x, y))
         result.scalar_minimize(method='Nelder-Mead')
         self.var_from_params(result.params)
@@ -402,7 +436,7 @@ class Spectrum(object):
         yerr[np.isclose(yerr, 0.0)] = 1.0
         return self.chisquare_fit(x, y, yerr, **kwargs)
 
-    def chisquare_fit(self, x, y, yerr, pierson=False):
+    def chisquare_fit(self, x, y, yerr, pearson=True):
         """Use a non-linear least squares minimization (Levenberg-Marquardt)
         algorithm to minimize the chi-square of the fit to data :attr:`x` and
         :attr:`y` with errorbars :attr:`yerr`. Reasonable bounds are used on
@@ -417,26 +451,24 @@ class Spectrum(object):
             Counts corresponding to :attr:`x`.
         yerr: array_like
             Error bars on :attr:`y`.
-        pierson: boolean, optional
-            Selects if the normal or Pierson chi-square statistic is used.
-            The Pierson chi-square uses the model value to estimate the
-            uncertainty. Defaults to :attr:`False`."""
+        pearson: boolean, optional
+            Selects if the normal or Pearson chi-square statistic is used.
+            The Pearson chi-square uses the model value to estimate the
+            uncertainty. Defaults to :attr:`True`."""
 
         x, y, yerr = self.sanitize_input(x, y, yerr)
 
-        def Model(params, x, y, yerr, pierson):
-            self.var_from_params(params)
-            model = self(x)
-            if pierson:
-                yerr = np.sqrt(model)
-                yerr[np.isclose(yerr, 0.0)] = 1.0
-            return (y - model) / yerr
-
         params = self.params_from_var()
+        try:
+            params['sigma_x'].vary = False
+        except:
+            pass
 
-        result = lm.minimize(Model, params, args=(x, y, yerr, pierson))
+        result = lm.minimize(model, params, args=(self, x, y, yerr, pearson))
 
-        self.chisquare_result = result
+        self.chisq_res_par = result.params
+        self.chisq_res_report = lm.fit_report(result)
+        return result
 
     def display_chisquare_fit(self, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
@@ -448,7 +480,7 @@ class Spectrum(object):
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisquare_fit'):
             print('Scaled errors estimated from covariance matrix.')
-            print(lm.fit_report(self.chisquare_result, **kwargs))
+            print(self.chisq_res_report)
         else:
             print('Spectrum has not yet been fitted with this method!')
 
@@ -468,13 +500,13 @@ class Spectrum(object):
             Returns a 3-tuple of lists containing the names of the parameters,
             the values and the estimated uncertainties."""
         var, var_names, varerr = [], [], []
-        if hasattr(self, 'chisquare_result') and (selection.lower() == 'chisquare'
+        if hasattr(self, 'chisq_res_par') and (selection.lower() == 'chisquare'
                                                or selection.lower() == 'any'):
-            for key in sorted(self.chisquare_result.params.keys()):
-                if self.chisquare_result.params[key].vary:
-                    var.append(self.chisquare_result.params[key].value)
-                    var_names.append(self.chisquare_result.params[key].name)
-                    varerr.append(self.chisquare_result.params[key].stderr)
+            for key in sorted(self.chisq_res_par.keys()):
+                if self.chisq_res_par[key].vary:
+                    var.append(self.chisq_res_par[key].value)
+                    var_names.append(self.chisq_res_par[key].name)
+                    varerr.append(self.chisq_res_par[key].stderr)
         elif hasattr(self, 'mle_fit'):
             for key in sorted(self.mle_fit.params.keys()):
                 if self.mle_fit.params[key].vary:
@@ -489,48 +521,6 @@ class Spectrum(object):
                     var_names.append(params[key].name)
                     varerr.append(None)
         return var_names, var, varerr
-
-    def chisquare_correlation_plot(self, selected=True, **kwargs):
-        """If a chisquare fit has been performed, this method creates a figure
-        for plotting the correlation maps between parameters.
-
-        Parameters
-        ----------
-        selected: boolean, optional
-            Controls if only the parameters defined in :attr:`selected` are
-            used (True) or if all parameters are used (False). Defaults to True
-        kwargs: keywords
-            Other keywords are passed on to the :func:`conf_interval2d`
-            function from lmfit. The exception is the keyword :attr:`limits`,
-            which is now a float that indicates how many standard deviations
-            have to be traveled.
-
-        Returns
-        -------
-        figure
-            Returns the generated MatPlotLib figure"""
-        g = utils.FittingGrid(self.chisquare_result,
-                              selected=self.selected if selected else None,
-                              **kwargs)
-        return g.fig
-
-    def calculate_confidence_intervals(self, selected=True, **kwargs):
-        """Calculates the confidence bounds for parameters by making use of
-        lmfit's :func:`conf_interval` function. Results are saved in
-        :attr:`self.chisquare_ci`
-
-        Parameters
-        ----------
-        selected: boolean, optional
-            Boolean controlling if the used parameters are only the ones
-            defined in the attribute :attr:`selected` (True), or if all
-            parameters are to be used."""
-        names = [p for f in self.selected for p in self.chisquare_result.params
-                 if (f in self.chisquare_result.params[p].name and
-                     self.chisquare_result.params[p].vary)] if selected else None
-        self.chisquare_ci = lm.conf_interval(self.chisquare_result,
-                                             p_names=names,
-                                             **kwargs)
 
     def display_ci(self):
         """If the confidence bounds for the parameters have been calculated
@@ -562,7 +552,7 @@ class Spectrum(object):
         -------
         DataFrame"""
         if method.lower() == 'chisquare':
-            values = self.chisquare_result.params.values()
+            values = self.chisq_res_par.values()
         elif method.lower() == 'mle':
             values = self.mle_fit.values()
         else:

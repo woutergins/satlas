@@ -6,7 +6,6 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-
 import numpy as np
 
 
@@ -50,4 +49,3 @@ def Gaussian(x, l):
         Array with the loglikelihoods for the data"""
     s = x ** 0.5
     return -((x - l)/(2 * s)) ** 2
-    # return -np.log(np.sqrt(2*np.pi)*s)-(x-l)**2/(2.0*s**2)

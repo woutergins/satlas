@@ -74,10 +74,7 @@ Note
 
     @fwhm.setter
     def fwhm(self, value):
-        try:
-            self._fwhm = value[0]
-        except (IndexError, TypeError):
-            self._fwhm = value
+        self._fwhm = value
         self.sigma = self.fwhm / (2 * np.sqrt(2 * np.log(2)))
         if not self.ampIsArea:
             self._normFactor = (self.sigma * np.sqrt(2 * np.pi)) ** (-1)
@@ -129,10 +126,7 @@ http://mathworld.wolfram.com/LorentzianFunction.html:
 
     @fwhm.setter
     def fwhm(self, value):
-        try:
-            self._fwhm = value[0]
-        except (IndexError, TypeError):
-            self._fwhm = value
+        self._fwhm = value
         self.gamma = 0.5 * self.fwhm
         if not self.ampIsArea:
             self._normFactor = 1.0 / (self.gamma * np.pi)
@@ -192,20 +186,22 @@ function, and the values supplied as FWHM are appropriately transformed to
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = np.abs(value)
-        try:
-            if len(self._fwhm) is not 2:
-                self._fwhm = np.array([self._fwhm[0], self._fwhm[0]])
-        except TypeError:
-            self._fwhm = np.array([self._fwhm, self._fwhm])
-
-        self.sigma, self.gamma = self._fwhm / self._fwhmNorm
+        if isinstance(value, (list, tuple, np.ndarray)):
+            seperate = value[0:2]
+            self.fwhmG, self.fwhmL = seperate
+            G, L = seperate
+            self._fwhm = 0.5346 * self.fwhmL + \
+                         np.sqrt(0.2166 * self.fwhmL ** 2 + self.fwhmG ** 2)
+            self.sigma, self.gamma = seperate / self._fwhmNorm
+        else:
+            self.fwhmG, self.fwhmL = value, value
+            self._fwhm = 0.6144031129489123 * value
+            self.sigma, self.gamma = self._fwhm / self._fwhmNorm
+        
         if not self.ampIsArea:
             z = (0 + 1j * self.gamma) / (self.sigma * np.sqrt(2))
             top = wofz(z).real / (self.sigma * np.sqrt(2 * np.pi))
             self._normFactor = top
-        G, L = self._fwhm[0], self._fwhm[1]
-        self.totalfwhm = 0.5346 * L + np.sqrt(0.2166 * L ** 2 + G ** 2)
 
     def __call__(self, x):
         x = x - self.mu
@@ -254,10 +250,7 @@ code inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.
 
     @fwhm.setter
     def fwhm(self, value):
-        try:
-            self._fwhm = value[0]
-        except (IndexError, TypeError):
-            self._fwhm = value
+        self._fwhm = value
         self.gamma = self.fwhm / np.sqrt(np.power(2, 2.0 / 3) - 1)
         if not self.ampIsArea:
             self._normFactor = (1.0 ** (-1.5)) / (2 * self.gamma)
@@ -308,10 +301,7 @@ Deyan Yordanov :cite:`Yordanov2007`.
 
     @fwhm.setter
     def fwhm(self, value):
-        try:
-            self._fwhm = value[0]
-        except (IndexError, TypeError):
-            self._fwhm = value
+        self._fwhm = value
         self.gamma = self.fwhm / (2 * np.log(np.sqrt(2) + 1))
         if not self.ampIsArea:
             self._normFactor = 1.0 / (2 * self.gamma)
@@ -369,10 +359,6 @@ lineshapes:
 
     @fwhm.setter
     def fwhm(self, value):
-        try:
-            self._fwhm = value[0]
-        except (IndexError, TypeError):
-            self._fwhm = value
         self._fwhm = value
         self.L.fwhm = value
         self.G.fwhm = value
@@ -444,14 +430,14 @@ Lorentzian, Irrational and HyperbolicSquared profiles."""
 
     @fwhm.setter
     def fwhm(self, value):
-        self._fwhm = np.abs(value)
-        try:
-            if len(self._fwhm) is not 2:
-                self.fwhm = [self._fwhm[0], self._fwhm[0]]
-        except TypeError:
-            self.fwhm = [self._fwhm, self._fwhm]
-        G, L = self._fwhm[0], self._fwhm[1]
-        self.totalfwhm = 0.5346 * L + np.sqrt(0.2166 * L ** 2 + G ** 2)
+        if isinstance(value, (list, tuple, np.ndarray)):
+            seperate = value[0:2]
+            self.fwhmG, self.fwhmL = seperate
+            self._fwhm = 0.5346 * self.fwhmL + \
+                         np.sqrt(0.2166 * self.fwhmL ** 2 + self.fwhmG ** 2)
+        else:
+            self.fwhmG, self.fwhmL = value, value
+            self._fwhm = 0.6144031129489123 * value
         self.setParams()
 
     def setParams(self):
@@ -477,10 +463,7 @@ Lorentzian, Irrational and HyperbolicSquared profiles."""
             [-10.02142, 32.83023, -39.71134,
              23.59717, -9.21815, 1.50429, 1.01579])
 
-        self.fwhmG = self.fwhm[0]
-        self.fwhmL = self.fwhm[1]
-        s = sum(self.fwhm)
-        self.rho = self.fwhmL / s
+        self.rho = self.fwhmL / (self.fwhmL + self.fwhmG)
         self.wG = np.polyval(a, self.rho)
         self.wL = np.polyval(b, self.rho)
         self.wI = np.polyval(c, self.rho)

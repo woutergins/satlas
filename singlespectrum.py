@@ -13,9 +13,12 @@ import numpy as np
 import pandas as pd
 import satlas.profiles as p
 from fractions import Fraction
-from satlas.wigner import wigner_6j as W6J
-from satlas.spectrum import Spectrum
-from satlas.isomerspectrum import IsomerSpectrum
+
+from .isomerspectrum import IsomerSpectrum
+from .spectrum import Spectrum
+from .wigner import wigner_6j, wigner_3j
+W6J = wigner_6j
+W3J = wigner_3j
 
 
 class SingleSpectrum(Spectrum):
@@ -37,8 +40,8 @@ class SingleSpectrum(Spectrum):
         fine level. The list should be given as [A :sub:`lower`,
         A :sub:`upper`, B :sub:`lower`, B :sub:`upper`, C :sub:`upper`,
         C :sub:`lower`].
-    df: float
-        Center of Gravity of the spectrum.
+    centroid: float
+        Centroid of the spectrum.
     fwhm: float or list of 2 floats, optional
         Depending on the used shape, the FWHM is defined by one or two floats.
         Defaults to [50.0, 50.0]
@@ -101,7 +104,7 @@ class SingleSpectrum(Spectrum):
                   'pseudovoigt': p.PseudoVoigt,
                   'voigt': p.Voigt}
 
-    def __init__(self, I, J, ABC, df, fwhm=[50.0, 50.0], scale=1.0,
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  background=0.1, shape='voigt', racah_int=True,
                  shared_fwhm=True):
         super(SingleSpectrum, self).__init__()
@@ -142,7 +145,7 @@ class SingleSpectrum(Spectrum):
         self._ABC = ABC
         self.abc_limit = 30000.0
         self.fwhm_limit = 0.1
-        self._df = df
+        self._centroid = centroid
 
         self.scale = scale
         self._background = background
@@ -189,7 +192,7 @@ class SingleSpectrum(Spectrum):
         * :attr:`Bu`
         * :attr:`Cl`
         * :attr:`Cu`
-        * :attr:`df`
+        * :attr:`Centroid`
         * :attr:`Background`
         * :attr:`Poisson` (only if the attribute *n* is greater than 0)
         * :attr:`Offset` (only if the attribute *n* is greater than 0)"""
@@ -232,12 +235,12 @@ class SingleSpectrum(Spectrum):
         self._calculate_transitions()
 
     @property
-    def df(self):
-        return self._df
+    def centroid(self):
+        return self._centroid
 
-    @df.setter
-    def df(self, value):
-        self._df = value
+    @centroid.setter
+    def centroid(self, value):
+        self._centroid = value
         self._calculate_transitions()
 
     @property
@@ -371,9 +374,15 @@ class SingleSpectrum(Spectrum):
             for j, F2 in enumerate(self._F[1]):
                 if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
                     dummy = Fraction(F1).limit_denominator()
-                    f1.append(str(dummy.numerator) + '_' + str(dummy.denominator))
+                    if dummy.denominator == 1:
+                        f1.append(str(dummy.numerator))
+                    else:
+                        f1.append(str(dummy.numerator) + '_' + str(dummy.denominator))
                     dummy = Fraction(F2).limit_denominator()
-                    f2.append(str(dummy.numerator) + '_' + str(dummy.denominator))
+                    if dummy.denominator == 1:
+                        f2.append(str(dummy.numerator))
+                    else:
+                        f2.append(str(dummy.numerator) + '_' + str(dummy.denominator))
                     mu.append(self._energies[1][j] - self._energies[0][i])
 
         if not len(self.parts) is len(mu):
@@ -444,7 +453,7 @@ class SingleSpectrum(Spectrum):
         if level == 0:
             df = 0
         else:
-            df = self._df
+            df = self._centroid
 
         if (I == 0 or J == 0):
             C_F = 0
@@ -511,7 +520,7 @@ class SingleSpectrum(Spectrum):
                     params['Bl'].value, params['Bu'].value,
                     params['Cl'].value, params['Cu'].value]
 
-        self.df = params['df'].value
+        self.centroid = params['Centroid'].value
 
         self.background = params['Background'].value
         self.n = params['N'].value
@@ -592,7 +601,7 @@ class SingleSpectrum(Spectrum):
                 par[fixed].expr = str(r[0]) + '*' + free
                 par[fixed].vary = False
 
-        par.add('df', value=self._df, vary=True)
+        par.add('Centroid', value=self._centroid, vary=True)
 
         par.add('Background', value=self.background, vary=True, min=0)
         par.add('N', value=self._n, vary=False)
@@ -771,7 +780,6 @@ class SingleSpectrum(Spectrum):
              no_of_points=10**4, ax=None, show=True, label=True,
              legend=None, data_legend=None):
         """Routine that plots the hfs, possibly on top of experimental data.
-
         Parameters
         ----------
         x: array
@@ -794,7 +802,6 @@ class SingleSpectrum(Spectrum):
         data_legend: String, optional
             If given, an entry in the legend will be made for the experimental
             data.
-
         Returns
         -------
         None"""
@@ -807,13 +814,7 @@ class SingleSpectrum(Spectrum):
 
         if x is None:
             ranges = []
-
-            ## Hack alert!!!!
-            if type(self.fwhm) == list:
-                fwhm = np.sqrt(self.fwhm[0]**2 + self.fwhm[0]**2)
-            else:
-                fwhm = self.fwhm
-            ## end of hack
+            fwhm = self.parts[0].fwhm
 
             for pos in self.mu[:, -1]:
                 r = np.linspace(pos - 4 * fwhm,
@@ -826,11 +827,11 @@ class SingleSpectrum(Spectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerr, fmt='o', markersize=5, label=data_legend)
-        ax.plot(superx, self(superx), lw=3.0, label=legend)
+            ax.errorbar(x, y, yerr, fmt='o', label=data_legend)
+        ax.plot(superx, self(superx), label=legend)
         if label:
-            ax.set_xlabel('Frequency (MHz)', fontsize=16)
-            ax.set_ylabel('Counts', fontsize=16)
+            ax.set_xlabel('Frequency (MHz)')
+            ax.set_ylabel('Counts')
         if show:
             plt.show()
         return toReturn
@@ -839,7 +840,6 @@ class SingleSpectrum(Spectrum):
         """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
-
         Parameters
         ----------
         x: array
@@ -853,15 +853,14 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
-
         Returns
         -------
         None
-
         """
         y = kwargs.get('y', None)
         if y is not None:
-            yerr = np.sqrt(y + 1)
+            yerr = np.sqrt(y)
+            yerr[np.isclose(yerr, 0)] = 1.0
         else:
             yerr = None
         kwargs['yerr'] = yerr
