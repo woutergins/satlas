@@ -33,7 +33,7 @@ def memoize(f):
 
 
 def model(params, spectrum, x, y, yerr, pearson):
-    spectrum.var_from_params(params)
+    spectrum.params = params
     model = spectrum(x)
     if pearson:
         yerr = np.sqrt(model)
@@ -459,7 +459,7 @@ class Spectrum(object):
 
         x, y, yerr = self.sanitize_input(x, y, yerr)
 
-        params = self.params_from_var()
+        params = self.params
         try:
             params['sigma_x'].vary = False
         except:
@@ -467,8 +467,8 @@ class Spectrum(object):
 
         result = lm.minimize(model, params, args=(self, x, y, yerr, pearson))
 
+        self.params = result.params
         self.chisq_res_par = result.params
-        self.chisq_res_report = lm.fit_report(result)
         return result
 
     def display_chisquare_fit(self, **kwargs):
@@ -479,9 +479,9 @@ class Spectrum(object):
         ----------
         kwargs: misc
             Keywords passed on to :func:`fit_report` from the LMFit package."""
-        if hasattr(self, 'chisquare_fit'):
+        if hasattr(self, 'chisq_res_par'):
             print('Scaled errors estimated from covariance matrix.')
-            print(self.chisq_res_report)
+            print(lm.fit_report(self.chisq_res_par, **kwargs))
         else:
             print('Spectrum has not yet been fitted with this method!')
 

@@ -9,10 +9,16 @@
 """
 import numpy as np
 from scipy.special import wofz
+from scipy.interpolate import interp1d
 
 
 __all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt',
            'ExtendedVoigt', 'Irrational', 'HyperbolicSquared']
+sqrt2 = 2 ** 0.5
+sqrt2pi = (2 * np.pi) ** 0.5
+sqrt2log2t2 = 2 * np.sqrt(2 * np.log(2))
+base_e = np.exp(1)
+
 
 class Profile(object):
 
@@ -78,14 +84,14 @@ Note
     @fwhm.setter
     def fwhm(self, value):
         self._fwhm = value
-        self.sigma = self.fwhm / (2 * np.sqrt(2 * np.log(2)))
+        self.sigma = self.fwhm / (sqrt2log2t2)
         if not self.ampIsArea:
-            self._normFactor = (self.sigma * np.sqrt(2 * np.pi)) ** (-1)
+            self._normFactor = (self.sigma * sqrt2pi) ** (-1)
 
     def __call__(self, x):
         x = x - self.mu
         expPart = np.exp(-0.5 * (x / self.sigma) ** 2)
-        normPart = self.sigma * np.sqrt(2 * np.pi)
+        normPart = self.sigma * sqrt2pi
         return super(Gaussian, self).__call__(expPart / normPart)
 
 
@@ -179,7 +185,7 @@ function, and the values supplied as FWHM are appropriately transformed to
         z&=\frac{x+i\gamma}{\sigma\sqrt{2\pi}}"""
 
     def __init__(self, fwhm=None, mu=None, amp=None, **kwargs):
-        self._fwhmNorm = np.array([2 * np.sqrt(2 * np.log(2)), 2])
+        self._fwhmNorm = np.array([sqrt2log2t2, 2])
         super(Voigt, self).__init__(fwhm=fwhm, mu=mu,
                                     amp=amp, **kwargs)
 
@@ -194,7 +200,7 @@ function, and the values supplied as FWHM are appropriately transformed to
             self.fwhmG, self.fwhmL = seperate
             G, L = seperate
             self._fwhm = 0.5346 * self.fwhmL + \
-                         np.sqrt(0.2166 * self.fwhmL ** 2 + self.fwhmG ** 2)
+                         (0.2166 * self.fwhmL ** 2 + self.fwhmG ** 2) ** 0.5
             self.sigma, self.gamma = seperate / self._fwhmNorm
         else:
             self.fwhmG, self.fwhmL = value, value
@@ -202,14 +208,14 @@ function, and the values supplied as FWHM are appropriately transformed to
             self.sigma, self.gamma = self._fwhm / self._fwhmNorm
 
         if not self.ampIsArea:
-            z = (0 + 1j * self.gamma) / (self.sigma * np.sqrt(2))
-            top = wofz(z).real / (self.sigma * np.sqrt(2 * np.pi))
+            z = (0 + 1j * self.gamma) / (self.sigma * sqrt2)
+            top = wofz(z).real / (self.sigma * sqrt2pi)
             self._normFactor = top
 
     def __call__(self, x):
         x = x - self.mu
-        z = (x + 1j * self.gamma) / (self.sigma * np.sqrt(2))
-        top = wofz(z).real / (self.sigma * np.sqrt(2 * np.pi))
+        z = (x + 1j * self.gamma) / (self.sigma * sqrt2)
+        top = wofz(z).real / (self.sigma * sqrt2pi)
         return super(Voigt, self).__call__(top)
 
 
