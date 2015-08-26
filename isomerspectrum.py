@@ -51,6 +51,9 @@ class IsomerSpectrum(CombinedSpectrum):
                     if p[new_key].expr is not None:
                         n_key = 's' + str(i) + '_' + o_key
                         p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if any([shared in old_key for shared in self.shared]) and i > 0:
+                    p[new_key].expr = 's0_' + old_key
+                    p[new_key].vary = False
                 if i > 0 and 'Background' in new_key:
                     p[new_key].value = 0
                     p[new_key].vary = False
