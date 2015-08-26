@@ -10,6 +10,7 @@
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 from .spectrum import Spectrum
 __all__ = ['CombinedSpectrum']
 
@@ -47,7 +48,8 @@ class CombinedSpectrum(Spectrum):
                 yerr = np.hstack(yerr)
         return x, y, yerr
 
-    def params_from_var(self):
+    @property
+    def params(self):
         """Combine the parameters from the subspectra into one Parameters
         instance.
 
@@ -60,9 +62,9 @@ class CombinedSpectrum(Spectrum):
         Black magic going on in here, especially in the block of code
         describing the shared parameters."""
         params = lm.Parameters()
-        from .isomerspectrum import IsomerSpectrum
+        # from .isomerspectrum import IsomerSpectrum
         for i, s in enumerate(self.spectra):
-            p = s.params_from_var()
+            p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
@@ -71,34 +73,57 @@ class CombinedSpectrum(Spectrum):
                     if p[new_key].expr is not None:
                         n_key = 's' + str(i) + '_' + o_key
                         p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if any([shared in old_key for shared in self.shared]) and i > 0:
+                    p[new_key].expr = 's0_' + old_key
+                    p[new_key].vary = False
             params += p
 
-        for i, s in enumerate(self.spectra):
-            for key in self.shared:
-                if i == 0:
-                    continue
-                if isinstance(self.spectra[i], IsomerSpectrum):
-                    for j, _ in enumerate(self.spectra[i].spectra):
-                        first_key = 's0_s' + str(j) + '_' + key
-                        new_key = 's' + str(j) + '_' + key
-                        for p in params.keys():
-                            if new_key in p:
-                                if p.startswith('s0_'):
-                                    pass
-                                else:
-                                    params[p].expr = first_key
-                                    params[p].vary = False
-                else:
-                    if isinstance(self.spectra[0], IsomerSpectrum):
-                        first_key = 's0_s0_' + key
-                    else:
-                        first_key = 's0_' + key
-                    new_key = 's' + str(i) + '_' + key
-                    for p in params.keys():
-                        if new_key in p:
-                            params[p].expr = first_key
-                            params[p].vary = False
+        # for i, s in enumerate(self.spectra):
+        #     for key in self.shared:
+        #         if i == 0:
+        #             continue
+        #         if isinstance(self.spectra[i], IsomerSpectrum):
+        #             for j, _ in enumerate(self.spectra[i].spectra):
+        #                 first_key = 's0_s' + str(j) + '_' + key
+        #                 new_key = 's' + str(j) + '_' + key
+        #                 for p in params.keys():
+        #                     if new_key in p:
+        #                         if p.startswith('s0_'):
+        #                             pass
+        #                         else:
+        #                             params[p].expr = first_key
+        #                             params[p].vary = False
+        #         else:
+        #             if isinstance(self.spectra[0], IsomerSpectrum):
+        #                 first_key = 's0_s0_' + key
+        #             else:
+        #                 first_key = 's0_' + key
+        #             new_key = 's' + str(i) + '_' + key
+        #             for p in params.keys():
+        #                 if new_key in p:
+        #                     params[p].expr = first_key
+        #                     params[p].vary = False
         return params
+
+    @params.setter
+    def params(self, params):
+        for i, spec in enumerate(self.spectra):
+            par = lm.Parameters()
+            for key in params:
+                if key.startswith('s'+str(i)+'_'):
+                    new_key = key[len('s'+str(i)+'_'):]
+                    expr = params[key].expr
+                    if expr is not None:
+                        for k in params:
+                            nk = k[len('s'+str(i)+'_'):]
+                            expr = expr.replace(k, nk)
+                    par.add(new_key,
+                            value=params[key].value,
+                            vary=params[key].vary,
+                            min=params[key].min,
+                            max=params[key].max,
+                            expr=expr)
+            spec.params = par
 
     def var_from_params(self, params):
         """Given a Parameters instance such as returned by the method
@@ -150,7 +175,6 @@ class CombinedSpectrum(Spectrum):
         p: list of Parameters
             A list of Parameters instances, each entry corresponding to the
             same entry in the attribute :attr:`spectra`."""
-        p = []
         for i, _ in enumerate(self.spectra):
             par = lm.Parameters()
             for key in params:
