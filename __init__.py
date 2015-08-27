@@ -5,20 +5,20 @@ from . import combinedspectrum
 from .combinedspectrum import *
 from . import isomerspectrum
 from .isomerspectrum import *
-from . import polar
-from .polar import *
+# from . import polar
+# from .polar import *
 from . import utilities
 from .utilities import *
-from . import relaxation
-from .relaxation import *
+# from . import relaxation
+# from .relaxation import *
 __all__ = []
 
 __all__.extend(singlespectrum.__all__)
 __all__.extend(combinedspectrum.__all__)
 __all__.extend(isomerspectrum.__all__)
-__all__.extend(polar.__all__)
+# __all__.extend(polar.__all__)
 __all__.extend(utilities.__all__)
-__all__.extend(relaxation.__all__)
+# __all__.extend(relaxation.__all__)
 
 style = {'backend': 'qt4agg',
          'lines.linewidth': 3,

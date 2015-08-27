@@ -17,6 +17,7 @@ from fractions import Fraction
 from .isomerspectrum import IsomerSpectrum
 from .spectrum import Spectrum
 from .wigner import wigner_6j, wigner_3j
+from .utilities import poisson_interval
 W6J = wigner_6j
 W3J = wigner_3j
 
@@ -57,41 +58,21 @@ class SingleSpectrum(Spectrum):
         Sets the transition shape. String is converted to lowercase. For
         possible values, see :attr:`Spectrum.__shapes__.keys()`.
         Defaults to Voigt if an incorrect value is supplied.
-    racah_int: Boolean, optional
+    racah_int: boolean, optional
         If True, fixes the relative peak intensities to the Racah intensities.
         Otherwise, gives them equal intensities and allows them to vary during
         fitting.
-    shared_fwhm: Boolean, optional
+    shared_fwhm: boolean, optional
         If True, the same FWHM is used for all peaks. Otherwise, give them all
         the same initial FWHM and let them vary during the fitting.
 
     Attributes
     ----------
-    fwhm : (list of) float or list of 2 floats
-        Sets the FWHM for all the transtions. If :attr:`shared_fwhm` is True,
-        this attribute is a list of FWHM values for each peak.
-    relAmp : list of floats
-        Sets the relative intensities of the transitions.
-    scale : float
-        Sets the amplitude of the global spectrum.
-    background : float
-        Sets the background of the global spectrum.
-    ABC : list of 6 floats
-        List of the hyperfine structure constants, organised as
-        [A :sub:`lower`, A :sub:`upper`, B :sub:`lower`, B :sub:`upper`,
-        C :sub:`upper`, C :sub:`lower`].
-    n : integer
-        Sets the number of Poisson sidepeaks.
-    offset : float
-        Sets the offset for the Poisson sidepeaks.
-        The sidepeaks are located at :math:`i\cdot \text{offset}`,
-        with :math:`i` the number of the sidepeak.
-        Note: this means that a negative value indicates a sidepeak
-        to the left of the main peak.
-    poisson : float
-        Sets the Poisson-factor for the Poisson sidepeaks.
-        The amplitude of each sidepeak is multiplied by
-        :math:`\text{poisson}^i/i!`, with :math:`i` the number of the sidepeak.
+    params : lmfit.Parameters instance
+        Contains all the relevant information for the spectrum's shape.
+        See the documentation of lmfit for more information.
+    racah_int: boolean
+        Change the value to change the behaviour of the amplitudes
 
     Note
     ----
@@ -152,6 +133,16 @@ class SingleSpectrum(Spectrum):
                              poisson, offset, centroid)
 
     @property
+    def locations(self):
+        return self._locations
+
+    @locations.setter
+    def locations(self, locations):
+        self._locations = locations
+        for p, l in zip(self.parts, locations):
+            p.mu = l
+
+    @property
     def racah_int(self):
         return self._racah_int
 
@@ -162,194 +153,24 @@ class SingleSpectrum(Spectrum):
         for label in self.ftof:
             self.params['Amp' + label].vary = not self._racah_int
 
-    def populate_params(self, ABC, fwhm, scale, background,
-                        n, poisson, offset, centroid):
-        par = lm.Parameters()
-        if not self.shape.lower() == 'voigt':
-            if self.shared_fwhm:
-                par.add('FWHM', value=fwhm, vary=True, min=0)
-            else:
-                for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHM' + label, value=val, vary=True, min=0)
-        else:
-            if self.shared_fwhm:
-                par.add('FWHMG', value=fwhm[0], vary=True, min=0)
-                par.add('FWHML', value=fwhm[1], vary=True, min=0)
-                val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
-                par.add('TotalFWHM', value=val, vary=False,
-                        expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
-            else:
-                for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHMG' + label, value=val[0], vary=True, min=0)
-                    par.add('FWHML' + label, value=val[1], vary=True, min=0)
-                    val = 0.5346 * val[1] + np.sqrt(0.2166 * val[1] ** 2
-                                                    + val[0] ** 2)
-                    par.add('TotalFWHM' + label, value=val, vary=False,
-                            expr='0.5346*FWHML' + label +
-                                 '+sqrt(0.2166*FWHML' + label +
-                                 '**2+FWHMG' + str(i) + '**2)')
-
-        par.add('scale', value=scale, vary=self.racah_int, min=0)
-        for label, amp in zip(self.ftof, self.initial_amplitudes):
-            label = 'Amp' + label
-            par.add(label, value=amp, vary=not self.racah_int, min=0)
-
-        par.add('Al', value=ABC[0], vary=True)
-        par.add('Au', value=ABC[1], vary=True)
-        par.add('Bl', value=ABC[2], vary=True)
-        par.add('Bu', value=ABC[3], vary=True)
-        par.add('Cl', value=ABC[4], vary=True)
-        par.add('Cu', value=ABC[5], vary=True)
-
-        ratios = (self.ratioA, self.ratioB, self.ratioC)
-        labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
-        for r, (l, u) in zip(ratios, labels):
-            if r[0] is not None:
-                if r[1].lower() == 'lower':
-                    fixed, free = l, u
-                else:
-                    fixed, free = u, l
-                par[fixed].expr = str(r[0]) + '*' + free
-                par[fixed].vary = False
-
-        par.add('Centroid', value=centroid, vary=True)
-
-        par.add('Background', value=background, vary=True, min=0)
-        par.add('N', value=n, vary=False)
-        if n > 0:
-            par.add('Poisson', value=poisson, vary=False, min=0)
-            par.add('Offset', value=offset, vary=False, min=None, max=-0.01)
-
-        self.params = self.check_variation(par)
-
-    def set_ratios(self, par):
-        ratios = (self.ratioA, self.ratioB, self.ratioC)
-        labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
-        for r, (l, u) in zip(ratios, labels):
-            if r[0] is not None:
-                if r[1].lower() == 'lower':
-                    fixed, free = l, u
-                else:
-                    fixed, free = u, l
-                par[fixed].expr = str(r[0]) + '*' + free
-                par[fixed].vary = False
-        return par
-
-    def check_variation(self, par):
-        for key in self._vary.keys():
-            if key in par.keys():
-                par[key].vary = self._vary[key]
-        par['N'].vary = False
-
-        if self.I in self.I_value:
-            Al, Au, Bl, Bu, Cl, Cu = self.I_value[self.I]
-            if not Al[0]:
-                par['Al'].vary, par['Al'].value = Al
-            if not Au[0]:
-                par['Au'].vary, par['Au'].value = Au
-            if not Bl[0]:
-                par['Bl'].vary, par['Bl'].value = Bl
-            if not Bu[0]:
-                par['Bu'].vary, par['Bu'].value = Bu
-            if not Cl[0]:
-                par['Cl'].vary, par['Cl'].value = Cl
-            if not Cu[0]:
-                par['Cu'].vary, par['Cu'].value = Cu
-        if self.J[0] in self.J_lower_value:
-            Al, Bl, Cl = self.J_lower_value[self.J[0]]
-            if not Al[0]:
-                par['Al'].vary, par['Al'].value = Al
-            if not Bl[0]:
-                par['Bl'].vary, par['Bl'].value = Bl
-            if not Cl[0]:
-                par['Cl'].vary, par['Cl'].value = Cl
-        if self.J[self.num_lower] in self.J_upper_value:
-            Au, Bu, Cu = self.J_upper_value[self.J[self.num_lower]]
-            if not Au[0]:
-                par['Au'].vary, par['Au'].value = Au
-            if not Bu[0]:
-                par['Bu'].vary, par['Bu'].value = Bu
-            if not Cu[0]:
-                par['Cu'].vary, par['Cu'].value = Cu
-        return par
-
     @property
     def params(self):
+        self._params = self.check_variation(self._params)
         return self._params
 
     @params.setter
     def params(self, params):
         self._params = params
+        # When changing the parameters, the energies and
+        # the locations have to be recalculated
         self.calculate_energies()
         self.calculate_transition_locations()
         if not self.racah_int:
+            # When not using set amplitudes, they need
+            # to be changed after every iteration
             self.set_amplitudes()
+        # Finally, the fwhm of each peak needs to be set
         self.set_fwhm()
-
-    def set_amplitudes(self):
-        for p, label in zip(self.parts, self.ftof):
-            p.amp = self.params['Amp' + label].value
-
-    def set_fwhm(self):
-        if self.shape.lower() == 'voigt':
-            fwhm = [[self.params['FWHMG'].value, self.params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self.params['FWHMG' + label].value, self.params['FWHML' + label].value] for label in self.ftof]
-        else:
-            fwhm = [self.params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self.params['FWHM' + label].value for label in self.ftof]
-        for p, f in zip(self.parts, fwhm):
-            p.fwhm = f
-
-    def calculate_F_levels(self):
-        F1 = np.arange(abs(self.I - self.J[0]), self.I+self.J[0]+1, 1)
-        self.num_lower = len(F1)
-        F2 = np.arange(abs(self.I - self.J[1]), self.I+self.J[1]+1, 1)
-        self.num_upper = len(F2)
-        F = np.append(F1, F2)
-        self.J = np.append(np.ones(len(F1)) * self.J[0],
-                           np.ones(len(F2)) * self.J[1])
-        self.F = F
-
-    def calculate_transitions(self):
-        f_f = []
-        indices = []
-        amps = []
-        for i, F1 in enumerate(self.F[:self.num_lower]):
-            for j, F2 in enumerate(self.F[self.num_lower:]):
-                if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
-                    j += self.num_lower
-                    intensity = self.calculate_racah_intensity(self.J[i],
-                                                               self.J[j],
-                                                               self.F[i],
-                                                               self.F[j])
-                    if intensity > 0:
-                        amps.append(intensity)
-                        indices.append([i, j])
-                        s = ''
-                        temp = Fraction(F1).limit_denominator()
-                        if temp.denominator == 1:
-                            s += str(temp.numerator)
-                        else:
-                            s += str(temp.numerator) + '_' + str(temp.denominator)
-                        s += '__'
-                        temp = Fraction(F2).limit_denominator()
-                        if temp.denominator == 1:
-                            s += str(temp.numerator)
-                        else:
-                            s += str(temp.numerator) + '_' + str(temp.denominator)
-                        f_f.append(s)
-        self.ftof = f_f
-        self.transition_indices = indices
-        self.initial_amplitudes = amps
-        self.parts = tuple(self.__shapes__[self.shape]() for _ in amps)
-
-    def calculate_energy_coefficients(self):
-        I, J, F = self.I, self.J, self.F
-        C = (F*(F+1) - I*(I+1) - J*(J + 1)) * (J/J) if I > 0 else 0 * J
-        D = (3*C*(C+1) - 4*I*(I+1)*J*(J+1)) / (2*I*(2*I-1)*J*(2*J-1))
-        E = (10*(0.5*C)**3 + 20*(0.5*C)**2 + C*(-3*I*(I+1)*J*(J+1) + I*(I+1) + J*(J+1) + 3) - 5*I*(I+1)*J*(J+1)) / (I*(I-1)*(2*I-1)*J*(J-1)*(2*J-1))
-        C = np.where(np.isfinite(C), 0.5 * C, 0)
-        D = np.where(np.isfinite(D), 0.25 * D, 0)
-        E = np.where(np.isfinite(E), E, 0)
-        self.C, self.D, self.E = C, D, E
 
     def calculate_energies(self):
         r"""The hyperfine addition to a central frequency (attribute :attr:`centroid`)
@@ -400,15 +221,198 @@ class SingleSpectrum(Spectrum):
         self.locations = [self.energies[ind_high] - self.energies[ind_low]
                           for (ind_low, ind_high) in self.transition_indices]
 
-    @property
-    def locations(self):
-        return self._locations
+    def set_amplitudes(self):
+        for p, label in zip(self.parts, self.ftof):
+            p.amp = self.params['Amp' + label].value
 
-    @locations.setter
-    def locations(self, locations):
-        self._locations = locations
-        for p, l in zip(self.parts, locations):
-            p.mu = l
+    def set_fwhm(self):
+        if self.shape.lower() == 'voigt':
+            fwhm = [[self.params['FWHMG'].value, self.params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self.params['FWHMG' + label].value, self.params['FWHML' + label].value] for label in self.ftof]
+        else:
+            fwhm = [self.params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self.params['FWHM' + label].value for label in self.ftof]
+        for p, f in zip(self.parts, fwhm):
+            p.fwhm = f
+
+    ####################################
+    #      INITIALIZATION METHODS      #
+    ####################################
+
+    def populate_params(self, ABC, fwhm, scale, background,
+                        n, poisson, offset, centroid):
+        # Prepares the params attribute with the initial values
+        par = lm.Parameters()
+        if not self.shape.lower() == 'voigt':
+            if self.shared_fwhm:
+                par.add('FWHM', value=fwhm, vary=True, min=0)
+            else:
+                for label, val in zip(self.ftof, fwhm):
+                    par.add('FWHM' + label, value=val, vary=True, min=0)
+        else:
+            if self.shared_fwhm:
+                par.add('FWHMG', value=fwhm[0], vary=True, min=0)
+                par.add('FWHML', value=fwhm[1], vary=True, min=0)
+                val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
+                par.add('TotalFWHM', value=val, vary=False,
+                        expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
+            else:
+                for label, val in zip(self.ftof, fwhm):
+                    par.add('FWHMG' + label, value=val[0], vary=True, min=0)
+                    par.add('FWHML' + label, value=val[1], vary=True, min=0)
+                    val = 0.5346 * val[1] + np.sqrt(0.2166 * val[1] ** 2
+                                                    + val[0] ** 2)
+                    par.add('TotalFWHM' + label, value=val, vary=False,
+                            expr='0.5346*FWHML' + label +
+                                 '+sqrt(0.2166*FWHML' + label +
+                                 '**2+FWHMG' + str(i) + '**2)')
+
+        par.add('scale', value=scale, vary=self.racah_int, min=0)
+        for label, amp in zip(self.ftof, self.amplitudes):
+            label = 'Amp' + label
+            par.add(label, value=amp, vary=not self.racah_int, min=0)
+
+        par.add('Al', value=ABC[0], vary=True)
+        par.add('Au', value=ABC[1], vary=True)
+        par.add('Bl', value=ABC[2], vary=True)
+        par.add('Bu', value=ABC[3], vary=True)
+        par.add('Cl', value=ABC[4], vary=True)
+        par.add('Cu', value=ABC[5], vary=True)
+
+        ratios = (self.ratioA, self.ratioB, self.ratioC)
+        labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
+        for r, (l, u) in zip(ratios, labels):
+            if r[0] is not None:
+                if r[1].lower() == 'lower':
+                    fixed, free = l, u
+                else:
+                    fixed, free = u, l
+                par[fixed].expr = str(r[0]) + '*' + free
+                par[fixed].vary = False
+
+        par.add('Centroid', value=centroid, vary=True)
+
+        par.add('Background', value=background, vary=True, min=0)
+        par.add('N', value=n, vary=False)
+        if n > 0:
+            par.add('Poisson', value=poisson, vary=False, min=0)
+            par.add('Offset', value=offset, vary=False, min=None, max=-0.01)
+
+        self.params = self.check_variation(par)
+
+    def set_ratios(self, par):
+        # Process the set ratio's for the hyperfine parameters.
+        ratios = (self.ratioA, self.ratioB, self.ratioC)
+        labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
+        for r, (l, u) in zip(ratios, labels):
+            if r[0] is not None:
+                if r[1].lower() == 'lower':
+                    fixed, free = l, u
+                else:
+                    fixed, free = u, l
+                par[fixed].expr = str(r[0]) + '*' + free
+                par[fixed].vary = False
+        return par
+
+    def check_variation(self, par):
+        # Make sure the variations in the params are set correctly.
+        for key in self._vary.keys():
+            if key in par.keys():
+                par[key].vary = self._vary[key]
+        par['N'].vary = False
+
+        if self.I in self.I_value:
+            Al, Au, Bl, Bu, Cl, Cu = self.I_value[self.I]
+            if not Al[0]:
+                par['Al'].vary, par['Al'].value = Al
+            if not Au[0]:
+                par['Au'].vary, par['Au'].value = Au
+            if not Bl[0]:
+                par['Bl'].vary, par['Bl'].value = Bl
+            if not Bu[0]:
+                par['Bu'].vary, par['Bu'].value = Bu
+            if not Cl[0]:
+                par['Cl'].vary, par['Cl'].value = Cl
+            if not Cu[0]:
+                par['Cu'].vary, par['Cu'].value = Cu
+        if self.J[0] in self.J_lower_value:
+            Al, Bl, Cl = self.J_lower_value[self.J[0]]
+            if not Al[0]:
+                par['Al'].vary, par['Al'].value = Al
+            if not Bl[0]:
+                par['Bl'].vary, par['Bl'].value = Bl
+            if not Cl[0]:
+                par['Cl'].vary, par['Cl'].value = Cl
+        if self.J[self.num_lower] in self.J_upper_value:
+            Au, Bu, Cu = self.J_upper_value[self.J[self.num_lower]]
+            if not Au[0]:
+                par['Au'].vary, par['Au'].value = Au
+            if not Bu[0]:
+                par['Bu'].vary, par['Bu'].value = Bu
+            if not Cu[0]:
+                par['Cu'].vary, par['Cu'].value = Cu
+        return par
+
+    def calculate_F_levels(self):
+        F1 = np.arange(abs(self.I - self.J[0]), self.I+self.J[0]+1, 1)
+        self.num_lower = len(F1)
+        F2 = np.arange(abs(self.I - self.J[1]), self.I+self.J[1]+1, 1)
+        self.num_upper = len(F2)
+        F = np.append(F1, F2)
+        self.J = np.append(np.ones(len(F1)) * self.J[0],
+                           np.ones(len(F2)) * self.J[1])
+        self.F = F
+
+    def calculate_transitions(self):
+        f_f = []
+        indices = []
+        amps = []
+        for i, F1 in enumerate(self.F[:self.num_lower]):
+            for j, F2 in enumerate(self.F[self.num_lower:]):
+                if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
+                    j += self.num_lower
+                    intensity = self.calculate_racah_intensity(self.J[i],
+                                                               self.J[j],
+                                                               self.F[i],
+                                                               self.F[j])
+                    if intensity > 0:
+                        amps.append(intensity)
+                        indices.append([i, j])
+                        s = ''
+                        temp = Fraction(F1).limit_denominator()
+                        if temp.denominator == 1:
+                            s += str(temp.numerator)
+                        else:
+                            s += str(temp.numerator) + '_' + str(temp.denominator)
+                        s += '__'
+                        temp = Fraction(F2).limit_denominator()
+                        if temp.denominator == 1:
+                            s += str(temp.numerator)
+                        else:
+                            s += str(temp.numerator) + '_' + str(temp.denominator)
+                        f_f.append(s)
+        self.ftof = f_f  # Stores the labels of all transitions, in order
+        self.transition_indices = indices  # Stores the indices in the F and energy arrays for the transition
+        self.amplitudes = amps  # Sets the initial amplitudes to the Racah intensities
+        self.parts = tuple(self.__shapes__[self.shape]() for _ in amps)
+
+    def calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
+        return float((2 * F1 + 1) * (2 * F2 + 1) * \
+                     W6J(J2, F2, self.I, F1, J1, order) ** 2)  # DO NOT REMOVE CAST TO FLOAT!!!
+
+    def calculate_energy_coefficients(self):
+        # Since I, J and F do not change, these factors can be calculated once
+        # and then stored.
+        I, J, F = self.I, self.J, self.F
+        C = (F*(F+1) - I*(I+1) - J*(J + 1)) * (J/J) if I > 0 else 0 * J  #*(J/J) is a dirty trick to avoid checking for J=0
+        D = (3*C*(C+1) - 4*I*(I+1)*J*(J+1)) / (2*I*(2*I-1)*J*(2*J-1))
+        E = (10*(0.5*C)**3 + 20*(0.5*C)**2 + C*(-3*I*(I+1)*J*(J+1) + I*(I+1) + J*(J+1) + 3) - 5*I*(I+1)*J*(J+1)) / (I*(I-1)*(2*I-1)*J*(J-1)*(2*J-1))
+        C = np.where(np.isfinite(C), 0.5 * C, 0)
+        D = np.where(np.isfinite(D), 0.25 * D, 0)
+        E = np.where(np.isfinite(E), E, 0)
+        self.C, self.D, self.E = C, D, E
+
+    ##########################
+    #      USER METHODS      #
+    ##########################
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
@@ -436,7 +440,9 @@ class SingleSpectrum(Spectrum):
         * :attr:`Centroid`
         * :attr:`Background`
         * :attr:`Poisson` (only if the attribute *n* is greater than 0)
-        * :attr:`Offset` (only if the attribute *n* is greater than 0)"""
+        * :attr:`Offset` (only if the attribute *n* is greater than 0)
+        * :attr:`Amp` (with the correct labeling of the transition)
+        * :attr:`scale`"""
         for k in varyDict.keys():
             self._vary[k] = varyDict[k]
 
@@ -465,75 +471,36 @@ class SingleSpectrum(Spectrum):
             self.ratioC = (value, target)
         self.params = self.set_ratios(self.params)
 
-    def calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
-        return float((2 * F1 + 1) * (2 * F2 + 1) * \
-                     W6J(J2, F2, self.I, F1, J1, order) ** 2)
+    def set_value(self, value, name=None):
+        """Sets the value of the selected parameter to the given value.
+
+        Parameters
+        ----------
+        value: float or iterable of floats
+        name: string or iterable of strings"""
+        try:
+            for v, n in zip(value, name):
+                self.params[name].value = v
+        except:
+            self.params[name].value = value
 
     def sanitize_input(self, x, y, yerr=None):
         return x, y, yerr
 
-    def bootstrap(self, x, y, bootstraps=100, samples=None, selected=True):
-        """Given an experimental spectrum of counts, generate a number of
-        bootstrapped resampled spectra, fit these, and return a pandas
-        DataFrame containing result of fitting these resampled spectra.
+    def seperate_response(self, x):
+        """Get the response for each seperate spectrum for the values :attr:`x`
+        , without background.
 
         Parameters
         ----------
-        x: array_like
+        x : float or array_like
             Frequency in MHz.
-        y: array_like
-            Counts corresponding to :attr:`x`.
-
-        Other Parameters
-        ----------------
-        bootstraps: integer, optional
-            Number of bootstrap samples to generate, defaults to 100.
-        samples: integer, optional
-            Number of counts in each bootstrapped spectrum, defaults to
-            the number of counts in the supplied spectrum.
-        selected: boolean, optional
-            Selects if only the parameters in :attr:`self.selected` are saved
-            in the DataFrame. Defaults to True (saving only the selected).
 
         Returns
         -------
-        DataFrame
-            DataFrame containing the results of fitting the bootstrapped
-            samples."""
-        total = np.cumsum(y)
-        dist = total / float(y.sum())
-        names, var, varerr = self.vars(selection='chisquare')
-        selected = self.selected if selected else names
-        v = [name for name in names if name in selected]
-        data = pd.DataFrame(index=np.arange(0, bootstraps + 1),
-                            columns=v)
-        stderrs = pd.DataFrame(index=np.arange(0, bootstraps + 1),
-                               columns=v)
-        v = [var[i] for i, name in enumerate(names) if name in selected]
-        data.loc[0] = v
-        v = [varerr[i] for i, name in enumerate(names) if name in selected]
-        stderrs.loc[0] = v
-        if samples is None:
-            samples = y.sum()
-        length = len(x)
-
-        for i in range(bootstraps):
-            newy = np.bincount(
-                    np.searchsorted(
-                            dist,
-                            np.random.rand(samples)
-                            ),
-                    minlength=length
-                    )
-            self.chisquare_spectroscopic_fit(x, newy)
-            names, var, varerr = self.vars(selection='chisquare')
-            v = [var[i] for i, name in enumerate(names) if name in selected]
-            data.loc[i + 1] = v
-            v = [varerr[i] for i, name in enumerate(names) if name in selected]
-            stderrs.loc[i + 1] = v
-        pan = {'data': data, 'stderr': stderrs}
-        pan = pd.Panel(pan)
-        return pan
+        list of floats or NumPy arrays
+            Seperate responses of spectra to the input :attr:`x`."""
+        return [self(x)]
 
     def __add__(self, other):
         """Add two spectra together to get an :class:`IsomerSpectrum`.
@@ -558,21 +525,6 @@ class SingleSpectrum(Spectrum):
             return self
         else:
             return self.__add__(other)
-
-    def seperate_response(self, x):
-        """Get the response for each seperate spectrum for the values :attr:`x`
-        , without background.
-
-        Parameters
-        ----------
-        x : float or array_like
-            Frequency in MHz.
-
-        Returns
-        -------
-        list of floats or NumPy arrays
-            Seperate responses of spectra to the input :attr:`x`."""
-        return [self(x)]
 
     def __call__(self, x):
         """Get the response for frequency :attr:`x` (in MHz) of the spectrum.
@@ -603,7 +555,8 @@ class SingleSpectrum(Spectrum):
 
     def plot(self, x=None, y=None, yerr=None,
              no_of_points=10**4, ax=None, show=True, label=True,
-             legend=None, data_legend=None):
+             legend=None, data_legend=None, xlabel='Frequency (MHz)',
+             ylabel='Counts'):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -635,9 +588,9 @@ class SingleSpectrum(Spectrum):
 
         if ax is None:
             fig, ax = plt.subplots(1, 1)
-            toReturn = fig, ax
         else:
-            toReturn = None
+            fig = ax.get_figure()
+        toReturn = fig, ax
 
         if x is None:
             ranges = []
@@ -654,11 +607,13 @@ class SingleSpectrum(Spectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerr, fmt='o', label=data_legend)
+            try:
+                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+            except:
+                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
         ax.plot(superx, self(superx), label=legend)
-        if label:
-            ax.set_xlabel('Frequency (MHz)')
-            ax.set_ylabel('Counts')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         if show:
             plt.show()
         return toReturn
@@ -688,9 +643,9 @@ class SingleSpectrum(Spectrum):
         """
         y = kwargs.get('y', None)
         if y is not None:
-            yerr = np.sqrt(y)
-            yerr[np.isclose(yerr, 0)] = 1.0
+            ylow, yhigh = poisson_interval(y)
+            yerr = {'low': ylow, 'high': yhigh}
         else:
             yerr = None
         kwargs['yerr'] = yerr
-        self.plot(**kwargs)
+        return self.plot(**kwargs)

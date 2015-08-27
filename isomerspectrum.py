@@ -10,6 +10,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from .combinedspectrum import CombinedSpectrum
+from .utilities import poisson_interval
 import lmfit
 import copy
 
@@ -81,24 +82,6 @@ class IsomerSpectrum(CombinedSpectrum):
                             expr=expr)
             spec.params = par
 
-    def params_from_var(self):
-        """Combine the parameters from the subspectra into one Parameters
-        instance.
-
-        Returns
-        -------
-        params: Parameters instance describing the spectrum"""
-        params = super(IsomerSpectrum, self).params_from_var()
-        for i, s in enumerate(self.spectra):
-            if i == 0:
-                continue
-            else:
-                new_key = 's' + str(i) + '_Background'
-                params[new_key].value = 0
-                params[new_key].vary = False
-                params[new_key].expr = None
-        return params
-
     def seperate_response(self, x):
         """Get the response for each seperate spectrum for the values x,
         without background.
@@ -118,9 +101,10 @@ class IsomerSpectrum(CombinedSpectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self, x=None, y=None, yerrs=None,
-             no_of_points=10**4, ax=None, label=False,
-             show=True):
+    def plot(self, x=None, y=None, yerr=None,
+             no_of_points=10**4, ax=None,
+             show=True, xlabel='Frequency (MHz)',
+             ylabel='Counts', data_legend='Data'):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
 
@@ -166,15 +150,17 @@ class IsomerSpectrum(CombinedSpectrum):
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
         if x is not None and y is not None:
-            ax.errorbar(x, y, yerrs, fmt='o', markersize=3)
+            try:
+                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+            except:
+                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
         resp = self.seperate_response(superx)
         for i, r in enumerate(resp):
-            ax.plot(superx, r, lw=3.0, label='I=' + str(self.spectra[i].I))
-        ax.plot(superx, self(superx), lw=3.0, label='Total')
+            ax.plot(superx, r, label='I=' + str(self.spectra[i].I))
+        ax.plot(superx, self(superx), label='Total')
 
-        if label:
-            ax.set_xlabel('Frequency (MHz)', fontsize=16)
-            ax.set_ylabel('Counts', fontsize=16)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
 
         plt.tight_layout()
         if show:
@@ -182,8 +168,7 @@ class IsomerSpectrum(CombinedSpectrum):
         else:
             return toReturn
 
-    def plot_spectroscopic(self, xs=None, ys=None,
-                           no_of_points=10**4, ax=None,show = True):
+    def plot_spectroscopic(self, **kwargs):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -208,11 +193,14 @@ class IsomerSpectrum(CombinedSpectrum):
         -------
         None"""
 
-        if ys is not None:
-            yerrs = np.sqrt(ys + 1)
+        y = kwargs.get('y', None)
+        if y is not None:
+            ylow, yhigh = poisson_interval(y)
+            yerr = {'low': ylow, 'high': yhigh}
         else:
-            yerrs = None
-        self.plot(xs, ys, yerrs, no_of_points, ax)
+            yerr = None
+        kwargs['yerr'] = yerr
+        return self.plot(**kwargs)
 
     def __add__(self, other):
         if isinstance(other, IsomerSpectrum):

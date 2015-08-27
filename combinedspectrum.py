@@ -37,10 +37,10 @@ class CombinedSpectrum(Spectrum):
                        'Offset']
 
     def sanitize_input(self, x, y, yerr=None):
-        """Take the :attr:`x`, :attr:`y`, and :attr:`yerr` inputs, and sanitize
-        them for the fit, meaning it should convert :attr:`y`/:attr:`yerr` to
-        the output format of the class, and :attr:`x` to the input format of
-        the class."""
+        # Take the :attr:`x`, :attr:`y`, and :attr:`yerr` inputs, and sanitize
+        # them for the fit, meaning it should convert :attr:`y`/:attr:`yerr` to
+        # the output format of the class, and :attr:`x` to the input format of
+        # the class.
         if isinstance(y, list):
             y = np.hstack(y)
         if yerr is not None:
@@ -50,59 +50,23 @@ class CombinedSpectrum(Spectrum):
 
     @property
     def params(self):
-        """Combine the parameters from the subspectra into one Parameters
-        instance.
-
-        Returns
-        -------
-        params: Parameters instance describing the spectrum.
-
-        Warning
-        -------
-        Black magic going on in here, especially in the block of code
-        describing the shared parameters."""
         params = lm.Parameters()
-        # from .isomerspectrum import IsomerSpectrum
         for i, s in enumerate(self.spectra):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
                 p[new_key] = p.pop(old_key)
-                for o_key in keys:
-                    if p[new_key].expr is not None:
+                # If an expression is defined, replace the old names with the new ones
+                if p[new_key].expr is not None:
+                    for o_key in keys:
                         n_key = 's' + str(i) + '_' + o_key
                         p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
             params += p
-
-        # for i, s in enumerate(self.spectra):
-        #     for key in self.shared:
-        #         if i == 0:
-        #             continue
-        #         if isinstance(self.spectra[i], IsomerSpectrum):
-        #             for j, _ in enumerate(self.spectra[i].spectra):
-        #                 first_key = 's0_s' + str(j) + '_' + key
-        #                 new_key = 's' + str(j) + '_' + key
-        #                 for p in params.keys():
-        #                     if new_key in p:
-        #                         if p.startswith('s0_'):
-        #                             pass
-        #                         else:
-        #                             params[p].expr = first_key
-        #                             params[p].vary = False
-        #         else:
-        #             if isinstance(self.spectra[0], IsomerSpectrum):
-        #                 first_key = 's0_s0_' + key
-        #             else:
-        #                 first_key = 's0_' + key
-        #             new_key = 's' + str(i) + '_' + key
-        #             for p in params.keys():
-        #                 if new_key in p:
-        #                     params[p].expr = first_key
-        #                     params[p].vary = False
         return params
 
     @params.setter
@@ -125,92 +89,25 @@ class CombinedSpectrum(Spectrum):
                             expr=expr)
             spec.params = par
 
-    def var_from_params(self, params):
-        """Given a Parameters instance such as returned by the method
-        :meth:`params_from_var`, set the parameters of the subspectra to the
-        appropriate values.
-
-        Parameters
-        ----------
-        params: Parameters
-            Parameters instance containing the information for the variables.
-        """
-        from .isomerspectrum import IsomerSpectrum
-
-        for i, s in enumerate(self.spectra):
-            p = lm.Parameters()
-            if isinstance(s, IsomerSpectrum):
-                for j, spec in enumerate(s.spectra):
-                    for key in params.keys():
-                        k = 's{!s}_s{!s}_'.format(i, j)
-                        if key.startswith(k):
-                            dinkie = params[key]
-                            new_name = key.split('_')
-                            new_name = '_'.join(new_name[1:])
-                            p.add(new_name, value=dinkie.value,
-                                  vary=dinkie.vary, min=dinkie.min,
-                                  max=dinkie.max, expr=dinkie.expr)
-            else:
-                for key in params.keys():
-                    if key.startswith('s' + str(i) + '_'):
-                        dinkie = params[key]
-                        new_name = key.find('_') + 1
-                        new_name = key[new_name:]
-                        # new_name = ''.join(key.split('_')[1:])
-                        p.add(new_name, value=dinkie.value, vary=dinkie.vary,
-                              min=dinkie.min, max=dinkie.max, expr=dinkie.expr)
-            s.var_from_params(p)
-
-    def split_parameters(self, params):
-        """Helper function to split the parameters of the IsomerSpectrum
-        instance into a list of parameters suitable for each subspectrum.
-
-        Parameters
-        ----------
-        params: Parameters
-            Parameters of the :class:`IsomerSpectrum` instance.
-
-        Returns
-        -------
-        p: list of Parameters
-            A list of Parameters instances, each entry corresponding to the
-            same entry in the attribute :attr:`spectra`."""
-        for i, _ in enumerate(self.spectra):
-            par = lm.Parameters()
-            for key in params:
-                if key.startswith('s'+str(i)+'_'):
-                    new_key = key[len('s'+str(i)+'_'):]
-                    expr = params[key].expr
-                    if expr is not None:
-                        for k in params:
-                            nk = k[len('s'+str(i)+'_'):]
-                            expr = expr.replace(k, nk)
-                    par.add(new_key,
-                            value=params[key].value,
-                            vary=params[key].vary,
-                            min=params[key].min,
-                            max=params[key].max,
-                            expr=expr)
-            p.append(par)
-        return p
-
-    def lnprior(self, params):
-        """Defines the (uninformative) prior for all parameters.
-
-        Parameters
-        ----------
-        params: Parameters
-            Instance of Parameters with values to be used in the fit/walk
-
-        Returns
-        -------
-        float
-            If any of the parameters are out of bounds, returns :data:`-np.inf`
-            , otherwise 1.0 is returned"""
-        params = self.split_parameters(params)
-        return np.sum([s.lnprior(par) for s, par in zip(self.spectra, params)])
+    #################################
+    #      CONVENIENCE METHODS      #
+    #################################
 
     def seperate_response(self, x):
+        """Generates the response for each subspectrum.
+
+        Parameters
+        ----------
+        x: list of arrays
+            A list equal in length to the number of subspectra,
+            contains arrays for which the subspectra have to be
+            evaluated.
+
+        Returns
+        -------
+        evaluated: ndarray
+            The output array, of the same shape as the input
+            list of arrays, containing the response values."""
         return np.squeeze([s.seperate_response(X)
                            for s, X in zip(self.spectra, x)])
 
@@ -219,7 +116,8 @@ class CombinedSpectrum(Spectrum):
     ###############################
 
     def plot(self, xs=None, ys=None, yerrs=None,
-             no_of_points=10**4, ax=None, show=True):
+             no_of_points=10**4, ax=None, show=True,
+             ylabel='Counts', xlabel='Frequency (MHz)'):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
 
@@ -234,20 +132,23 @@ class CombinedSpectrum(Spectrum):
             Experimental errors on y.
         no_of_points: int
             Number of points to use for the plot of the hfs.
-        ax: matplotlib axes object
-            If provided, plots on this axis
+        ax: list of matplotlib axes object
+            If provided, plots on these axes.
         show: Boolean
             if True, the plot will be shown at the end.
 
         Returns
         -------
-        None
+        fig, ax: tuple
+            Returns a tuple containing the figure and axes which were
+            used for the plotting.
         """
         if ax is None:
             fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
-            toReturn = fig, ax
         else:
-            toReturn = None
+            fig = ax[0].get_figure()
+        toReturn = fig, ax
+
         if xs is None:
             xs = [None] * len(self.spectra)
         if ys is None:
@@ -258,17 +159,18 @@ class CombinedSpectrum(Spectrum):
         for i, (x, y, yerr, spec) in enumerate(zip(xs, ys, yerrs,
                                                    self.spectra)):
             if x is not None and y is not None:
-                ax[i].errorbar(x, y, yerr, fmt='o', markersize=3)
-            spec.plot(x, y, yerr, no_of_points, ax[i], show=False, label=False)
+                ax[i].errorbar(x, y, yerr, fmt='o')
+            spec.plot(x, y, yerr, no_of_points, ax[i], show=False)
+            ax[i].set_xlabel('')
+            ax[i].set_ylabel('')
 
-        ax[len(xs)-1].set_xlabel('Frequency (MHz)', fontsize=16)
-        ax[0].set_ylabel('Counts', fontsize=16)
+        ax[len(xs)-1].set_xlabel('Frequency (MHz)')
+        ax[0].set_ylabel('Counts')
 
         plt.tight_layout()
         if show:
             plt.show()
-        else:
-            return toReturn
+        return toReturn
 
     def plot_spectroscopic(self, xs=None, ys=None,
                            no_of_points=10**4, ax=None, show=True):
@@ -297,10 +199,23 @@ class CombinedSpectrum(Spectrum):
         None"""
 
         if ys is not None and not any([y is None for y in ys]):
-            yerrs = [np.sqrt(y + 1) for y in ys]
+            yerrs = [np.sqrt(y) for y in ys]
+            for i in range(len(yerrs)):
+                yerrs[i] = np.where(yerrs[i] == 0, 0, yerrs[i])
         else:
             yerrs = [None for i in self.spectra]
         return self.plot(xs, ys, yerrs, no_of_points, ax, show)
+
+    ###########################
+    #      MAGIC METHODS      #
+    ###########################
+
+    def __add__(self, other):
+        if isinstance(other, CombinedSpectrum):
+            return_object = CombinedSpectrum(self.spectra.extend(other.spectra))
+        elif isinstance(other, Spectrum):
+            return_object = CombinedSpectrum(self.spectra.append(other))
+        return return_object
 
     def __call__(self, x):
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])
