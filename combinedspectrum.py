@@ -222,6 +222,7 @@ class CombinedSpectrum(Spectrum):
              no_of_points=10**4, ax=None, show=True):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
+
         Parameters
         ----------
         x: list of arrays
@@ -237,6 +238,7 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
+
         Returns
         -------
         None
@@ -273,6 +275,7 @@ class CombinedSpectrum(Spectrum):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
+
         Parameters
         ----------
         x: list of arrays
@@ -288,6 +291,7 @@ class CombinedSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
+
         Returns
         -------
         None"""

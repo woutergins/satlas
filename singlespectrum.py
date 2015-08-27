@@ -135,7 +135,7 @@ class SingleSpectrum(Spectrum):
                               }
         self.shape = shape
         self._racah_int = racah_int
-        self._shared_fwhm = shared_fwhm
+        self.shared_fwhm = shared_fwhm
         self.I = I
         self.J = J
         self.calculate_F_levels()
@@ -605,6 +605,7 @@ class SingleSpectrum(Spectrum):
              no_of_points=10**4, ax=None, show=True, label=True,
              legend=None, data_legend=None):
         """Routine that plots the hfs, possibly on top of experimental data.
+
         Parameters
         ----------
         x: array
@@ -627,6 +628,7 @@ class SingleSpectrum(Spectrum):
         data_legend: String, optional
             If given, an entry in the legend will be made for the experimental
             data.
+
         Returns
         -------
         None"""
@@ -665,6 +667,7 @@ class SingleSpectrum(Spectrum):
         """Routine that plots the hfs, possibly on top of
         experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
+
         Parameters
         ----------
         x: array
@@ -678,6 +681,7 @@ class SingleSpectrum(Spectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
+
         Returns
         -------
         None

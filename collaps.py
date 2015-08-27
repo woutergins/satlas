@@ -10,7 +10,7 @@
 from datetime import datetime
 import re
 import sys
-from .spectrum import SingleSpectrum
+from .singlespectrum import SingleSpectrum
 from . import utilities as utilities
 import lmfit as lm
 import numpy as np

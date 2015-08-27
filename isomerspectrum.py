@@ -123,6 +123,7 @@ class IsomerSpectrum(CombinedSpectrum):
              show=True):
         """Routine that plots the hfs of all the spectra,
         possibly on top of experimental data.
+
         Parameters
         ----------
         x: list of arrays
@@ -138,6 +139,7 @@ class IsomerSpectrum(CombinedSpectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
+
         Returns
         -------
         None
@@ -185,6 +187,7 @@ class IsomerSpectrum(CombinedSpectrum):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
+
         Parameters
         ----------
         x: list of arrays
@@ -200,6 +203,7 @@ class IsomerSpectrum(CombinedSpectrum):
             If provided, plots on this axis
         show: Boolean
             if True, the plot will be shown at the end.
+
         Returns
         -------
         None"""
