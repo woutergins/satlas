@@ -22,16 +22,6 @@ from . import loglikelihood as llh
 
 __all__ = []
 
-def memoize(f):
-    memo = {}
-
-    def helper(x):
-        if x not in memo:
-            memo[x] = f(x)
-        return memo[x]
-    return helper
-
-
 def model(params, spectrum, x, y, yerr, pearson):
     spectrum.params = params
     model = spectrum(x)
@@ -117,7 +107,7 @@ class Spectrum(object):
             Frequencies in MHz.
         y: array_like
             Counts corresponding to :attr:`x`."""
-        self.var_from_params(params)
+        self.params = params
         if any([np.isclose(X.min(), X.max(), atol=self.atol)
                 for X in self.seperate_response(x)]) or any(self(x) < 0):
             return -np.inf
@@ -211,11 +201,11 @@ class Spectrum(object):
             return -self.lnprob(*args, **kwargs)
 
         x, y, _ = self.sanitize_input(x, y)
-        params = self.params_from_var()
+        params = self.params
         params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
         result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(x, y))
         result.scalar_minimize(method='Nelder-Mead')
-        self.var_from_params(result.params)
+        self.params = result.params
         self.mle_fit = result.params
         self.mle_result = result.message
 
@@ -318,7 +308,7 @@ class Spectrum(object):
             params[n].stderr = e
 
         self.mle_fit = params
-        self.var_from_params(params)
+        self.params = params
 
         data = pd.DataFrame(samples, columns=var_names)
         data.sort_index(axis=1, inplace=True)
@@ -373,7 +363,7 @@ class Spectrum(object):
             functions for each variable. The first dictionary has all the
             variable names as keys, the second dictionary has 'x' and 'y'
             as keys."""
-        params = self.params_from_var()
+        params = self.params
         var_names = []
         vars = []
         for key in params.keys():
@@ -408,7 +398,7 @@ class Spectrum(object):
             data[n] = {}
             data[n]['x'] = xvalues
             data[n]['y'] = yvalues
-            self.var_from_params(self.mle_fit)
+            self.params = self.mle_fit
         return data
 
     def display_mle_fit(self, **kwargs):
@@ -515,7 +505,7 @@ class Spectrum(object):
                     var_names.append(self.mle_fit.params[key].name)
                     varerr.append(self.mle_fit.params[key].stderr)
         else:
-            params = self.params_from_var()
+            params = self.params
             for key in sorted(params.keys()):
                 if params[key].vary:
                     var.append(params[key].value)
