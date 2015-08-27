@@ -134,8 +134,8 @@ class SingleSpectrum(Spectrum):
                                     (True, 1), (False, 0))
                               }
         self.shape = shape
-        self.racah_int = racah_int
-        self.shared_fwhm = shared_fwhm
+        self._racah_int = racah_int
+        self._shared_fwhm = shared_fwhm
         self.I = I
         self.J = J
         self.calculate_F_levels()
@@ -143,7 +143,6 @@ class SingleSpectrum(Spectrum):
         self.calculate_transitions()
 
         self._vary = {}
-        self.ratio = [None, None, None]
 
         self.ratioA = (None, 'lower')
         self.ratioB = (None, 'lower')
@@ -151,6 +150,17 @@ class SingleSpectrum(Spectrum):
 
         self.populate_params(ABC, fwhm, scale, background, n,
                              poisson, offset, centroid)
+
+    @property
+    def racah_int(self):
+        return self._racah_int
+
+    @racah_int.setter
+    def racah_int(self, value):
+        self._racah_int = value
+        self.params['scale'].vary = self._racah_int
+        for label in self.ftof:
+            self.params['Amp' + label].vary = not self._racah_int
 
     def populate_params(self, ABC, fwhm, scale, background,
                         n, poisson, offset, centroid):
@@ -165,9 +175,7 @@ class SingleSpectrum(Spectrum):
             if self.shared_fwhm:
                 par.add('FWHMG', value=fwhm[0], vary=True, min=0)
                 par.add('FWHML', value=fwhm[1], vary=True, min=0)
-                val = 0.5346 * fwhm[1] + np.sqrt(0.2166 *
-                                                 fwhm[1] ** 2
-                                                 + fwhm[0] ** 2)
+                val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
                         expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
             else:
@@ -176,9 +184,9 @@ class SingleSpectrum(Spectrum):
                     par.add('FWHML' + label, value=val[1], vary=True, min=0)
                     val = 0.5346 * val[1] + np.sqrt(0.2166 * val[1] ** 2
                                                     + val[0] ** 2)
-                    par.add('TotalFWHM' + str(i), value=val, vary=False,
-                            expr='0.5346*FWHML' + str(i) +
-                                 '+sqrt(0.2166*FWHML' + str(i) +
+                    par.add('TotalFWHM' + label, value=val, vary=False,
+                            expr='0.5346*FWHML' + label +
+                                 '+sqrt(0.2166*FWHML' + label +
                                  '**2+FWHMG' + str(i) + '**2)')
 
         par.add('scale', value=scale, vary=self.racah_int, min=0)

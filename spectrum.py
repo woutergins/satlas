@@ -262,7 +262,7 @@ class Spectrum(object):
             try:
                 widgets = ['Walk:', progressbar.Percentage(), ' ',
                            progressbar.Bar(marker=progressbar.RotatingMarker()),
-                           ' ', progressbar.AdaptiveETA()]
+                           ' ', progressbar.AdaptiveETA(num_samples=100)]
                 pbar = progressbar.ProgressBar(widgets=widgets,
                                                maxval=walkers * nsteps).start()
             except:
