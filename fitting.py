@@ -52,7 +52,8 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     if monitor:
         result = lm.Minimizer(model, params, fcn_args=(spectrum, x, y, yerr, pearson))
         result.prepare_fit(params)
-        nfree = len(x) - result.nvarys
+        X = np.concatenate(x)
+        nfree = len(X.flatten()) - result.nvarys
         fig, ax = plt.subplots(1, 1)
         line, = ax.plot([], [])
         ax.set_xlabel('Iteration')
@@ -74,7 +75,6 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
                              iter_cb=plot)
     else:
         result = lm.minimize(model, params, args=(spectrum, x, y, yerr, pearson))
-
 
     spectrum.params = result.params
     spectrum.chisq_res_par = result.params
