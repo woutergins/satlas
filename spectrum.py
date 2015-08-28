@@ -63,7 +63,7 @@ class Spectrum(object):
 
     def __init__(self):
         super(Spectrum, self).__init__()
-        self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'df']
+        self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
         self.atol = 0.1
         self.loglikelifunc = 'poisson'
         self._theta_array = np.linspace(-3, 3, 1000)
@@ -549,7 +549,7 @@ class Spectrum(object):
         else:
             raise KeyError
         if selected:
-            values = [v for n in self.selected for v in values if v.name in n]
+            values = [v for n in self.selected for v in values if n in v.name]
         if vary:
             values = [v for v in values if v.vary]
         if bounds:

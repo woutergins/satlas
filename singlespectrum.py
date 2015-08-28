@@ -392,7 +392,7 @@ class SingleSpectrum(Spectrum):
         self.ftof = f_f  # Stores the labels of all transitions, in order
         self.transition_indices = indices  # Stores the indices in the F and energy arrays for the transition
         self.amplitudes = amps  # Sets the initial amplitudes to the Racah intensities
-        self.parts = tuple(self.__shapes__[self.shape]() for _ in amps)
+        self.parts = tuple(self.__shapes__[self.shape](amp=a) for a in amps)
 
     def calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
         return float((2 * F1 + 1) * (2 * F2 + 1) * \
@@ -478,11 +478,17 @@ class SingleSpectrum(Spectrum):
         ----------
         value: float or iterable of floats
         name: string or iterable of strings"""
+        par = self._params
         try:
             for v, n in zip(value, name):
-                self.params[name].value = v
+                par[name].value = v
         except:
-            self.params[name].value = value
+            par[name].value = value
+        self.params = par
+
+    #######################################
+    #      METHODS CALLED BY FITTING      #
+    #######################################
 
     def sanitize_input(self, x, y, yerr=None):
         return x, y, yerr
@@ -501,6 +507,10 @@ class SingleSpectrum(Spectrum):
         list of floats or NumPy arrays
             Seperate responses of spectra to the input :attr:`x`."""
         return [self(x)]
+
+    ###########################
+    #      MAGIC METHODS      #
+    ###########################
 
     def __add__(self, other):
         """Add two spectra together to get an :class:`IsomerSpectrum`.
@@ -554,9 +564,8 @@ class SingleSpectrum(Spectrum):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True, label=True,
-             legend=None, data_legend=None, xlabel='Frequency (MHz)',
-             ylabel='Counts'):
+             no_of_points=10**4, ax=None, show=True, legend=None,
+             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -566,25 +575,29 @@ class SingleSpectrum(Spectrum):
             the peaks is chosen to plot the hfs.
         y: array
             Experimental y-data.
-        yerr: array
+        yerr: array or dict('high': array, 'low': array)
             Experimental errors on y.
         no_of_points: int
-            Number of points to use for the plot of the hfs.
+            Number of points to use for the plot of the hfs if
+            experimental data is given.
         ax: matplotlib axes object
-            If provided, plots on this axis
-        show: Boolean
+            If provided, plots on this axis.
+        show: boolean
             If True, the plot will be shown at the end.
-        label: Boolean
-            If True, the plot will be labeled.
-        legend: String, optional
+        legend: string, optional
             If given, an entry in the legend will be made for the spectrum.
-        data_legend: String, optional
+        data_legend: string, optional
             If given, an entry in the legend will be made for the experimental
             data.
+        xlabel: string, optional
+            If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
+        ylabel: string, optional
+            If given, sets the ylabel to this string. Defaults to 'Counts'.
 
         Returns
         -------
-        None"""
+        fig, ax: matplotlib figure and axis
+            Figure and axis used for the plotting."""
 
         if ax is None:
             fig, ax = plt.subplots(1, 1)
@@ -604,11 +617,11 @@ class SingleSpectrum(Spectrum):
             superx = np.sort(np.concatenate(ranges))
 
         else:
-            superx = np.linspace(x.min(), x.max(), no_of_points)
+            superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
         if x is not None and y is not None:
             try:
-                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+                ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']], fmt='o', label=data_legend)
             except:
                 ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
         ax.plot(superx, self(superx), label=legend)
@@ -630,21 +643,29 @@ class SingleSpectrum(Spectrum):
             the peaks is chosen to plot the hfs.
         y: array
             Experimental y-data.
+        yerr: array or dict('high': array, 'low': array)
+            Experimental errors on y.
         no_of_points: int
-            Number of points to use for the plot of the hfs.
+            Number of points to use for the plot of the hfs if
+            experimental data is given.
         ax: matplotlib axes object
-            If provided, plots on this axis
-        show: Boolean
-            if True, the plot will be shown at the end.
+            If provided, plots on this axis.
+        show: boolean
+            If True, the plot will be shown at the end.
+        legend: string, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: string, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
 
         Returns
         -------
-        None
-        """
+        fig, ax: matplotlib figure and axis
+            Figure and axis used for the plotting."""
         y = kwargs.get('y', None)
         if y is not None:
             ylow, yhigh = poisson_interval(y)
-            yerr = {'low': ylow, 'high': yhigh}
+            yerr = {'low': y - ylow, 'high': yhigh - y}
         else:
             yerr = None
         kwargs['yerr'] = yerr

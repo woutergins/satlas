@@ -122,7 +122,7 @@ class IsomerSpectrum(CombinedSpectrum):
         ax: matplotlib axes object
             If provided, plots on this axis
         show: Boolean
-            if True, the plot will be shown at the end.
+            If True, the plot will be shown at the end.
 
         Returns
         -------

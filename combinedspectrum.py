@@ -115,64 +115,68 @@ class CombinedSpectrum(Spectrum):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self, xs=None, ys=None, yerrs=None,
-             no_of_points=10**4, ax=None, show=True,
-             ylabel='Counts', xlabel='Frequency (MHz)'):
-        """Routine that plots the hfs of all the spectra,
-        possibly on top of experimental data.
+    def plot(self, x=None, y=None, yerr=None,
+             no_of_points=10**4, ax=None, show=True, legend=None,
+             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
+        """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
         ----------
         x: list of arrays
-            Experimental x-data. If list of Nones, a suitable region around
+            Experimental x-data. If None, a suitable region around
             the peaks is chosen to plot the hfs.
         y: list of arrays
             Experimental y-data.
-        yerr: list of arrays
+        yerr: list of arrays or dict('high': array, 'low': array)
             Experimental errors on y.
         no_of_points: int
-            Number of points to use for the plot of the hfs.
-        ax: list of matplotlib axes object
-            If provided, plots on these axes.
-        show: Boolean
-            if True, the plot will be shown at the end.
+            Number of points to use for the plot of the hfs if
+            experimental data is given.
+        ax: matplotlib axes object
+            If provided, plots on this axis.
+        show: boolean
+            If True, the plot will be shown at the end.
+        legend: string, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: string, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
 
         Returns
         -------
-        fig, ax: tuple
-            Returns a tuple containing the figure and axes which were
-            used for the plotting.
-        """
+        fig, ax: matplotlib figure and axis
+            Figure and axis used for the plotting."""
         if ax is None:
             fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
         else:
             fig = ax[0].get_figure()
         toReturn = fig, ax
 
-        if xs is None:
-            xs = [None] * len(self.spectra)
-        if ys is None:
-            ys = [None] * len(self.spectra)
-        if yerrs is None:
-            yerrs = [None] * len(self.spectra)
+        if x is None:
+            x = [None] * len(self.spectra)
+        if y is None:
+            y = [None] * len(self.spectra)
+        if yerr is None:
+            yerr = [None] * len(self.spectra)
 
-        for i, (x, y, yerr, spec) in enumerate(zip(xs, ys, yerrs,
+        selected = int(len(self.spectra)/2)
+        for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
                                                    self.spectra)):
-            if x is not None and y is not None:
-                ax[i].errorbar(x, y, yerr, fmt='o')
-            spec.plot(x, y, yerr, no_of_points, ax[i], show=False)
-            ax[i].set_xlabel('')
-            ax[i].set_ylabel('')
-
-        ax[len(xs)-1].set_xlabel('Frequency (MHz)')
-        ax[0].set_ylabel('Counts')
+            if i == selected:
+                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
+                          data_legend=data_legend, legend=legend, xlabel='', ylabel=ylabel)
+            elif i == len(self.spectra) - 1:
+                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='',
+                          xlabel=xlabel)
+            else:
+                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
 
         plt.tight_layout()
         if show:
             plt.show()
         return toReturn
 
-    def plot_spectroscopic(self, xs=None, ys=None,
+    def plot_spectroscopic(self, x=None, y=None,
                            no_of_points=10**4, ax=None, show=True):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
@@ -198,13 +202,13 @@ class CombinedSpectrum(Spectrum):
         -------
         None"""
 
-        if ys is not None and not any([y is None for y in ys]):
-            yerrs = [np.sqrt(y) for y in ys]
-            for i in range(len(yerrs)):
-                yerrs[i] = np.where(yerrs[i] == 0, 0, yerrs[i])
+        if y is not None and not any([Y is None for Y in y]):
+            yerr = [np.sqrt(Y) for Y in y]
+            for i in range(len(yerr)):
+                yerr[i] = np.where(yerr[i] == 0, 0, yerr[i])
         else:
-            yerrs = [None for i in self.spectra]
-        return self.plot(xs, ys, yerrs, no_of_points, ax, show)
+            yerr = [None for i in self.spectra]
+        return self.plot(x=x, y=y, yerr=yerr, no_of_points=no_of_points, ax=ax, show=show)
 
     ###########################
     #      MAGIC METHODS      #
