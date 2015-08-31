@@ -1,3 +1,12 @@
+"""
+.. module:: fitting
+    :platform: Windows
+    :synopsis: Implementation of fitting routines specialised
+    for Spectrum objects.
+
+.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+"""
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
