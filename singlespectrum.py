@@ -471,19 +471,19 @@ class SingleSpectrum(Spectrum):
             self.ratioC = (value, target)
         self.params = self.set_ratios(self.params)
 
-    def set_value(self, value, name=None):
+    def set_value(self, values, name=None):
         """Sets the value of the selected parameter to the given value.
 
         Parameters
         ----------
-        value: float or iterable of floats
+        values: float or iterable of floats
         name: string or iterable of strings"""
         par = self._params
         try:
-            for v, n in zip(value, name):
-                par[name].value = v
+            for v, n in zip(values, name):
+                par[n].value = v
         except:
-            par[name].value = value
+            par[name].value = values
         self.params = par
 
     #######################################

@@ -1,6 +1,15 @@
 import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
+import emcee as mcmc
+try:
+    import progressbar
+except:
+    pass
+import pandas as pd
+from . import loglikelihood as llh
+
+__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'likelihood_fit']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
@@ -14,12 +23,12 @@ def model(params, spectrum, x, y, yerr, pearson, **kwargs):
     return (y - model) / yerr
 
 def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
-        """Use the :meth:`FitToData` method, automatically estimating the errors
-        on the counts by the square root."""
-        x, y, _ = spectrum.sanitize_input(x, y)
-        yerr = np.sqrt(y)
-        yerr[np.isclose(yerr, 0.0)] = 1.0
-        return chisquare_fit(spectrum, x, y, yerr, **kwargs)
+    """Use the :meth:`FitToData` method, automatically estimating the errors
+    on the counts by the square root."""
+    x, y, _ = spectrum.sanitize_input(x, y)
+    yerr = np.sqrt(y)
+    yerr[np.isclose(yerr, 0.0)] = 1.0
+    return chisquare_fit(spectrum, x, y, yerr, **kwargs)
 
 def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
@@ -52,8 +61,11 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     if monitor:
         result = lm.Minimizer(model, params, fcn_args=(spectrum, x, y, yerr, pearson))
         result.prepare_fit(params)
-        X = np.concatenate(x)
-        nfree = len(X.flatten()) - result.nvarys
+        try:
+            X = np.concatenate(x)
+            nfree = len(X.flatten()) - result.nvarys
+        except:
+            nfree = len(x.flatten()) - result.nvarys
         fig, ax = plt.subplots(1, 1)
         line, = ax.plot([], [])
         ax.set_xlabel('Iteration')
@@ -79,154 +91,154 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     spectrum.params = result.params
     spectrum.chisq_res_par = result.params
 
+##########################################
+# MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #
+##########################################
 
-# class PriorParameter(lm.Parameter):
 
-#     """Extended the Parameter class from LMFIT to incorporate prior boundaries.
-#     """
+class PriorParameter(lm.Parameter):
 
-#     def __init__(self, name, value=None, vary=True, min=None, max=None,
-#                  expr=None, priormin=None, priormax=None):
-#         super(PriorParameter, self).__init__(name, value=value,
-#                                              vary=vary, min=min,
-#                                              max=max, expr=expr)
-#         self.priormin = priormin
-#         self.priormax = priormax
+    # Extended the Parameter class from LMFIT to incorporate prior boundaries.
 
-# ##########################################
-# # MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #
-# ##########################################
-# from . import loglikelihood as llh
-# import numpy as np
-# theta_array = np.linspace(-3, 3, 1000)
+    def __init__(self, name, value=None, vary=True, min=None, max=None,
+                 expr=None, priormin=None, priormax=None):
+        super(PriorParameter, self).__init__(name, value=value,
+                                             vary=vary, min=min,
+                                             max=max, expr=expr)
+        self.priormin = priormin
+        self.priormax = priormax
 
-# def x_err_calculation(spectrum, x, y, s, func):
-#     x, theta = np.meshgrid(x, theta_array)
-#     y, _ = np.meshgrid(y, theta_array)
-#     p = func(y, spectrum(x + theta))
-#     g = np.exp(-(theta / s)**2 / 2) / s
-#     return np.log(np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1])
+theta_array = np.linspace(-3, 3, 1024)
 
-# def lnprob(spectrum, params, x, y):
-#     lp = lnprior(params)
-#     if not np.isfinite(lp):
-#         return -np.inf
-#     res = lp + np.sum(loglikelihood(spectrum, params, x, y))
-#     return res
+def x_err_calculation(spectrum, x, y, s, func):
+    x, theta = np.meshgrid(x, theta_array)
+    y, _ = np.meshgrid(y, theta_array)
+    p = func(y, spectrum(x + theta))
+    g = np.exp(-(theta / s)**2 / 2) / s
+    return np.log(np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1])
 
-# def lnprior(params):
-#     for key in params.keys():
-#         try:
-#             leftbound, rightbound = (params[key].priormin,
-#                                      params[key].priormax)
-#         except:
-#             leftbound, rightbound = params[key].min, params[key].max
-#         leftbound = -np.inf if leftbound is None else leftbound
-#         rightbound = np.inf if rightbound is None else rightbound
-#         if not leftbound <= params[key].value <= rightbound:
-#             return -np.inf
-#     return 1.0
+def lnprob(params, spectrum, x, y, func):
+    lp = lnprior(params)
+    if not np.isfinite(lp):
+        return -np.inf
+    res = lp + np.sum(loglikelihood(spectrum, params, x, y, func))
+    return res
 
-# def loglikelihood(spectrum, params, x, y):
-#     spectrum.params = params
-#     if any([np.isclose(X.min(), X.max(), atol=0.1)
-#             for X in spectrum.seperate_response(x)]) or any(self(x) < 0):
-#         return -np.inf
-#     if params['sigma_x'].value > 0:
-#         s = params['sigma_x'].value
-#         return_value = x_err_calculation(spectrum, x, y, s, func)
-#     else:
-#         return_value = func(y, spectrum(x))
-#     return return_value
+def lnprior(params):
+    for key in params.keys():
+        try:
+            leftbound, rightbound = (params[key].priormin,
+                                     params[key].priormax)
+        except:
+            leftbound, rightbound = params[key].min, params[key].max
+        leftbound = -np.inf if leftbound is None else leftbound
+        rightbound = np.inf if rightbound is None else rightbound
+        if not leftbound <= params[key].value <= rightbound:
+            return -np.inf
+    return 1.0
 
-# def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_llh, walking=True, **kwargs):
-#     def negativeloglikelihood(*args, **kwargs):
-#         return -lnprob(*args, **kwargs)
+def loglikelihood(spectrum, params, x, y, func):
+    spectrum.params = params
+    if any([np.isclose(X.min(), X.max(), atol=0.1)
+            for X in spectrum.seperate_response(x)]) or any(spectrum(x) < 0):
+        return -np.inf
+    if params['sigma_x'].value > 0:
+        s = params['sigma_x'].value
+        return_value = x_err_calculation(spectrum, x, y, s, func)
+    else:
+        return_value = func(y, spectrum(x))
+    return return_value
 
-#     x, y, _ = spectrum.sanitize_input(x, y)
-#     params = spectrum.params
-#     params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
-#     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(x, y))
-#     result.scalar_minimize(method='Nelder-Mead')
-#     spectrum.params = result.params
-#     spectrum.mle_fit = result.params
-#     spectrum.mle_result = result.message
+def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_llh, walking=True, **kwargs):
+    def negativeloglikelihood(*args, **kwargs):
+        return -lnprob(*args, **kwargs)
 
-#     if walking:
-#         likelihood_walk(x, y, **kwargs)
-#     return None
+    x, y, _ = spectrum.sanitize_input(x, y)
+    params = spectrum.params
+    params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
+    result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(spectrum, x, y, func))
+    result.scalar_minimize(method='Nelder-Mead')
+    spectrum.params = result.params
+    spectrum.mle_fit = result.params
+    spectrum.mle_result = result.message
 
-# def likelihood_walk(spectrum, x, y, nsteps=2000, walkers=20, burnin=10.0,
-#                     verbose=True, store_walks=False):
+    if walking:
+        likelihood_walk(spectrum, x, y, func=func, **kwargs)
+    return None
 
-#     params = self.mle_fit
-#     var_names = []
-#     vars = []
-#     for key in params.keys():
-#         if params[key].vary:
-#             var_names.append(key)
-#             vars.append(params[key].value)
-#     ndim = len(vars)
-#     pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
-#     x, y, _ = self.sanitize_input(x, y)
+def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=20, burnin=10.0,
+                    verbose=True, store_walks=False):
 
-#     if verbose:
-#         try:
-#             widgets = ['Walk:', progressbar.Percentage(), ' ',
-#                        progressbar.Bar(marker=progressbar.RotatingMarker()),
-#                        ' ', progressbar.AdaptiveETA(num_samples=100)]
-#             pbar = progressbar.ProgressBar(widgets=widgets,
-#                                            maxval=walkers * nsteps).start()
-#         except:
-#             pass
+    params = spectrum.mle_fit
+    var_names = []
+    vars = []
+    for key in params.keys():
+        if params[key].vary:
+            var_names.append(key)
+            vars.append(params[key].value)
+    ndim = len(vars)
+    pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
+    x, y, _ = spectrum.sanitize_input(x, y)
 
-#     def lnprobList(fvars, x, y, groupParams, pbar):
-#         for val, n in zip(fvars, var_names):
-#             groupParams[n].value = val
-#         try:
-#             pbar += 1
-#         except:
-#             pass
-#         return self.lnprob(groupParams, x, y)
-#     groupParams = lm.Parameters()
-#     for key in params.keys():
-#         groupParams[key] = PriorParameter(key,
-#                                           value=params[key].value,
-#                                           vary=params[key].vary,
-#                                           expr=params[key].expr,
-#                                           priormin=params[key].min,
-#                                           priormax=params[key].max)
-#     sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-#                                    args=(x, y, groupParams, pbar))
-#     burn = int(nsteps * burnin / 100)
-#     sampler.run_mcmc(pos, burn, storechain=False)
-#     sampler.reset()
-#     sampler.run_mcmc(pos, nsteps - burn)
-#     try:
-#         pbar.finish()
-#     except:
-#         pass
-#     samples = sampler.flatchain
-#     val = []
-#     err = []
-#     q = [16.0, 50.0, 84.0]
-#     for i, samp in enumerate(samples.T):
-#         q16, q50, q84 = np.percentile(samp, q)
-#         val.append(q50)
-#         err.append(max([q50 - q16, q84 - q50]))
+    if verbose:
+        try:
+            widgets = ['Walk:', progressbar.Percentage(), ' ',
+                       progressbar.Bar(marker=progressbar.RotatingMarker()),
+                       ' ', progressbar.AdaptiveETA(num_samples=100)]
+            pbar = progressbar.ProgressBar(widgets=widgets,
+                                           maxval=walkers * nsteps).start()
+        except:
+            pbar = 0
+    else:
+        pbar = 0
 
-#     for n, v, e in zip(var_names, val, err):
-#         params[n].value = v
-#         params[n].stderr = e
+    def lnprobList(fvars, spectrum, groupParams, x, y, pbar, func):
+        for val, n in zip(fvars, var_names):
+            groupParams[n].value = val
+        try:
+            pbar += 1
+        except:
+            pass
+        return lnprob(groupParams, spectrum, x, y, func)
+    groupParams = lm.Parameters()
+    for key in params.keys():
+        groupParams[key] = PriorParameter(key,
+                                          value=params[key].value,
+                                          vary=params[key].vary,
+                                          expr=params[key].expr,
+                                          priormin=params[key].min,
+                                          priormax=params[key].max)
+    sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
+                                   args=(spectrum, groupParams, x, y, pbar, func))
+    burn = int(nsteps * burnin / 100)
+    sampler.run_mcmc(pos, burn, storechain=False)
+    sampler.reset()
+    sampler.run_mcmc(pos, nsteps - burn)
+    try:
+        pbar.finish()
+    except:
+        pass
+    samples = sampler.flatchain
+    val = []
+    err = []
+    q = [16.0, 50.0, 84.0]
+    for i, samp in enumerate(samples.T):
+        q16, q50, q84 = np.percentile(samp, q)
+        val.append(q50)
+        err.append(max([q50 - q16, q84 - q50]))
 
-#     self.mle_fit = params
-#     self.params = params
+    for n, v, e in zip(var_names, val, err):
+        params[n].value = v
+        params[n].stderr = e
 
-#     data = pd.DataFrame(samples, columns=var_names)
-#     data.sort_index(axis=1, inplace=True)
-#     self.mle_data = data
-#     if store_walks:
-#         self.walks = [(name, sampler.chain[:, :, i].T)
-#                       for i, name in enumerate(var_names)]
-#     else:
-#         self.walks = None
+    spectrum.mle_fit = params
+    spectrum.params = params
+
+    data = pd.DataFrame(samples, columns=var_names)
+    data.sort_index(axis=1, inplace=True)
+    spectrum.mle_data = data
+    if store_walks:
+        spectrum.walks = [(name, sampler.chain[:, :, i].T)
+                      for i, name in enumerate(var_names)]
+    else:
+        spectrum.walks = None
