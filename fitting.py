@@ -2,6 +2,7 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import emcee as mcmc
+import copy
 try:
     import progressbar
 except:
@@ -132,8 +133,11 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     else:
         result = lm.minimize(model, params, args=(spectrum, x, y, yerr, pearson))
 
-    spectrum.params = result.params
-    spectrum.chisq_res_par = result.params
+    spectrum.params = copy.deepcopy(result.params)
+    spectrum.chisq_res_par = copy.deepcopy(result.params)
+    spectrum.ndof = copy.deepcopy(result.nfree)
+    spectrum.redchi = copy.deepcopy(result.redchi)
+    spectrum.chisqr = copy.deepcopy(result.chisqr)
 
 ##########################################
 # MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #
