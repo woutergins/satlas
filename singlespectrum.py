@@ -12,12 +12,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
+import scipy.optimize as optimize
 from fractions import Fraction
 
 from .isomerspectrum import IsomerSpectrum
 from .spectrum import Spectrum
 from .wigner import wigner_6j, wigner_3j
 from .utilities import poisson_interval
+from .loglikelihood import poisson_llh
 W6J = wigner_6j
 W3J = wigner_3j
 
@@ -565,8 +567,9 @@ class SingleSpectrum(Spectrum):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
+             no_of_points=10**3, ax=None, show=True, legend=None,
+             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
+             bayesian=False, colormap='bone_r'):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -594,6 +597,11 @@ class SingleSpectrum(Spectrum):
             If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
         ylabel: string, optional
             If given, sets the ylabel to this string. Defaults to 'Counts'.
+        bayesian: boolean, optional
+            If given, the region around the fitted line will be shaded, with
+            the luminosity indicating the pmf of the Poisson
+            distribution characterized by the value of the fit. Note that
+            the argument :attr:`yerr` is ignored if :attr:`bayesian` is True.
 
         Returns
         -------
@@ -616,20 +624,35 @@ class SingleSpectrum(Spectrum):
                                 2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-
+            superx = np.linspace(superx.min(), superx.max(), 10**3)
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
+
         if 'sigma_x' in self.params:
             xerr = self.params['sigma_x'].value
         else:
             xerr = 0
 
         if x is not None and y is not None:
-            try:
-                ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']], xerr=xerr, fmt='o', label=data_legend)
-            except:
-                ax.errorbar(x, y, yerr=yerr, xerr=xerr, fmt='o', label=data_legend)
-        ax.plot(superx, self(superx), label=legend)
+            if not bayesian:
+                try:
+                    ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']],
+                                xerr=xerr, fmt='o', label=data_legend)
+                except:
+                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+            else:
+                ax.plot(x, y, 'o')
+        if bayesian:
+            range = (superx.min(), superx.max())
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, finish=None)[1])
+            y = np.arange(0, max_counts + 3 * max_counts ** 0.5 + 1)
+            x, y = np.meshgrid(superx, y)
+            z = poisson_llh(self(x), y)
+            z = np.exp(z - z.max(axis=0))
+
+            z = z / z.sum(axis=0)
+            ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
+        ax.plot(superx, self(superx), label=legend, lw=0.5)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if show:
