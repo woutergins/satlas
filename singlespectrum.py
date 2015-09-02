@@ -391,7 +391,8 @@ class SingleSpectrum(Spectrum):
                         f_f.append(s)
         self.ftof = f_f  # Stores the labels of all transitions, in order
         self.transition_indices = indices  # Stores the indices in the F and energy arrays for the transition
-        self.amplitudes = amps  # Sets the initial amplitudes to the Racah intensities
+        self.amplitudes = np.array(amps)  # Sets the initial amplitudes to the Racah intensities
+        self.amplitudes = self.amplitudes / self.amplitudes.max()
         self.parts = tuple(self.__shapes__[self.shape](amp=a) for a in amps)
 
     def calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
@@ -618,12 +619,16 @@ class SingleSpectrum(Spectrum):
 
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
+        if 'sigma_x' in self.params:
+            xerr = self.params['sigma_x'].value
+        else:
+            xerr = 0
 
         if x is not None and y is not None:
             try:
-                ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']], fmt='o', label=data_legend)
+                ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']], xerr=xerr, fmt='o', label=data_legend)
             except:
-                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+                ax.errorbar(x, y, yerr=yerr, xerr=xerr, fmt='o', label=data_legend)
         ax.plot(superx, self(superx), label=legend)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

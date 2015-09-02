@@ -148,6 +148,9 @@ class CombinedSpectrum(Spectrum):
             Figure and axis used for the plotting."""
         if ax is None:
             fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
+            height = fig.get_figheight()
+            width = fig.get_figwidth()
+            fig.set_size_inches(width, len(self.spectra) * height, forward=True)
         else:
             fig = ax[0].get_figure()
         toReturn = fig, ax
@@ -159,15 +162,14 @@ class CombinedSpectrum(Spectrum):
         if yerr is None:
             yerr = [None] * len(self.spectra)
 
-        selected = int(len(self.spectra)/2)
+        selected = int(np.floor(len(self.spectra)/2 - 1))
         for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
                                                    self.spectra)):
             if i == selected:
                 spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
-                          data_legend=data_legend, legend=legend, xlabel='', ylabel=ylabel)
+                          data_legend=data_legend, legend=legend, xlabel='')
             elif i == len(self.spectra) - 1:
-                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='',
-                          xlabel=xlabel)
+                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
             else:
                 spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
 

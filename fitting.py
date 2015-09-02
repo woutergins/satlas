@@ -165,7 +165,9 @@ class PriorParameter(lm.Parameter):
         self.priormin = priormin
         self.priormax = priormax
 
-theta_array = np.linspace(-3, 3, 1024)
+theta_array = np.linspace(-5, 5, 2**10)
+_x_err_calculation_stored = {}
+sqrt2pi = np.sqrt(2*np.pi)
 
 def x_err_calculation(spectrum, x, y, s, func):
     """Calculates the loglikelihood for a spectrum given
@@ -197,11 +199,18 @@ def x_err_calculation(spectrum, x, y, s, func):
     a convolution integral. If greater accuracy is required,
     change :attr:`satlas.fitting.theta_array` to a suitable
     range and length."""
-    x, theta = np.meshgrid(x, theta_array)
-    y, _ = np.meshgrid(y, theta_array)
-    p = np.exp(func(y, spectrum(x + theta)))
-    g = np.exp(-(theta / s)**2 / 2) / s
-    return np.log(np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1])
+    key = hash(x.data.tobytes()) + hash(y.data.tobytes())
+    if key in _x_err_calculation_stored:
+        x_grid, y_grid, theta, g_top = _x_err_calculation_stored[key]
+    else:
+        x_grid, theta = np.meshgrid(x, theta_array)
+        y_grid, _ = np.meshgrid(y, theta_array)
+        g_top = (np.exp(-theta*theta * 0.5)).T
+        _x_err_calculation_stored[key] = x_grid, y_grid, theta, g_top
+    p = (np.exp(func(y_grid, spectrum(x_grid + s * theta)))).T
+    g = g_top / (sqrt2pi * s)
+    integral_value = np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1]
+    return np.log(integral_value)
 
 def lnprob(params, spectrum, x, y, func):
     """Calculates the logarithm of the probability that the data fits
@@ -347,10 +356,12 @@ def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_ll
     params = spectrum.params
     params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(spectrum, x, y, func))
-    result.scalar_minimize(method='Nelder-Mead')
+    result.scalar_minimize(method='L-BFGS-B')
+    # result.scalar_minimize(method='Nelder-Mead')
     spectrum.params = result.params
     spectrum.mle_fit = result.params
     spectrum.mle_result = result.message
+    print(result.message)
 
     if walking:
         likelihood_walk(spectrum, x, y, func=func, **walk_kws)
