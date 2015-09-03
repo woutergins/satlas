@@ -484,8 +484,12 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
                       for i, name in enumerate(var_names)]
 
 def plot_loglikelihood(spectrum, x, y, xerr=None):
-    label = '{:.2f} MHz x-uncertainty'
+    label_pois = '{:.2f} MHz x-uncertainty (Poisson)'
+    label_gauss = '{:.2f} MHz x-uncertainty (Gaussian)'
     params = copy.deepcopy(spectrum.params)
+    if xerr is not None:
+        if not isinstance(xerr, list):
+            xerr = [xerr]
     try:
         saved_xerr = params['sigma_x'].value
     except:
@@ -493,13 +497,14 @@ def plot_loglikelihood(spectrum, x, y, xerr=None):
         saved_xerr = 0
     selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
     selected = [s for s in selected if params[s].vary]
-    fig, ax = plt.subplots(1, len(selected), squeeze=False, sharey=True)
+
+    fig, ax = plt.subplots(1, len(selected), squeeze=True)
     height = fig.get_figheight()
     width = fig.get_figwidth()
-    fig.set_size_inches(len(self.spectra) * width, height, forward=True)
-    for a, s in zip(ax, s):
+    fig.set_size_inches(len(selected) * width, height, forward=True)
+
+    for a, s in zip(ax, selected):
         a.set_xlabel(s)
-        print(params[s].value)
         original_value = params[s].value
         try:
             deviation = params[s].stderr
@@ -511,21 +516,39 @@ def plot_loglikelihood(spectrum, x, y, xerr=None):
         for i, v in enumerate(value_range):
             params[s].value = v
             likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
-        loc = (likeli.max()-1)/likeli.max()
-        likeli = likeli / likeli.max()
+        loc = -1 #(likeli.max()-1)#/likeli.max()
+        likeli = likeli - likeli.max()
 
-        line, = a.plot(value_range, likeli, label=label.format(params['sigma_x'].value))
-        a.axhline(y=loc, ls='--', color=line.get_color())
+        line, = a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
+        for i, v in enumerate(value_range):
+            params[s].value = v
+            likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
+        loc = -1 #(likeli.max()-1)#/likeli.max()
+        likeli = likeli - likeli.max()
 
-        params['sigma_x'].value = xerr if xerr is not None else saved_xerr
-        if params['sigma_x'].value != 0:
-            for i, v in enumerate(value_range):
-                params[s].value = v
-                likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
-            likeli = likeli / likeli.max()
-            line, = a.plot(value_range, likeli, label=label.format(params['sigma_x'].value))
-            a.axhline(y=loc, ls='--', color=line.get_color())
-            a.legend(loc=0)
+        line, = a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))
+        a.axhline(y=loc, ls='--', color='k')
+
+        if xerr is not None:
+            for XERR in xerr:
+                params['sigma_x'].value = XERR
+                if params['sigma_x'].value != 0:
+                    for i, v in enumerate(value_range):
+                        params[s].value = v
+                        likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
+                    loc = -1 #(likeli.max()-1)#/likeli.max()
+                    likeli = likeli - likeli.max()
+                    a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
+                    for i, v in enumerate(value_range):
+                        params[s].value = v
+                        likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
+                    loc = -1 #(likeli.max()-1)#/likeli.max()
+                    likeli = likeli - likeli.max()
+                    a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))
+                    # a.axhline(y=loc, ls='--', color=line.get_color())
+        a.legend(loc=0)
+        a.set_ylim(-2, 0)
+        params['sigma_x'].value = saved_xerr
         params[s].value = original_value
-        print(params[s].value)
+        spectrum.params = params
     return fig, ax

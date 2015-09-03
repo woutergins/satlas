@@ -42,11 +42,11 @@ def gaussian_llh(x, l):
     x : array_like
         Data that has to be tested.
     l : array_like
-        Parameter for the Poisson distrbution.
+        Parameter for the Gaussian distrbution.
 
     Returns
     -------
     array_like
         Array with the loglikelihoods for the data"""
-    s = x ** 0.5
+    s = l ** 0.5
     return -((x - l)/(2 * s)) ** 2
