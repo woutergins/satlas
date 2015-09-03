@@ -19,7 +19,8 @@ except:
 import pandas as pd
 from . import loglikelihood as llh
 
-__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'likelihood_fit']
+__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'likelihood_fit',
+           'plot_loglikelihood']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
@@ -481,3 +482,50 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
     if store_walks:
         spectrum.walks = [(name, sampler.chain[:, :, i].T)
                       for i, name in enumerate(var_names)]
+
+def plot_loglikelihood(spectrum, x, y, xerr=None):
+    label = '{:.2f} MHz x-uncertainty'
+    params = copy.deepcopy(spectrum.params)
+    try:
+        saved_xerr = params['sigma_x'].value
+    except:
+        params.add('sigma_x', value=0, vary=False)
+        saved_xerr = 0
+    selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
+    selected = [s for s in selected if params[s].vary]
+    fig, ax = plt.subplots(1, len(selected), squeeze=False, sharey=True)
+    height = fig.get_figheight()
+    width = fig.get_figwidth()
+    fig.set_size_inches(len(self.spectra) * width, height, forward=True)
+    for a, s in zip(ax, s):
+        a.set_xlabel(s)
+        print(params[s].value)
+        original_value = params[s].value
+        try:
+            deviation = params[s].stderr
+            value_range = np.linspace(original_value - deviation, original_value + deviation, 100)
+        except:
+            value_range = np.linspace(original_value - 50, original_value + 50, 100)
+        likeli = np.zeros(len(value_range))
+        params['sigma_x'].value = 0
+        for i, v in enumerate(value_range):
+            params[s].value = v
+            likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
+        loc = (likeli.max()-1)/likeli.max()
+        likeli = likeli / likeli.max()
+
+        line, = a.plot(value_range, likeli, label=label.format(params['sigma_x'].value))
+        a.axhline(y=loc, ls='--', color=line.get_color())
+
+        params['sigma_x'].value = xerr if xerr is not None else saved_xerr
+        if params['sigma_x'].value != 0:
+            for i, v in enumerate(value_range):
+                params[s].value = v
+                likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
+            likeli = likeli / likeli.max()
+            line, = a.plot(value_range, likeli, label=label.format(params['sigma_x'].value))
+            a.axhline(y=loc, ls='--', color=line.get_color())
+            a.legend(loc=0)
+        params[s].value = original_value
+        print(params[s].value)
+    return fig, ax
