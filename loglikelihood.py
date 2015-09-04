@@ -32,8 +32,8 @@ def poisson_llh(x, l):
 
 def gaussian_llh(x, l):
     """Returns the loglikelihood for a Gaussian distribution,
-    assuming the variance is given by the square root of the data
-    points. It is assumed that the parameters are true, and the
+    assuming the variance is given by the square root of the fit value.
+    It is assumed that the parameters are true, and the
     loglikelihood that the data is drawn from the distribution
     established by the parameters is calculated.
 
@@ -49,4 +49,5 @@ def gaussian_llh(x, l):
     array_like
         Array with the loglikelihoods for the data"""
     s = l ** 0.5
-    return -((x - l)/(2 * s)) ** 2
+    deviation = (x-l)/s
+    return -(deviation*deviation + np.log(l))

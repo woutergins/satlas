@@ -505,25 +505,25 @@ def plot_loglikelihood(spectrum, x, y, xerr=None):
 
     for a, s in zip(ax, selected):
         a.set_xlabel(s)
+        a.set_ylabel(r'$\Delta\ln L$')
         original_value = params[s].value
         try:
             deviation = params[s].stderr
-            value_range = np.linspace(original_value - deviation, original_value + deviation, 100)
+            value_range = np.linspace(original_value - deviation, original_value + deviation, 1000)
         except:
-            value_range = np.linspace(original_value - 50, original_value + 50, 100)
+            value_range = np.linspace(original_value - 50, original_value + 50, 1000)
         likeli = np.zeros(len(value_range))
         params['sigma_x'].value = 0
         for i, v in enumerate(value_range):
             params[s].value = v
             likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
-        loc = -1 #(likeli.max()-1)#/likeli.max()
         likeli = likeli - likeli.max()
 
         line, = a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
         for i, v in enumerate(value_range):
             params[s].value = v
             likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
-        loc = -1 #(likeli.max()-1)#/likeli.max()
+        loc = -0.5 #(likeli.max()-1)#/likeli.max()
         likeli = likeli - likeli.max()
 
         line, = a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))
@@ -536,16 +536,14 @@ def plot_loglikelihood(spectrum, x, y, xerr=None):
                     for i, v in enumerate(value_range):
                         params[s].value = v
                         likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
-                    loc = -1 #(likeli.max()-1)#/likeli.max()
                     likeli = likeli - likeli.max()
                     a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
                     for i, v in enumerate(value_range):
                         params[s].value = v
                         likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
-                    loc = -1 #(likeli.max()-1)#/likeli.max()
                     likeli = likeli - likeli.max()
                     a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))
-                    # a.axhline(y=loc, ls='--', color=line.get_color())
+
         a.legend(loc=0)
         a.set_ylim(-2, 0)
         params['sigma_x'].value = saved_xerr

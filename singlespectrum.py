@@ -296,7 +296,7 @@ class SingleSpectrum(Spectrum):
         par.add('N', value=n, vary=False)
         if n > 0:
             par.add('Poisson', value=poisson, vary=False, min=0)
-            par.add('Offset', value=offset, vary=False, min=None, max=-0.01)
+            par.add('Offset', value=offset, vary=False, min=None, max=0)
 
         self.params = self.check_variation(par)
 
