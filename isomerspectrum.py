@@ -1,8 +1,5 @@
 """
-.. module:: CombinedSpectrum
-    :platform: Windows
-    :synopsis: Implementation of classes for the analysis of hyperfine
-     structure spectra with isomeric presence.
+Implementation of a class for the analysis of hyperfine structure spectra with isomeric presence.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -32,7 +29,7 @@ class IsomerSpectrum(CombinedSpectrum):
         super(IsomerSpectrum, self).__init__(spectra)
         self.shared = []
 
-    def sanitize_input(self, x, y, yerr=None):
+    def _sanitize_input(self, x, y, yerr=None):
         """Doesn't do anything yet."""
         x, y = np.array(x), np.array(y)
         if yerr is not None:
@@ -82,7 +79,7 @@ class IsomerSpectrum(CombinedSpectrum):
                             expr=expr)
             spec.params = par
 
-    def seperate_response(self, x):
+    def _seperate_response(self, x):
         """Get the response for each seperate spectrum for the values x,
         without background.
 

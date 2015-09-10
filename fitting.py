@@ -1,8 +1,5 @@
 """
-.. module:: fitting
-    :platform: Windows
-    :synopsis: Implementation of fitting routines specialised
-    for Spectrum objects.
+Implementation of fitting routines specialised for Spectrum objects.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -20,13 +17,13 @@ import pandas as pd
 from . import loglikelihood as llh
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'likelihood_fit',
-           'plot_loglikelihood']
+           'likelihood_plot']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
 ###############################
 
-def model(params, spectrum, x, y, yerr, pearson=False):
+def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     """Model function for chisquare fitting routines as established
     in this module.
 
@@ -114,7 +111,7 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
         pass
 
     if monitor:
-        result = lm.Minimizer(model, params, fcn_args=(spectrum, x, y, yerr, pearson))
+        result = lm.Minimizer(chisquare_model, params, fcn_args=(spectrum, x, y, yerr, pearson))
         result.prepare_fit(params)
         try:
             X = np.concatenate(x)
@@ -170,7 +167,7 @@ theta_array = np.linspace(-5, 5, 2**10)
 _x_err_calculation_stored = {}
 sqrt2pi = np.sqrt(2*np.pi)
 
-def x_err_calculation(spectrum, x, y, s, func):
+def likelihood_x_err(spectrum, x, y, s, func):
     """Calculates the loglikelihood for a spectrum given
     x and y values. Incorporates a common given error on
     the x-axis.
@@ -213,7 +210,7 @@ def x_err_calculation(spectrum, x, y, s, func):
     integral_value = np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1]
     return np.log(integral_value)
 
-def lnprob(params, spectrum, x, y, func):
+def likelihood_lnprob(params, spectrum, x, y, func):
     """Calculates the logarithm of the probability that the data fits
     the model given the current parameters.
 
@@ -237,13 +234,13 @@ def lnprob(params, spectrum, x, y, func):
     The prior is first evaluated for the parameters. If this is
     not finite, the values are rejected from consideration by
     immediately returning -np.inf."""
-    lp = lnprior(params)
+    lp = likelihood_lnprior(params)
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(loglikelihood(params, spectrum, x, y, func))
+    res = lp + np.sum(likelihood_loglikelihood(params, spectrum, x, y, func))
     return res
 
-def lnprior(params):
+def likelihood_lnprior(params):
     """Calculates the logarithm of the prior given the parameter
     values. This is independent of the data to be fitted to.
 
@@ -278,7 +275,7 @@ def lnprior(params):
             return -np.inf
     return 1.0
 
-def loglikelihood(params, spectrum, x, y, func):
+def likelihood_loglikelihood(params, spectrum, x, y, func):
     """Given a parameters object, a Spectrum object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
@@ -313,7 +310,7 @@ def loglikelihood(params, spectrum, x, y, func):
     # function.
     if params['sigma_x'].value > 0:
         s = params['sigma_x'].value
-        return_value = x_err_calculation(spectrum, x, y, s, func)
+        return_value = likelihood_x_err(spectrum, x, y, s, func)
     else:
         return_value = func(y, spectrum(x))
     return return_value
@@ -483,7 +480,28 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
         spectrum.walks = [(name, sampler.chain[:, :, i].T)
                       for i, name in enumerate(var_names)]
 
-def plot_loglikelihood(spectrum, x, y, xerr=None):
+def likelihood_plot(spectrum, x, y, xerr=None):
+    """Plots the likelihood for relevant HFS structure parameters.
+
+    Parameters
+    ----------
+    spectrum: satlas.Spectrum
+        Spectrum to be fitted to the data.
+    x: array_like
+        Experimental data for the x-axis.
+    y: array_like
+        Experimental data for the y-axis.
+
+    Other parameters
+    ----------------
+    xerr: float or list of floats
+        Repeats the calculations, but taking the given values
+        as errors on the data for the x-axis.
+
+    Returns
+    -------
+    fig, ax: matplotlib figure and axis
+        Figure and axis used for the plotting."""
     label_pois = '{:.2f} MHz x-uncertainty (Poisson)'
     label_gauss = '{:.2f} MHz x-uncertainty (Gaussian)'
     params = copy.deepcopy(spectrum.params)

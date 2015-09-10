@@ -1,8 +1,5 @@
 """
-.. module:: SingleSpectrum
-    :platform: Windows
-    :synopsis: Implementation of class for the analysis of hyperfine
-     structure spectra, including various fitting routines.
+Implementation of a class for the analysis of hyperfine structure spectra.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -28,7 +25,7 @@ __all__ = ['SingleSpectrum']
 
 class SingleSpectrum(Spectrum):
 
-    r"""Class for the construction of a HFS spectrum, consisting of different
+    r"""Constructs a HFS spectrum, consisting of different
     peaks described by a certain profile. The number of peaks and their
     positions is governed by the atomic HFS.
     Calling an instance of the Spectrum class returns the response value of the
@@ -68,18 +65,24 @@ class SingleSpectrum(Spectrum):
         If True, the same FWHM is used for all peaks. Otherwise, give them all
         the same initial FWHM and let them vary during the fitting.
 
-    Attributes
-    ----------
-    params : lmfit.Parameters instance
-        Contains all the relevant information for the spectrum's shape.
-        See the documentation of lmfit for more information.
-    racah_int: boolean
-        Change the value to change the behaviour of the amplitudes
-
     Note
     ----
-    The listed attributes are commonly accessed attributes for the end user.
-    More are used, and should be looked up in the source code."""
+    The list of parameter keys is:
+        * :attr:`FWHM` (only for profiles with one float for the FWHM)
+        * :attr:`FWHMG` (only for profiles with two floats for the FWHM)
+        * :attr:`FWHML` (only for profiles with two floats for the FWHM)
+        * :attr:`Al`
+        * :attr:`Au`
+        * :attr:`Bl`
+        * :attr:`Bu`
+        * :attr:`Cl`
+        * :attr:`Cu`
+        * :attr:`Centroid`
+        * :attr:`Background`
+        * :attr:`Poisson` (only if the attribute *n* is greater than 0)
+        * :attr:`Offset` (only if the attribute *n* is greater than 0)
+        * :attr:`Amp` (with the correct labeling of the transition)
+        * :attr:`scale`"""
 
     __shapes__ = {'gaussian': p.Gaussian,
                   'lorentzian': p.Lorentzian,
@@ -121,9 +124,9 @@ class SingleSpectrum(Spectrum):
         self.shared_fwhm = shared_fwhm
         self.I = I
         self.J = J
-        self.calculate_F_levels()
-        self.calculate_energy_coefficients()
-        self.calculate_transitions()
+        self._calculate_F_levels()
+        self._calculate_energy_coefficients()
+        self._calculate_transitions()
 
         self._vary = {}
         self._constraints = {}
@@ -132,11 +135,12 @@ class SingleSpectrum(Spectrum):
         self.ratioB = (None, 'lower')
         self.ratioC = (None, 'lower')
 
-        self.populate_params(ABC, fwhm, scale, background, n,
-                             poisson, offset, centroid)
+        self._populate_params(ABC, fwhm, scale, background, n,
+                              poisson, offset, centroid)
 
     @property
     def locations(self):
+        """Contains the locations of the peak"""
         return self._locations
 
     @locations.setter
@@ -147,6 +151,8 @@ class SingleSpectrum(Spectrum):
 
     @property
     def racah_int(self):
+        """Boolean to set the behaviour to Racah intensities (True)
+        or to individual amplitudes (False)."""
         return self._racah_int
 
     @racah_int.setter
@@ -158,7 +164,9 @@ class SingleSpectrum(Spectrum):
 
     @property
     def params(self):
-        self._params = self.check_variation(self._params)
+        """Instance of lmfit.Parameters object characterizing the
+        shape of the HFS."""
+        self._params = self._check_variation(self._params)
         return self._params
 
     @params.setter
@@ -166,16 +174,16 @@ class SingleSpectrum(Spectrum):
         self._params = params
         # When changing the parameters, the energies and
         # the locations have to be recalculated
-        self.calculate_energies()
-        self.calculate_transition_locations()
+        self._calculate_energies()
+        self._calculate_transition_locations()
         if not self.racah_int:
             # When not using set amplitudes, they need
             # to be changed after every iteration
-            self.set_amplitudes()
+            self._set_amplitudes()
         # Finally, the fwhm of each peak needs to be set
-        self.set_fwhm()
+        self._set_fwhm()
 
-    def calculate_energies(self):
+    def _calculate_energies(self):
         r"""The hyperfine addition to a central frequency (attribute :attr:`centroid`)
         for a specific level is calculated. The formula comes from
         :cite:`Schwartz1955` and in a simplified form, reads
@@ -220,15 +228,15 @@ class SingleSpectrum(Spectrum):
                           np.ones(self.num_upper) * self.params['Centroid'].value)
         self.energies = centr + self.C * A + self.D * B + self.E * C
 
-    def calculate_transition_locations(self):
+    def _calculate_transition_locations(self):
         self.locations = [self.energies[ind_high] - self.energies[ind_low]
                           for (ind_low, ind_high) in self.transition_indices]
 
-    def set_amplitudes(self):
+    def _set_amplitudes(self):
         for p, label in zip(self.parts, self.ftof):
             p.amp = self.params['Amp' + label].value
 
-    def set_fwhm(self):
+    def _set_fwhm(self):
         if self.shape.lower() == 'voigt':
             fwhm = [[self.params['FWHMG'].value, self.params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self.params['FWHMG' + label].value, self.params['FWHML' + label].value] for label in self.ftof]
         else:
@@ -240,7 +248,7 @@ class SingleSpectrum(Spectrum):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def populate_params(self, ABC, fwhm, scale, background,
+    def _populate_params(self, ABC, fwhm, scale, background,
                         n, poisson, offset, centroid):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
@@ -299,9 +307,9 @@ class SingleSpectrum(Spectrum):
             par.add('Poisson', value=poisson, vary=False, min=0)
             par.add('Offset', value=offset, vary=False, min=None, max=0)
 
-        self.params = self.check_variation(par)
+        self.params = self._check_variation(par)
 
-    def set_ratios(self, par):
+    def _set_ratios(self, par):
         # Process the set ratio's for the hyperfine parameters.
         ratios = (self.ratioA, self.ratioB, self.ratioC)
         labels = (('Al', 'Au'), ('Bl', 'Bu'), ('Cl', 'Cu'))
@@ -315,7 +323,7 @@ class SingleSpectrum(Spectrum):
                 par[fixed].vary = False
         return par
 
-    def check_variation(self, par):
+    def _check_variation(self, par):
         # Make sure the variations in the params are set correctly.
         for key in self._vary.keys():
             if key in par.keys():
@@ -363,7 +371,7 @@ class SingleSpectrum(Spectrum):
                     pass
         return par
 
-    def calculate_F_levels(self):
+    def _calculate_F_levels(self):
         F1 = np.arange(abs(self.I - self.J[0]), self.I+self.J[0]+1, 1)
         self.num_lower = len(F1)
         F2 = np.arange(abs(self.I - self.J[1]), self.I+self.J[1]+1, 1)
@@ -373,7 +381,7 @@ class SingleSpectrum(Spectrum):
                            np.ones(len(F2)) * self.J[1])
         self.F = F
 
-    def calculate_transitions(self):
+    def _calculate_transitions(self):
         f_f = []
         indices = []
         amps = []
@@ -381,7 +389,7 @@ class SingleSpectrum(Spectrum):
             for j, F2 in enumerate(self.F[self.num_lower:]):
                 if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
                     j += self.num_lower
-                    intensity = self.calculate_racah_intensity(self.J[i],
+                    intensity = self._calculate_racah_intensity(self.J[i],
                                                                self.J[j],
                                                                self.F[i],
                                                                self.F[j])
@@ -407,11 +415,11 @@ class SingleSpectrum(Spectrum):
         self.amplitudes = self.amplitudes / self.amplitudes.max()
         self.parts = tuple(self.__shapes__[self.shape](amp=a) for a in amps)
 
-    def calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
+    def _calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
         return float((2 * F1 + 1) * (2 * F2 + 1) * \
                      W6J(J2, F2, self.I, F1, J1, order) ** 2)  # DO NOT REMOVE CAST TO FLOAT!!!
 
-    def calculate_energy_coefficients(self):
+    def _calculate_energy_coefficients(self):
         # Since I, J and F do not change, these factors can be calculated once
         # and then stored.
         I, J, F = self.I, self.J, self.F
@@ -433,33 +441,21 @@ class SingleSpectrum(Spectrum):
 
         Parameters
         ----------
-        varydict: dictionary
-            A dictionary containing 'key: True/False' mappings
-
-        Note
-        ----
-        The list of usable keys:
-
-        * :attr:`FWHM` (only for profiles with one float for the FWHM)
-        * :attr:`eta`  (only for the Pseudovoigt profile)
-        * :attr:`FWHMG` (only for profiles with two floats for the FWHM)
-        * :attr:`FWHML` (only for profiles with two floats for the FWHM)
-        * :attr:`Al`
-        * :attr:`Au`
-        * :attr:`Bl`
-        * :attr:`Bu`
-        * :attr:`Cl`
-        * :attr:`Cu`
-        * :attr:`Centroid`
-        * :attr:`Background`
-        * :attr:`Poisson` (only if the attribute *n* is greater than 0)
-        * :attr:`Offset` (only if the attribute *n* is greater than 0)
-        * :attr:`Amp` (with the correct labeling of the transition)
-        * :attr:`scale`"""
+        varyDict: dictionary
+            A dictionary containing 'key: True/False' mappings"""
         for k in varyDict.keys():
             self._vary[k] = varyDict[k]
 
     def set_boundaries(self, boundaryDict):
+        """Sets the boundaries of the fitparameters as supplied in the
+        dictionary.
+
+        Parameters
+        ----------
+        boundaryDict: dictionary
+            A dictionary containing "key: {'min': value, 'max': value}" mappings.
+            A value of :attr:`None` or a missing key gives no boundary
+            in that direction."""
         for k in boundaryDict.keys():
             self._constraints[k] = boundaryDict[k]
 
@@ -486,7 +482,7 @@ class SingleSpectrum(Spectrum):
             self.ratioB = (value, target)
         if parameter.lower() == 'c':
             self.ratioC = (value, target)
-        self.params = self.set_ratios(self.params)
+        self.params = self._set_ratios(self.params)
 
     def set_value(self, values, name=None):
         """Sets the value of the selected parameter to the given value.
@@ -507,7 +503,7 @@ class SingleSpectrum(Spectrum):
     #      METHODS CALLED BY FITTING      #
     #######################################
 
-    def sanitize_input(self, x, y, yerr=None):
+    def _sanitize_input(self, x, y, yerr=None):
         return x, y, yerr
 
     def seperate_response(self, x):
@@ -584,7 +580,7 @@ class SingleSpectrum(Spectrum):
              no_of_points=10**3, ax=None, show=True, legend=None,
              data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
              bayesian=False, colormap='bone_r'):
-        """Routine that plots the hfs, possibly on top of experimental data.
+        """Plot the hfs, possibly on top of experimental data.
 
         Parameters
         ----------
@@ -674,9 +670,8 @@ class SingleSpectrum(Spectrum):
         return toReturn
 
     def plot_spectroscopic(self, **kwargs):
-        """Routine that plots the hfs, possibly on top of
-        experimental data. It assumes that the y data is drawn from
-        a Poisson distribution (e.g. counting data).
+        """Plots the hfs on top of experimental data
+        with errorbar given by the square root of the data.
 
         Parameters
         ----------

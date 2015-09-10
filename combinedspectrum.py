@@ -1,8 +1,5 @@
 """
-.. module:: CombinedSpectrum
-    :platform: Windows
-    :synopsis: Implementation of class for the simultaneous fitting of hyperfine
-     structure spectra.
+Implementation of a class for the simultaneous fitting of hyperfine structure spectra.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -17,8 +14,7 @@ __all__ = ['CombinedSpectrum']
 
 class CombinedSpectrum(Spectrum):
 
-    """A class for combining different spectra (:class:`CombinedSpectrum`) or
-    combining isomers/isotopes (:class:`IsomerSpectrum`, child class).
+    """Combines different spectra for simultaneous fitting.
 
     Parameters
     ----------
@@ -36,7 +32,7 @@ class CombinedSpectrum(Spectrum):
                        'Cu',
                        'Offset']
 
-    def sanitize_input(self, x, y, yerr=None):
+    def _sanitize_input(self, x, y, yerr=None):
         # Take the :attr:`x`, :attr:`y`, and :attr:`yerr` inputs, and sanitize
         # them for the fit, meaning it should convert :attr:`y`/:attr:`yerr` to
         # the output format of the class, and :attr:`x` to the input format of
@@ -93,7 +89,7 @@ class CombinedSpectrum(Spectrum):
     #      CONVENIENCE METHODS      #
     #################################
 
-    def seperate_response(self, x):
+    def _seperate_response(self, x):
         """Generates the response for each subspectrum.
 
         Parameters

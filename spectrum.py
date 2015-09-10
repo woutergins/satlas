@@ -20,7 +20,7 @@ except:
 from . import loglikelihood as llh
 
 
-__all__ = []
+__all__ = ['Spectrum']
 
 def model(params, spectrum, x, y, yerr, pearson):
     spectrum.params = params
