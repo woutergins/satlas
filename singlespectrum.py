@@ -126,6 +126,7 @@ class SingleSpectrum(Spectrum):
         self.calculate_transitions()
 
         self._vary = {}
+        self._constraints = {}
 
         self.ratioA = (None, 'lower')
         self.ratioB = (None, 'lower')
@@ -351,6 +352,15 @@ class SingleSpectrum(Spectrum):
                 par['Bu'].vary, par['Bu'].value = Bu
             if not Cu[0]:
                 par['Cu'].vary, par['Cu'].value = Cu
+
+        for key in self._constraints.keys():
+            for bound in self._constraints[key]:
+                if bound.lower() == 'min':
+                    par[key].min = self._constraints[key][bound]
+                elif bound.lower() == 'max':
+                    par[key].max = self._constraints[key][bound]
+                else:
+                    pass
         return par
 
     def calculate_F_levels(self):
@@ -448,6 +458,10 @@ class SingleSpectrum(Spectrum):
         * :attr:`scale`"""
         for k in varyDict.keys():
             self._vary[k] = varyDict[k]
+
+    def set_boundaries(self, boundaryDict):
+        for k in boundaryDict.keys():
+            self._constraints[k] = boundaryDict[k]
 
     def fix_ratio(self, value, target='upper', parameter='A'):
         """Fixes the ratio for a given hyperfine parameter to the given value.
