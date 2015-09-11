@@ -1,0 +1,6 @@
+satlas.isomerspectrum.IsomerSpectrum.__call__
+=============================================
+
+.. currentmodule:: satlas.isomerspectrum
+
+.. automethod:: IsomerSpectrum.__call__

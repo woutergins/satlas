@@ -1,0 +1,28 @@
+satlas.combinedspectrum.CombinedSpectrum
+========================================
+
+.. currentmodule:: satlas.combinedspectrum
+
+.. autoclass:: CombinedSpectrum
+
+
+   .. rubric:: Methods
+
+   .. autosummary::
+      :toctree: combinedspectrum/
+
+      ~CombinedSpectrum.__init__
+      ~CombinedSpectrum.__call__
+      ~CombinedSpectrum.__add__
+      ~CombinedSpectrum.plot
+      ~CombinedSpectrum.plot_spectroscopic
+      ~CombinedSpectrum.seperate_response
+
+   .. rubric:: Attributes
+
+   .. autosummary::
+
+      ~CombinedSpectrum.params
+      ~CombinedSpectrum.selected
+      ~CombinedSpectrum.shared
+

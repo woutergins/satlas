@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>satlas.fitting.likelihood_walk &mdash; SATLAS 0.0.1b2 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1b2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="up" title="satlas.fitting" href="../satlas.fitting.html" >
+    <link rel="next" title="satlas.fitting.likelihood_x_err" href="satlas.fitting.likelihood_x_err.html" >
+    <link rel="prev" title="satlas.fitting.likelihood_plot" href="satlas.fitting.likelihood_plot.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+	
+          <li class="active"><a href="../../api.html" >API reference</a></li>
+          <li class="active"><a href="../satlas.fitting.html" accesskey="U">satlas.fitting</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="satlas.fitting.likelihood_x_err.html" title="satlas.fitting.likelihood_x_err"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="satlas.fitting.likelihood_plot.html" title="satlas.fitting.likelihood_plot"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="satlas-fitting-likelihood-walk">
+<h1>satlas.fitting.likelihood_walk<a class="headerlink" href="#satlas-fitting-likelihood-walk" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="satlas.fitting.likelihood_walk">
+<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_walk</code><span class="sig-paren">(</span><em>spectrum</em>, <em>x</em>, <em>y</em>, <em>func=&lt;function poisson_llh at 0x124FDED0&gt;</em>, <em>nsteps=2000</em>, <em>walkers=20</em>, <em>burnin=10.0</em>, <em>verbose=True</em>, <em>store_walks=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_walk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the uncertainty on MLE-optimized parameter values
+by performing a random walk through parameter space and comparing
+the resulting loglikelihood values. For more information,
+see the emcee package.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-class docutils literal"><span class="pre">Spectrum</span></code></a>) &#8211; Spectrum to be fitted to the data.</li>
+<li><strong>x</strong> (<em>array_like</em>) &#8211; Experimental data for the x-axis.</li>
+<li><strong>y</strong> (<em>array_like</em>) &#8211; Experimental data for the y-axis.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>func</strong> (<em>function, optional</em>) &#8211;
+Used to calculate the loglikelihood that the data is drawn
+from a distribution given a model value. Should accept
+input as (y_data, y_model). Defaults to the Poisson
+loglikelihood.</li>
+<li><strong>walkers</strong> (<em>integer, optional</em>) &#8211;
+Sets the number of walkers to be used for the random walk.
+The number of walkers should never be less than twice the
+number of parameters. For more information on this, see
+the emcee documentation. Defaults to 20 walkers.</li>
+<li><strong>nsteps</strong> (<em>integer, optional</em>) &#8211;
+Determines how many steps each walker should take.
+Defaults to 2000 steps.</li>
+<li><strong>burnin</strong> (<em>float &lt; 100.0</em>) &#8211;
+Sets the percentage of the walk to be considered burn-in
+(steps for which the walk has not started exploring the space yet).
+Defaults to 10.0 percent.</li>
+<li><strong>verbose</strong> (<em>boolean, optional</em>) &#8211;
+If True, a progressbar is printed and updated every second.
+This progressbar displays the progress of the walk, with a primitive
+estimate of the remaining time in the calculation.</li>
+<li><strong>store_walks</strong> (<em>boolean, optional</em>) &#8211;
+If True, the data from the walks is stored in the spectrum
+object under the attribute <em>walks</em>. Defaults to False.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="satlas.fitting.likelihood_plot.html"
+                        title="previous chapter">satlas.fitting.likelihood_plot</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="satlas.fitting.likelihood_x_err.html"
+                        title="next chapter">satlas.fitting.likelihood_x_err</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/generated/fitting/satlas.fitting.likelihood_walk.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

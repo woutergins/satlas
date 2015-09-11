@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>Fitting routines &mdash; SATLAS 0.0.1b2 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1b2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../index.html" >
+    <link rel="up" title="Tutorials" href="../tutorial.html" >
+    <link rel="next" title="Plotting routines" href="plottingroutines.html" >
+    <link rel="prev" title="Spectrum creation and evaluation" href="spectrumcreation.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../index.html">SATLAS 0.0.1b2 documentation</a></li>
+	
+          <li class="active"><a href="../tutorial.html" accesskey="U">Tutorials</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="plottingroutines.html" title="Plotting routines"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="spectrumcreation.html" title="Spectrum creation and evaluation"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="fitting-routines">
+<h1>Fitting routines<a class="headerlink" href="#fitting-routines" title="Permalink to this headline">¶</a></h1>
+<p>For all methods, the underlying package LMFIT handles the parabolic error calculations and passes along the optimization assignment to SciPy.</p>
+<div class="section" id="chisquare-method">
+<h2>Chisquare method<a class="headerlink" href="#chisquare-method" title="Permalink to this headline">¶</a></h2>
+<p>When fitting with the chisquare method, the costfunction to be minimized is</p>
+<div class="math">
+<p><img src="../_images/math/e47e50a7c3dfc0d990f2e514245e4f3a3b5c31cd.png" alt="\chi^2 = \left(\frac{y_i-HFS(x_i)}{\sigma_i}\right)^2"/></p>
+</div><p>with the subscript <em>i</em> referring to the datapoint, and <em>HFS</em> to the response of the <a class="reference internal" href="../generated/satlas.singlespectrum.SingleSpectrum.html#satlas.singlespectrum.SingleSpectrum" title="satlas.singlespectrum.SingleSpectrum"><code class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></code></a> class. The algorithm used is the Levenberg-Marquardt algorithm, which gives quick results in a reliable fashion. The <a class="reference internal" href="../generated/fitting/satlas.fitting.chisquare_model.html#satlas.fitting.chisquare_model" title="satlas.fitting.chisquare_model"><code class="xref py py-func docutils literal"><span class="pre">fitting.chisquare_model</span></code></a> function creates the costfunction used for counting data. The function <a class="reference internal" href="../generated/fitting/satlas.fitting.chisquare_fit.html#satlas.fitting.chisquare_fit" title="satlas.fitting.chisquare_fit"><code class="xref py py-func docutils literal"><span class="pre">fitting.chisquare_fit</span></code></a> performs the actual fit, while <a class="reference internal" href="../generated/fitting/satlas.fitting.chisquare_spectroscopic_fit.html#satlas.fitting.chisquare_spectroscopic_fit" title="satlas.fitting.chisquare_spectroscopic_fit"><code class="xref py py-func docutils literal"><span class="pre">fitting.chisquare_spectroscopic_fit</span></code></a> calculates the uncertainty on the data by taking the square root of the number of counts.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">One of the options for <a class="reference internal" href="../generated/fitting/satlas.fitting.chisquare_model.html#satlas.fitting.chisquare_model" title="satlas.fitting.chisquare_model"><code class="xref py py-func docutils literal"><span class="pre">fitting.chisquare_model</span></code></a> is the boolean <em>pearson</em>. If this boolean is <em>True</em>, the uncertainty is calculated by taking the square root of the <em>fitvalue</em>, not the datapoint. This approach mimics the use of the Poisson distribution instead of the Gaussian distribution for the uncertainty calculation.</p>
+</div>
+<p>In order to demonstrate the fit functions, toy data is needed. This is created by assuming some parameters for the spectrum, calculating the response, and then adding random noise.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">satlas</span> <span class="kn">as</span> <span class="nn">s</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c">#Ensure the same random numbers each time</span>
+
+<span class="n">I</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
+
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<span class="n">centroid</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="n">spectrum</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">SingleSpectrum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">frequency_range</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">spectrum</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">-</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">spectrum</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">frequency_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequency_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">200</span><span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">spectrum</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span> <span class="o">+</span> <span class="n">spectrum</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">))</span>
+
+<span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">spectrum</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This gives as output:</p>
+<div class="highlight-python"><div class="highlight"><pre>True
+Tolerance seems to be too small.
+Scaled errors estimated from covariance matrix.
+NDoF: 191, Chisquare: 191.69717, Reduced Chisquare: 1.0036501
+[[Variables]]
+    FWHMG:        11.3427266 +/- 2.140752 (18.87%) (init= 10)
+    FWHML:        8.43978693 +/- 1.852357 (21.95%) (init= 10)
+    TotalFWHM:    16.5154873 +/- 1.082126 (6.55%)  == &#39;0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)&#39;
+    scale:        97.1175807 +/- 5.290111 (5.45%) (init= 100)
+    Amp0__1:      0.2380952 (fixed)
+    Amp1__1:      0.1785714 (fixed)
+    Amp1__2:      0.5357143 (fixed)
+    Amp2__1:      0.01190476 (fixed)
+    Amp2__2:      0.1785714 (fixed)
+    Amp2__3:      1 (fixed)
+    Al:           98.8906329 +/- 0.715946 (0.72%) (init= 100)
+    Au:           199.256948 +/- 0.435687 (0.22%) (init= 200)
+    Bl:           100.828639 +/- 0.482189 (0.48%) (init= 100)
+    Bu:           200.587132 +/- 0.737509 (0.37%) (init= 200)
+    Cl:           0 (fixed)
+    Cu:           0 (fixed)
+    Centroid:     499.942232 +/- 0.368317 (0.07%) (init= 500)
+    Background:   10.9890430 +/- 0.313143 (2.85%) (init= 10)
+    N:            0 (fixed)
+</pre></div>
+</div>
+<p>If <em>pearson=False</em> is given to the fitfunction, the result is:</p>
+<div class="highlight-python"><div class="highlight"><pre>True
+Tolerance seems to be too small.
+Scaled errors estimated from covariance matrix.
+NDoF: 191, Chisquare: 217.46192, Reduced Chisquare: 1.1385441
+[[Variables]]
+    FWHMG:        11.8496386 +/- 2.154808 (18.18%) (init= 10)
+    FWHML:        8.09226423 +/- 1.885223 (23.30%) (init= 10)
+    TotalFWHM:    16.7598660 +/- 1.101574 (6.57%)  == &#39;0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)&#39;
+    scale:        97.0090173 +/- 5.449919 (5.62%) (init= 100)
+    Amp0__1:      0.2380952 (fixed)
+    Amp1__1:      0.1785714 (fixed)
+    Amp1__2:      0.5357143 (fixed)
+    Amp2__1:      0.01190476 (fixed)
+    Amp2__2:      0.1785714 (fixed)
+    Amp2__3:      1 (fixed)
+    Al:           99.2139530 +/- 0.778808 (0.78%) (init= 100)
+    Au:           199.435631 +/- 0.474742 (0.24%) (init= 200)
+    Bl:           100.942580 +/- 0.522766 (0.52%) (init= 100)
+    Bu:           200.521786 +/- 0.840366 (0.42%) (init= 200)
+    Cl:           0 (fixed)
+    Cu:           0 (fixed)
+    Centroid:     499.819171 +/- 0.387606 (0.08%) (init= 500)
+    Background:   9.40626039 +/- 0.305555 (3.25%) (init= 10)
+    N:            0 (fixed)
+</pre></div>
+</div>
+<p>which is slightly different.</p>
+</div>
+<div class="section" id="maximum-likelihood-estimation">
+<h2>Maximum Likelihood Estimation<a class="headerlink" href="#maximum-likelihood-estimation" title="Permalink to this headline">¶</a></h2>
+<p>The Maximum Likelihood Estimation (MLE) can be used to derive the chisquare method in the case of Gaussian uncertainties. When this is not the case (as it is for counting data, which has a Poisson distribution), a less simplified method has to be used.</p>
+<p>The MLE method works by minimizing the negative loglikelihood. This is calculated as</p>
+<div class="math">
+<p><img src="../_images/math/68eaefa655c0e8ab3b6970e2644f56a5a02dc9cd.png" alt="-\mathcal{L}\left(\vec{\theta}\middle|x, y, \sigma\right) = \sum_i logp\left(\vec{\theta}\middle|x_i, y_i, \sigma_i\right)"/></p>
+</div><p>For the function <em>logp</em>, the standard choice is the loglikelihood derived from the Poisson distribution.</p>
+<p>To use this method, the fitting routine code has to be changed to</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">spectrum</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>which results in:</p>
+<div class="highlight-python"><div class="highlight"><pre>True
+b&#39;CONVERGENCE: REL_REDUCTION_OF_F_&lt;=_FACTR*EPSMCH&#39;
+[[Variables]]
+FWHMG:        11.5663086 (init= 10)
+FWHML:        8.25344413 (init= 10)
+TotalFWHM:    16.5997497  == &#39;0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)&#39;
+scale:        97.0842156 (init= 100)
+Amp0__1:      0.2380952 (fixed)
+Amp1__1:      0.1785714 (fixed)
+Amp1__2:      0.5357143 (fixed)
+Amp2__1:      0.01190476 (fixed)
+Amp2__2:      0.1785714 (fixed)
+Amp2__3:      1 (fixed)
+Al:           98.9040895 (init= 100)
+Au:           199.251260 (init= 200)
+Bl:           100.882018 (init= 100)
+Bu:           200.624751 (init= 200)
+Cl:           0 (fixed)
+Cu:           0 (fixed)
+Centroid:     499.927333 (init= 500)
+Background:   10.5128145 (init= 10)
+N:            0 (fixed)
+sigma_x:      0 (fixed)
+</pre></div>
+</div>
+<p>The uncertainties on the parameters has to be estimated using a random walk through parameter space. The package <em>emcee</em>  is used to do the heavy lifting for this. The code to do this is rather straightforward:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">likelihood_walk</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">spectrum</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As output, this gives:</p>
+<div class="highlight-python"><div class="highlight"><pre>Walk:100% ||||||||||||||||||||||||||||||||||||||||||||||||||||||| Time: 0:00:57
+[[Variables]]
+    FWHMG:        11.3330525 +/- 2.036778 (17.97%) (init= 10)
+    FWHML:        8.48156529 +/- 1.868822 (22.03%) (init= 10)
+    TotalFWHM:    16.5997497  == &#39;0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)&#39;
+    scale:        96.9754581 +/- 3.817534 (3.94%) (init= 100)
+    Amp0__1:      0.2380952 (fixed)
+    Amp1__1:      0.1785714 (fixed)
+    Amp1__2:      0.5357143 (fixed)
+    Amp2__1:      0.01190476 (fixed)
+    Amp2__2:      0.1785714 (fixed)
+    Amp2__3:      1 (fixed)
+    Al:           98.8963340 +/- 0.626067 (0.63%) (init= 100)
+    Au:           199.250820 +/- 0.412322 (0.21%) (init= 200)
+    Bl:           100.881912 +/- 0.517756 (0.51%) (init= 100)
+    Bu:           200.579461 +/- 0.745763 (0.37%) (init= 200)
+    Cl:           0 (fixed)
+    Cu:           0 (fixed)
+    Centroid:     499.960181 +/- 0.397658 (0.08%) (init= 500)
+    Background:   10.5127063 +/- 0.308161 (2.93%) (init= 10)
+    N:            0 (fixed)
+    sigma_x:      0 (fixed)
+</pre></div>
+</div>
+<p>As an alternative, the <em>walking=True</em> can also be passed to <code class="xref py py-func docutils literal"><span class="pre">likelihood_fit</span></code> to immediately perform a random walk.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Beware!</p>
+<p class="last">This method calculates uncertainties using a random walk, and converts the asymmetrical quantiles to a single value. <strong>There is no guarantee that this number is correct!</strong> In order to interpret this, take a look at the visualisation methods to see if the random walk converged.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Due to the random walk taking up a significant amount of time, the keyword <em>verbose</em> controls the appearance of a progressbar in the terminal. Setting <em>verbose</em> to <em>False</em> removes the progressbar.</p>
+</div>
+</div>
+<div class="section" id="estimating-with-an-uncertainty-on-frequency">
+<h2>Estimating with an uncertainty on frequency<a class="headerlink" href="#estimating-with-an-uncertainty-on-frequency" title="Permalink to this headline">¶</a></h2>
+<p>A new method has been developed in order to calculate the loglikelihood that takes an uncertainty on the <em>x</em>-axis into account. This is done by evaluating the integral</p>
+<div class="math">
+<p><img src="../_images/math/a4e5ff9789bb77ac83a25cc3a5e3bdafe286e9ac.png" alt="\int_{-\infty}^{+\infty} p\left(\vec{\theta}\middle|x_i+\alpha, y_i, \sigma_i\right) G\left(\alpha\middle|\sigma_x\right)"/></p>
+</div><p>of which then the logarithm is taken. The rest of the routine does not change. For <em>G</em> the normal distribution is used.
+Using this calculation does have a severe impact on performance. For the toy example, the time for fitting goes from 0.5 seconds to 38 seconds, roughly 80 times slower. The estimated time for the random walk increases by roughly the same factor to 2 hours from 1 minute.</p>
+<p>To use a certain value for the uncertainty, pass it along to the fitroutine using the <em>xerr</em> keyword. Using</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>calculates the fit for a uncertainty of 1 MHz on the frequency after first fitting without uncertainty. This gives a result of:</p>
+<div class="highlight-python"><div class="highlight"><pre>True
+b&#39;CONVERGENCE: REL_REDUCTION_OF_F_&lt;=_FACTR*EPSMCH&#39;
+[[Variables]]
+    FWHMG:        11.9125158 (init= 11.56631)
+    FWHML:        8.12958692 (init= 8.253444)
+    TotalFWHM:    16.8450038  == &#39;0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)&#39;
+    scale:        97.1493901 (init= 97.08422)
+    Amp0__1:      0.2380952 (fixed)
+    Amp1__1:      0.1785714 (fixed)
+    Amp1__2:      0.5357143 (fixed)
+    Amp2__1:      0.01190476 (fixed)
+    Amp2__2:      0.1785714 (fixed)
+    Amp2__3:      1 (fixed)
+    Al:           99.0043808 (init= 98.90409)
+    Au:           199.286265 (init= 199.2513)
+    Bl:           100.853037 (init= 100.882)
+    Bu:           200.541399 (init= 200.6248)
+    Cl:           0 (fixed)
+    Cu:           0 (fixed)
+    Centroid:     499.941046 (init= 499.9273)
+    Background:   10.4947324 (init= 10.51281)
+    N:            0 (fixed)
+    sigma_x:      1 (fixed)
+</pre></div>
+</div>
+<p>Based on the uncertainties estimated in the previous section, this seems within error bars. However, this calculation widens the loglikelihood, effectively increasing the errors. This means that, while the exact value should be roughly the same, the uncertainty on the parameters might be changed. Interpretation and use of the visualisation routines is needed to judge this.</p>
+</div>
+<div class="section" id="data-processing">
+<h2>Data processing<a class="headerlink" href="#data-processing" title="Permalink to this headline">¶</a></h2>
+<p>For ease-of-use, the result of the fit can also be extracted in the form of a pandas DataFrame instead of printing the output to the terminal. This is done by using the <code class="xref py py-meth docutils literal"><span class="pre">get_result_frame</span></code> method. Using the code</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pearson</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">walking</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">frame_chi</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">get_result_frame</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;chisquare&#39;</span><span class="p">)</span>  <span class="c">#Convert the results of the chisquare fit</span>
+<span class="n">frame_mle</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">get_result_frame</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;mle&#39;</span><span class="p">)</span>  <span class="c">#Same for the MLE results</span>
+<span class="n">frame</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">concat_results</span><span class="p">([</span><span class="n">frame_chi</span><span class="p">,</span> <span class="n">frame_mle</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;chisquare&#39;</span><span class="p">,</span> <span class="s">&#39;poisson&#39;</span><span class="p">])</span>
+<span class="k">print</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>results in an output of:</p>
+<div class="highlight-python"><div class="highlight"><pre>                     Al               Amp0__1                Amp1__1  \
+            Uncertainty     Value Uncertainty      Value Uncertainty
+chisquare 0   0.7788089  99.21395           0  0.2380952           0
+poisson   0    0.664372  98.89788        None  0.2380952        None
+
+                           Amp1__2                Amp2__1              ...   \
+                 Value Uncertainty      Value Uncertainty       Value  ...
+chisquare 0  0.1785714           0  0.5357143           0  0.01190476  ...
+poisson   0  0.1785714        None  0.5357143        None  0.01190476  ...
+
+                  FWHML                     N         TotalFWHM            \
+            Uncertainty     Value Uncertainty Value Uncertainty     Value
+chisquare 0    1.885224  8.092264           0     0    1.101575  16.75987
+poisson   0    1.573602  8.256177        None     0        None  16.61306
+
+                  scale               sigma_x
+            Uncertainty     Value Uncertainty Value
+chisquare 0    5.449919  97.00902         NaN   NaN
+poisson   0    3.545048  96.96984        None     0
+
+[2 rows x 40 columns]
+</pre></div>
+</div>
+<p>For more information on how to use DataFrames, see the pandas documentation.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Fitting routines</a><ul>
+<li><a class="reference internal" href="#chisquare-method">Chisquare method</a></li>
+<li><a class="reference internal" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
+<li><a class="reference internal" href="#estimating-with-an-uncertainty-on-frequency">Estimating with an uncertainty on frequency</a></li>
+<li><a class="reference internal" href="#data-processing">Data processing</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="spectrumcreation.html"
+                        title="previous chapter">Spectrum creation and evaluation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="plottingroutines.html"
+                        title="next chapter">Plotting routines</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../_sources/tutorials/fittingroutines.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

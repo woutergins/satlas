@@ -1,0 +1,6 @@
+satlas.singlespectrum.SingleSpectrum.set_boundaries
+===================================================
+
+.. currentmodule:: satlas.singlespectrum
+
+.. automethod:: SingleSpectrum.set_boundaries

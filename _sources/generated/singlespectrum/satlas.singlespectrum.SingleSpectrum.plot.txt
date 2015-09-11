@@ -1,0 +1,6 @@
+satlas.singlespectrum.SingleSpectrum.plot
+=========================================
+
+.. currentmodule:: satlas.singlespectrum
+
+.. automethod:: SingleSpectrum.plot

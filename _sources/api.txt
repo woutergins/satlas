@@ -1,0 +1,45 @@
+.. _api_ref:
+
+API reference
+=============
+
+.. currentmodule:: satlas
+
+Spectrum creation
+-----------------
+
+.. note::
+
+    The abstract baseclass :class:`.Spectrum` defines a few methods for retrieving information about the current state of the fit. These methods are not documented in the child classes, but will be regularly used.
+
+.. autosummary::
+    :toctree: generated/
+
+    satlas.spectrum.Spectrum
+    satlas.singlespectrum.SingleSpectrum
+    satlas.isomerspectrum.IsomerSpectrum
+    satlas.combinedspectrum.CombinedSpectrum
+
+Fitting routines
+----------------
+
+.. autosummary::
+    :toctree: generated/
+
+    satlas.fitting
+
+Lineshapes
+----------
+
+.. autosummary::
+    :toctree: generated/
+
+    satlas.profiles
+
+Utilities
+---------
+
+.. autosummary::
+    :toctree: generated/
+
+    satlas.utilities

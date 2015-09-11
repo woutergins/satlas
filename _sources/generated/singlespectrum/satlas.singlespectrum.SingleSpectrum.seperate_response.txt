@@ -1,0 +1,6 @@
+satlas.singlespectrum.SingleSpectrum.seperate_response
+======================================================
+
+.. currentmodule:: satlas.singlespectrum
+
+.. automethod:: SingleSpectrum.seperate_response

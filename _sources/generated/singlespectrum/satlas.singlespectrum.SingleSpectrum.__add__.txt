@@ -1,0 +1,6 @@
+satlas.singlespectrum.SingleSpectrum.__add__
+============================================
+
+.. currentmodule:: satlas.singlespectrum
+
+.. automethod:: SingleSpectrum.__add__

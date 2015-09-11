@@ -1,143 +1,91 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>satlas.utilities &mdash; SATLAS 1.0.0 documentation</title>
-  
 
-  
-  
-
-  
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
-
-  
-  
+<html>
+  <head>
+    <meta charset="utf-8">
     
-
-  
-
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="top" title="SATLAS 1.0.0 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
-
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-
+    <title>satlas.utilities &mdash; SATLAS 0.0.1b2 documentation</title>
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-nav-search">
-        <a href="../../index.html" class="fa fa-home"> SATLAS</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-      </div>
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1b2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="up" title="Module code" href="../index.html" > 
+  </head>
+  <body>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
         
-        
-            <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../utilities.html"><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../utilities.html#module-satlas.utilities">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../profiles.html#usage-example">Usage example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../profiles.html#module-satlas.profiles">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../spectrum.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../spectrum.html#module-satlas.spectrum">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../relaxation.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../relaxation.html#module-satlas.relaxation">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../polar.html#module-satlas.polar">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../collaps.html"><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../collaps.html#module-collaps">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
-</ul>
-
-        
-      </div>
-      &nbsp;
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../../index.html">SATLAS</a>
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="../../index.html">Docs</a> &raquo;</li>
-      
-          <li><a href="../index.html">Module code</a> &raquo;</li>
-      
-    <li>satlas.utilities</li>
-      <li class="wy-breadcrumbs-aside">
-        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+	
+          <li class="active"><a href="../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
       </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main">
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
             
   <h1>Source code for satlas.utilities</h1><div class="highlight"><pre>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">.. module:: utilities</span>
-<span class="sd">    :platform: Windows</span>
-<span class="sd">    :synopsis: Implementation of various functions that ease the work,</span>
-<span class="sd">     but do not belong in one of the other modules.</span>
+<span class="sd">Implementation of various functions that ease the work, but do not belong in one of the other modules.</span>
 
 <span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@fys.kuleuven.be&gt;</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">emcee</span> <span class="kn">as</span> <span class="nn">mcmc</span>
 <span class="kn">import</span> <span class="nn">lmfit</span> <span class="kn">as</span> <span class="nn">lm</span>
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="kn">as</span> <span class="nn">mpl</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">chi2</span>
 
 <span class="n">c</span> <span class="o">=</span> <span class="mf">299792458.0</span>
 <span class="n">h</span> <span class="o">=</span> <span class="mf">6.62606957</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">34</span><span class="p">)</span>
@@ -146,370 +94,13 @@
 <span class="n">cmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">ListedColormap</span><span class="p">([</span><span class="s">&#39;#A6CEE3&#39;</span><span class="p">,</span> <span class="s">&#39;#1F78B4&#39;</span><span class="p">,</span> <span class="s">&#39;#B2DF8A&#39;</span><span class="p">])</span>
 <span class="n">invcmap</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">ListedColormap</span><span class="p">([</span><span class="s">&#39;#B2DF8A&#39;</span><span class="p">,</span> <span class="s">&#39;#1F78B4&#39;</span><span class="p">,</span> <span class="s">&#39;#A6CEE3&#39;</span><span class="p">])</span>
 
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;weighted_average&#39;</span><span class="p">,</span>
+           <span class="s">&#39;generate_correlation_plot&#39;</span><span class="p">,</span>
+           <span class="s">&#39;generate_spectrum&#39;</span><span class="p">,</span>
+           <span class="s">&#39;concat_results&#39;</span><span class="p">,</span>
+           <span class="s">&#39;poisson_interval&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="state_number_enumerate"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.state_number_enumerate">[docs]</a><span class="k">def</span> <span class="nf">state_number_enumerate</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create the indices for the different entries in</span>
-<span class="sd">    a multi-dimensional array. Code copied from the QuTiP package.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    shape: tuple</span>
-<span class="sd">        Describes the shape of the multi-dimensional array.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    tuple</span>
-<span class="sd">        Tuple with each entry being a tuple containing the indices.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dims</span><span class="p">[</span><span class="n">idx</span><span class="p">]):</span>
-            <span class="n">state</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
-            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">state_number_enumerate</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="k">yield</span> <span class="n">s</span>
-
-
-<span class="c"># Create a vectorized function for calling an array of callables,</span>
-<span class="c"># mixed with non-callables.</span></div>
-<span class="k">def</span> <span class="nf">ifCallableCall</span><span class="p">(</span><span class="n">ob</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">ob</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">ob</span><span class="p">)</span> <span class="k">else</span> <span class="n">ob</span>
-
-<span class="n">vFifCallableCall</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">ifCallableCall</span><span class="p">,</span> <span class="n">otypes</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">])</span>
-
-
-<div class="viewcode-block" id="callNDArray"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.callNDArray">[docs]</a><span class="k">def</span> <span class="nf">callNDArray</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Goes over each subarray in the first dimension,</span>
-<span class="sd">    and calls the corresponding argument. Returns the values itself</span>
-<span class="sd">    if the entry is not callable.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    arr: NumPy array</span>
-<span class="sd">        Array containing a mix of callable and not-callable entries.</span>
-<span class="sd">    arg: misc</span>
-<span class="sd">        Argument to be passed to each callable entry.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    NumPy array</span>
-<span class="sd">        Array with the callable entries replaced by the returned value.&quot;&quot;&quot;</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="n">n</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-        <span class="c"># Go for the vectorized function. In case of problems,</span>
-        <span class="c"># comment the following line and use the try-except</span>
-        <span class="c"># block. That is proven to work, but is slower.</span>
-        <span class="n">res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">vFifCallableCall</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">arg</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        <span class="c"># try:</span>
-        <span class="c">#     res[i] = np.array(</span>
-        <span class="c">#         [[x(arg[i]) if callable(x) else x for x in xarr]</span>
-        <span class="c">#         for xarr in arr[i]])</span>
-        <span class="c"># except ValueError:</span>
-        <span class="c">#     raise ValueError()</span>
-    <span class="k">return</span> <span class="n">res</span>
-
-</div>
-<div class="viewcode-block" id="ReleaseCurve"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.ReleaseCurve">[docs]</a><span class="k">class</span> <span class="nc">ReleaseCurve</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-
-    <span class="sd">r&quot;&quot;&quot;Creates a callable object for the standard release curve. Formula</span>
-<span class="sd">    based on J.P. Ramos et al. :cite:`Ramos2014`. Input parameters are</span>
-<span class="sd">    initialized to an 35Ar release curve.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    amp : float,</span>
-<span class="sd">        Influences the height of the curve, roughly the maximum of the</span>
-<span class="sd">        release rate. Is also an attribute. Default: 4E7</span>
-<span class="sd">    a : float between 0 and 1</span>
-<span class="sd">        Weighting of the different exponentials in the formula. Is also an</span>
-<span class="sd">        attribute. Default: 0.9</span>
-<span class="sd">    tr : float</span>
-<span class="sd">        Time constant parameter in seconds. The attribute is saved as the</span>
-<span class="sd">        corresponding l-parameter. Default: 78 ms</span>
-<span class="sd">    tf : float</span>
-<span class="sd">        Time constant parameter in seconds. The attribute is saved as the</span>
-<span class="sd">        corresponding l-parameter. Default: 396 ms</span>
-<span class="sd">    ts : float</span>
-<span class="sd">        Time constant parameter in seconds. The attribute is saved as the</span>
-<span class="sd">        corresponding l-parameter. Default: 1905 ms</span>
-<span class="sd">    pulses : integer</span>
-<span class="sd">        Number of pulses seperated by the delay parameter. Has no effect if the</span>
-<span class="sd">        :attr:`continued` parameter is True. Is also an attribute. Default: 3</span>
-<span class="sd">    delay : float</span>
-<span class="sd">        Seconds between pulses. Is also an attribute. Default: 10.0 s</span>
-<span class="sd">    continued : bool</span>
-<span class="sd">        Continuously generate pulses seperated by the delay parameter if True,</span>
-<span class="sd">        else create the number of pulses given in the pulses parameter. Is also</span>
-<span class="sd">        an attribute. Default: True</span>
-
-<span class="sd">    Note</span>
-<span class="sd">    ----</span>
-<span class="sd">    The l-parameters are related to the t-parameters through</span>
-<span class="sd">    :math:`l = \frac{\ln(2)}{t}`. The release curve is modeled as:</span>
-
-<span class="sd">    .. math::</span>
-<span class="sd">        RC\left(t\right) = a\left(1-\exp\left(-l_rt\right)\right)</span>
-<span class="sd">        \left(a\exp\left(-l_ft\right)+(1-a)\exp\left(-l_st\right)\right)&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="mf">4.0</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">7</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-                 <span class="n">tr</span><span class="o">=</span><span class="mi">78</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span> <span class="n">tf</span><span class="o">=</span><span class="mi">396</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span>
-                 <span class="n">ts</span><span class="o">=</span><span class="mi">1905</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">3</span><span class="p">),</span>
-                 <span class="n">pulses</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">continued</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ReleaseCurve</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">=</span> <span class="n">amp</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">tr</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">tf</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">ts</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span> <span class="o">=</span> <span class="n">pulses</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">delay</span> <span class="o">=</span> <span class="n">delay</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">continued</span> <span class="o">=</span> <span class="n">continued</span>
-
-<div class="viewcode-block" id="ReleaseCurve.fit_to_data"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.ReleaseCurve.fit_to_data">[docs]</a>    <span class="k">def</span> <span class="nf">fit_to_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;If a release curve is measured as a function of time, this should</span>
-<span class="sd">        fit the parameters to the given curve y(t) with errors yerr.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        t: array_like</span>
-<span class="sd">            Timevector of the measurements.</span>
-<span class="sd">        y: array_like</span>
-<span class="sd">            Counts corresponding to t.</span>
-<span class="sd">        yerr: array_like</span>
-<span class="sd">            Counting errors of y.</span>
-
-<span class="sd">        Warning</span>
-<span class="sd">        -------</span>
-<span class="sd">        This method has not been tested!&quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">lmfit</span> <span class="kn">as</span> <span class="nn">lm</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">add_many</span><span class="p">(</span>
-            <span class="p">(</span><span class="s">&#39;Amp&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s">&#39;tr&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s">&#39;tf&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lf</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s">&#39;ts&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
-
-        <span class="k">def</span> <span class="nf">resid</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;Amp&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;tr&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;tf&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;ts&#39;</span><span class="p">]</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="o">/</span> <span class="n">yerr</span>
-
-        <span class="k">return</span> <span class="n">lm</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">resid</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-</div>
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pulses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pulses</span>
-
-    <span class="nd">@pulses.setter</span>
-    <span class="k">def</span> <span class="nf">pulses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pulses</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">continued</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_continued</span>
-
-    <span class="nd">@continued.setter</span>
-    <span class="k">def</span> <span class="nf">continued</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_continued</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">empirical_formula</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-        <span class="n">amp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span>
-        <span class="n">lr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr</span>
-        <span class="n">lf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lf</span>
-        <span class="n">ls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ls</span>
-
-        <span class="n">val</span> <span class="o">=</span> <span class="n">amp</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">lr</span> <span class="o">*</span> <span class="n">t</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">lf</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span> <span class="o">+</span>
-                                             <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">ls</span> <span class="o">*</span> <span class="n">t</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">val</span>
-
-<div class="viewcode-block" id="ReleaseCurve.__call__"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.ReleaseCurve.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the evaluation of the formula, taking the pulses</span>
-<span class="sd">        and delays into account.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        t: array_like</span>
-<span class="sd">            Times for which the yield is requested.&quot;&quot;&quot;</span>
-        <span class="n">pulses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span>
-        <span class="n">delay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span>
-        <span class="n">continued</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">continued</span>
-
-        <span class="n">pulses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">pulses</span><span class="p">)</span> <span class="o">*</span> <span class="n">delay</span>
-        <span class="n">rc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">continued</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">pulsetime</span> <span class="ow">in</span> <span class="n">pulses</span><span class="p">:</span>
-                <span class="n">mask</span> <span class="o">=</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">pulsetime</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
-                        <span class="n">rc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">pulsetime</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">mask</span><span class="p">:</span>
-                        <span class="n">rc</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">pulsetime</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">pulsetime</span> <span class="o">=</span> <span class="n">delay</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">number</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">//</span> <span class="n">pulsetime</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;int&#39;</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">pulses</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-                    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">number</span> <span class="o">&gt;=</span> <span class="n">pulses</span><span class="p">)</span>
-                    <span class="n">rc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">-</span>
-                                                       <span class="n">pulses</span> <span class="o">*</span> <span class="n">pulsetime</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-                <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">t</span> <span class="o">//</span> <span class="n">pulsetime</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-                        <span class="n">rc</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empirical_formula</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pulsetime</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">rc</span>
-
-</div></div>
-<div class="viewcode-block" id="Level"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.Level">[docs]</a><span class="k">class</span> <span class="nc">Level</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-
-    <span class="sd">&quot;&quot;&quot;Ease-of-use class for representing a level.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    energy : float</span>
-<span class="sd">        Fine structure energy in eV.</span>
-<span class="sd">    hyp_par : list of 2 floats</span>
-<span class="sd">        Hyperfine parameters [A, B] in MHz.</span>
-<span class="sd">    L, S, J : integer or half-integers</span>
-<span class="sd">        Spin quantum numbers.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">hyp_par</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">J</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Level</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="n">energy</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">hyp_par</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="n">L</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">S</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="n">J</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s">&#39;&lt;Level object: E=</span><span class="si">%f</span><span class="s">, A=</span><span class="si">%f</span><span class="s">, B=</span><span class="si">%f</span><span class="s">, L=</span><span class="si">%f</span><span class="s">, S=</span><span class="si">%f</span><span class="s">, J=</span><span class="si">%f</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">J</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">s</span>
-
-</div>
-<span class="k">def</span> <span class="nf">invCM2MHz</span><span class="p">(</span><span class="n">invCM</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">invCM</span> <span class="o">*</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">6</span>
-
-
-<span class="k">def</span> <span class="nf">MHz2invCM</span><span class="p">(</span><span class="n">MHz</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">MHz</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">6</span> <span class="o">/</span> <span class="p">(</span><span class="mf">100.0</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">invCM2eV</span><span class="p">(</span><span class="n">invCM</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">invCM</span> <span class="o">*</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="n">q</span>
-
-
-<span class="k">def</span> <span class="nf">eV2invCM</span><span class="p">(</span><span class="n">eV</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">eV</span> <span class="o">*</span> <span class="n">q</span> <span class="o">/</span> <span class="p">(</span><span class="mf">100.0</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">invCM2nm</span><span class="p">(</span><span class="n">invCM</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">((</span><span class="n">invCM</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">9</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">nm2invCM</span><span class="p">(</span><span class="n">nm</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">((</span><span class="n">nm</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">9</span><span class="p">))</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span>
-
-
-<div class="viewcode-block" id="Energy"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.Energy">[docs]</a><span class="k">class</span> <span class="nc">Energy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-
-    <span class="sd">&quot;&quot;&quot;Ease-of-use class to represent energy and frequencies.</span>
-<span class="sd">    Uses automatic conversion to a series of units.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    value: float</span>
-<span class="sd">        Value of the energy or frequency to be converted/worked with.</span>
-<span class="sd">    unit: string, {cm-1, MHz, eV, nm}</span>
-<span class="sd">        String denoting the unit for the given value. Default value is inverse</span>
-<span class="sd">        centimeters (cm-1).&quot;&quot;&quot;</span>
-
-    <span class="n">__units__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;cm-1&#39;</span><span class="p">,</span> <span class="s">&#39;MHz&#39;</span><span class="p">,</span> <span class="s">&#39;eV&#39;</span><span class="p">,</span> <span class="s">&#39;nm&#39;</span><span class="p">]</span>
-    <span class="n">__conversion__</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;MHz&#39;</span><span class="p">:</span> <span class="n">invCM2MHz</span><span class="p">,</span>
-                      <span class="s">&#39;eV&#39;</span><span class="p">:</span> <span class="n">invCM2eV</span><span class="p">,</span>
-                      <span class="s">&#39;nm&#39;</span><span class="p">:</span> <span class="n">invCM2nm</span><span class="p">}</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s">&#39;cm-1&#39;</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Energy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">unit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__units__</span><span class="p">:</span>
-            <span class="n">m</span> <span class="o">=</span> <span class="s">&#39;{} is an unknown unit!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="n">convert</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;MHz&#39;</span><span class="p">:</span> <span class="n">MHz2invCM</span><span class="p">,</span>
-                   <span class="s">&#39;eV&#39;</span><span class="p">:</span> <span class="n">eV2invCM</span><span class="p">,</span>
-                   <span class="s">&#39;nm&#39;</span><span class="p">:</span> <span class="n">nm2invCM</span><span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="ow">in</span> <span class="n">convert</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">convert</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">unit</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s">&#39;cm-1&#39;</span>
-
-<div class="viewcode-block" id="Energy.__call__"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.Energy.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert the value to the given unit.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        unit: string</span>
-<span class="sd">            Requested unit, must be &#39;cm-1&#39;, &#39;MHz&#39;, &#39;eV&#39; or &#39;nm&#39;.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        float</span>
-<span class="sd">            Converted value.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">unit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__conversion__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__conversion__</span><span class="p">[</span><span class="n">unit</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">val</span>
-
-</div></div>
-<div class="viewcode-block" id="round2SignifFigs"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.round2SignifFigs">[docs]</a><span class="k">def</span> <span class="nf">round2SignifFigs</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Code copied from</span>
-<span class="sd">    http://stackoverflow.com/questions/18915378/rounding-to-significant-figures-in-numpy</span>
-<span class="sd">    Goes over the list or array of vals given, and rounds</span>
-<span class="sd">    them to the number of significant digits (n) given.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    vals : array_like</span>
-<span class="sd">        Values to be rounded.</span>
-<span class="sd">    n : integer</span>
-<span class="sd">        Number of significant digits to round to.</span>
-
-<span class="sd">    Note</span>
-<span class="sd">    ----</span>
-<span class="sd">    Does not accept: inf, nan, complex</span>
-
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
-<span class="sd">    &gt;&gt;&gt; m = [0.0, -1.2366e22, 1.2544444e-15, 0.001222]</span>
-<span class="sd">    &gt;&gt;&gt; round2SignifFigs(m,2)</span>
-<span class="sd">    array([  0.00e+00,  -1.24e+22,   1.25e-15,   1.22e-03])</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">((</span><span class="n">vals</span><span class="p">))):</span>
-        <span class="n">eset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">seterr</span><span class="p">(</span><span class="nb">all</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span>
-        <span class="n">mags</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vals</span><span class="p">)))</span>  <span class="c"># omag&#39;s</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">vals</span> <span class="o">/</span> <span class="n">mags</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mags</span>  <span class="c"># round(val/omag)*omag</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">seterr</span><span class="p">(</span><span class="o">**</span><span class="n">eset</span><span class="p">)</span>
-        <span class="n">vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">vals</span><span class="p">))]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c"># 0.0 -&gt; nan -&gt; 0.0</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s">&#39;Input must be real and finite&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">vals</span>
-
-</div>
-<div class="viewcode-block" id="weighted_average"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.weighted_average">[docs]</a><span class="k">def</span> <span class="nf">weighted_average</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+<div class="viewcode-block" id="weighted_average"><a class="viewcode-back" href="../../generated/utilities/satlas.utilities.weighted_average.html#satlas.utilities.weighted_average">[docs]</a><span class="k">def</span> <span class="nf">weighted_average</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">r&quot;&quot;&quot;Takes the weighted average of an array of values and the associated</span>
 <span class="sd">    errors. Calculates the scatter and statistical error, and returns</span>
 <span class="sd">    the greater of these two values.</span>
@@ -547,91 +138,16 @@
 <span class="sd">                                                    x\right\rangle_{weighted}}</span>
 <span class="sd">                                                      {\sigma_i}\right)^2}</span>
 <span class="sd">               {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}&quot;&quot;&quot;</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
-    <span class="n">Xstat</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="n">Xm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">Xstat</span>
+    <span class="c"># x = np.ravel(x)</span>
+    <span class="c"># sigma = np.ravel(sigma)</span>
+    <span class="n">Xstat</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">Xm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">/</span> <span class="n">Xstat</span>
     <span class="c"># Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)</span>
-    <span class="n">Xscatt</span> <span class="o">=</span> <span class="p">(((</span><span class="n">x</span> <span class="o">-</span> <span class="n">Xm</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">Xstat</span><span class="p">)</span>
+    <span class="n">Xscatt</span> <span class="o">=</span> <span class="p">(((</span><span class="n">x</span> <span class="o">-</span> <span class="n">Xm</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">Xstat</span><span class="p">)</span>
     <span class="n">Xstat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">Xstat</span>
-    <span class="k">return</span> <span class="n">Xm</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">Xstat</span><span class="p">,</span> <span class="n">Xscatt</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
-
+    <span class="k">return</span> <span class="n">Xm</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">reduce</span><span class="p">([</span><span class="n">Xstat</span><span class="p">,</span> <span class="n">Xscatt</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
 </div>
-<div class="viewcode-block" id="bootstrap_ci"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.bootstrap_ci">[docs]</a><span class="k">def</span> <span class="nf">bootstrap_ci</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;basic&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate confidence intervals on the 1-sigma level for bootstrapped data</span>
-<span class="sd">    given in a DataFrame.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe: DataFrame</span>
-<span class="sd">        DataFrame with the results of each bootstrap fit on a row. If the</span>
-<span class="sd">        t-method is to be used, a Panel is required, with the data in</span>
-<span class="sd">        the panel labeled &#39;data&#39; and the uncertainties labeled &#39;stderr&#39;</span>
-<span class="sd">    kind: str, optional</span>
-<span class="sd">        Selects which method to use: percentile, basic, or t-method (student).</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    DataFrame</span>
-<span class="sd">        Dataframe containing the left and right limits for each column as rows.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Panel</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
-        <span class="n">stderrs</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s">&#39;stderr&#39;</span><span class="p">]</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stderrs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">dataframe</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">percentile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stderrs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">CI</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="mf">15.865</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="mf">84.135</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">left</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">right</span>
-        <span class="k">return</span> <span class="n">CI</span>
-
-    <span class="k">def</span> <span class="nf">basic</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stderrs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">CI</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
-                                                                 <span class="mf">84.135</span><span class="p">),</span>
-                          <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
-                                                                  <span class="mf">15.865</span><span class="p">),</span>
-                           <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">left</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">right</span>
-        <span class="k">return</span> <span class="n">CI</span>
-
-    <span class="k">def</span> <span class="nf">student</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stderrs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">CI</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-        <span class="n">R</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">stderrs</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mf">84.135</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mf">15.865</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">stderrs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">left</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">stderrs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">right</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">left</span>
-        <span class="n">CI</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">right</span>
-        <span class="k">return</span> <span class="n">CI</span>
-
-    <span class="n">method</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;basic&#39;</span><span class="p">:</span> <span class="n">basic</span><span class="p">,</span> <span class="s">&#39;percentile&#39;</span><span class="p">:</span> <span class="n">percentile</span><span class="p">,</span> <span class="s">&#39;t&#39;</span><span class="p">:</span> <span class="n">student</span><span class="p">}</span>
-    <span class="n">method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">basic</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-
-</div>
-<span class="k">def</span> <span class="nf">generate_likelihood_plot</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-    <span class="n">shape</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))))</span>
-    <span class="n">figLikelih</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
-    <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">axes</span><span class="p">):</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">&#39;x&#39;</span><span class="p">]</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s">&#39;y&#39;</span><span class="p">]</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">figLikelih</span><span class="p">,</span> <span class="n">axes</span>
-
-
-<div class="viewcode-block" id="generate_correlation_plot"><a class="viewcode-back" href="../../utilities.html#satlas.utilities.generate_correlation_plot">[docs]</a><span class="k">def</span> <span class="nf">generate_correlation_plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="generate_correlation_plot"><a class="viewcode-back" href="../../generated/utilities/satlas.utilities.generate_correlation_plot.html#satlas.utilities.generate_correlation_plot">[docs]</a><span class="k">def</span> <span class="nf">generate_correlation_plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Given the random walk data, creates a triangle plot: distribution of</span>
 <span class="sd">    a single parameter on the diagonal axes, 2D contour plots with 1, 2 and</span>
 <span class="sd">    3 sigma contours on the off-diagonal. The 1-sigma limits based on the</span>
@@ -660,7 +176,6 @@
                         <span class="n">despine</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="n">returnfig</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">fig</span>
     <span class="k">return</span> <span class="n">returnfig</span>
-
 </div>
 <span class="k">def</span> <span class="nf">contour2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -712,7 +227,6 @@
 
     <span class="k">return</span> <span class="n">ax</span><span class="p">,</span> <span class="n">contourset</span>
 
-
 <span class="k">def</span> <span class="nf">removeAxis</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
@@ -720,7 +234,6 @@
     <span class="n">ax</span><span class="o">.</span><span class="n">set_frame_on</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ax</span>
-
 
 <span class="k">def</span> <span class="nf">addTitle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -736,7 +249,6 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s">&quot;dashed&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ax</span>
 
-
 <span class="k">def</span> <span class="nf">addTruths</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">truth</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
@@ -745,113 +257,6 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;truth should be a value&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">FittingGrid</span><span class="p">(</span><span class="n">sns</span><span class="o">.</span><span class="n">Grid</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">minimizer</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">despine</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">selected</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">limits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FittingGrid</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
-        <span class="c"># Sort out the variables that define the grid</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ny</span> <span class="o">=</span> <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">minimizer</span> <span class="o">=</span> <span class="n">minimizer</span>
-        <span class="nb">vars</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">extra_keywords</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">=</span> <span class="n">limits</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">minimizer</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">minimizer</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
-                            <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">vars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">vars</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-
-        <span class="c"># Create the figure and the array of subplots</span>
-        <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span> <span class="o">*</span> <span class="n">aspect</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span>
-
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-                                 <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span>
-                                 <span class="n">sharex</span><span class="o">=</span><span class="s">&quot;col&quot;</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s">&quot;row&quot;</span><span class="p">,</span>
-                                 <span class="n">squeeze</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">fig</span> <span class="o">=</span> <span class="n">fig</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">axes</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_legend_data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">remove_upper</span><span class="p">()</span>
-
-        <span class="c"># Label the axes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_add_axis_labels</span><span class="p">()</span>
-
-        <span class="c"># Make the plot look nice</span>
-        <span class="k">if</span> <span class="n">despine</span><span class="p">:</span>
-            <span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fig</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">make_maps</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">make_maps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">V</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.68</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">]</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="n">V</span>
-        <span class="n">norm</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">BoundaryNorm</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">cmap</span><span class="o">.</span><span class="n">N</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
-            <span class="n">param1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_vars</span><span class="p">[</span><span class="n">y</span><span class="p">]</span>
-            <span class="n">param2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_vars</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
-            <span class="n">p1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimizer</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">param1</span><span class="p">]</span>
-            <span class="n">p2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimizer</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">param2</span><span class="p">]</span>
-            <span class="n">limits</span> <span class="o">=</span> <span class="p">((</span><span class="n">p1</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">p1</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-                       <span class="n">p1</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">p1</span><span class="o">.</span><span class="n">stderr</span><span class="p">),</span>
-                      <span class="p">(</span><span class="n">p2</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">p2</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-                       <span class="n">p2</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">p2</span><span class="o">.</span><span class="n">stderr</span><span class="p">))</span>
-            <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">GR</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">conf_interval2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minimizer</span><span class="p">,</span> <span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span>
-                                          <span class="n">nx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span>
-                                          <span class="n">limits</span><span class="o">=</span><span class="n">limits</span><span class="p">)</span>
-            <span class="c"># cf = ax.contourf(X, Y, GR, V, cmap=self.cm)</span>
-            <span class="n">cf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">GR</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
-                <span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_yticklabels</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
-                <span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span>
-        <span class="n">cax</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="n">mpl</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">make_axes</span><span class="p">([</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">])</span>
-        <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">cf</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cax</span><span class="p">)</span>
-        <span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">r&#39;1$\sigma$&#39;</span><span class="p">,</span> <span class="s">r&#39;2$\sigma$&#39;</span><span class="p">,</span> <span class="s">r&#39;3$\sigma$&#39;</span><span class="p">])</span>
-
-    <span class="k">def</span> <span class="nf">remove_upper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Plot with a bivariate function on the upper diagonal subplots.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        func : callable plotting function</span>
-<span class="sd">            Must take x, y arrays as positional arguments and draw onto the</span>
-<span class="sd">            &quot;currently active&quot; matplotlib Axes.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices_from</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_frame_on</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">_clean_axis</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update_legend_data</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_add_axis_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add labels to the left and bottom Axes.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_vars</span><span class="p">):</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_vars</span><span class="p">):</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-
 
 <span class="k">class</span> <span class="nc">WalkingGrid</span><span class="p">(</span><span class="n">sns</span><span class="o">.</span><span class="n">PairGrid</span><span class="p">):</span>
 
@@ -1058,61 +463,127 @@
             <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
                 <span class="k">pass</span>
         <span class="k">return</span> <span class="n">numeric_cols</span>
+
+<div class="viewcode-block" id="generate_spectrum"><a class="viewcode-back" href="../../generated/utilities/satlas.utilities.generate_spectrum.html#satlas.utilities.generate_spectrum">[docs]</a><span class="k">def</span> <span class="nf">generate_spectrum</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">number_of_counts</span><span class="p">,</span> <span class="n">nwalkers</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates a spectrum by random sampling from the provided hyperfine</span>
+<span class="sd">    spectrum and range. The total number of counts for the generated spectrum</span>
+<span class="sd">    is required.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spectrum: SingleSpectrum</span>
+<span class="sd">        An instance of SingleSpectrum, which gives the probability distribution</span>
+<span class="sd">        from which the random samples are drawn.</span>
+<span class="sd">    x: NumPy array</span>
+<span class="sd">        NumPy array representing the bin centers for the spectrum.</span>
+<span class="sd">    number_of_counts: int</span>
+<span class="sd">        Parameter controlling the total number of counts in the spectrum.</span>
+<span class="sd">    nwalkers: int, optional</span>
+<span class="sd">        Number of walkers for the random sampling algorithm from emcee.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    y: NumPy array</span>
+<span class="sd">        Array containing the number of counts corresponding to each value</span>
+<span class="sd">        in x.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">binsize</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c"># Need the binsize for accurate lnprob boundaries</span>
+
+    <span class="k">def</span> <span class="nf">lnprob</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">right</span> <span class="o">+</span> <span class="n">binsize</span> <span class="o">/</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">left</span> <span class="o">-</span> <span class="n">binsize</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>  <span class="c"># Make sure only to draw from the provided range</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">spectrum</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>  <span class="c"># No need to normalize lnprob!</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">nwalkers</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+           <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">nwalkers</span><span class="p">,</span> <span class="n">ndim</span><span class="p">))</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="n">nwalkers</span><span class="p">,</span> <span class="n">ndim</span><span class="p">,</span> <span class="n">lnprob</span><span class="p">,</span>
+                                   <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+    <span class="c"># Burn-in</span>
+    <span class="n">pos</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">sampler</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="c"># Making sure not to do too much work! Divide requested number of samples</span>
+    <span class="c"># by number of walkers, make sure it&#39;s a higher integer.</span>
+    <span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">number_of_counts</span> <span class="o">/</span> <span class="n">nwalkers</span><span class="p">))</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">flatchain</span><span class="p">[</span><span class="o">-</span><span class="n">number_of_counts</span><span class="p">:]</span>
+    <span class="c"># Bin the samples</span>
+    <span class="n">bins</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">binsize</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">bins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">binsize</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+</div>
+<div class="viewcode-block" id="concat_results"><a class="viewcode-back" href="../../generated/utilities/satlas.utilities.concat_results.html#satlas.utilities.concat_results">[docs]</a><span class="k">def</span> <span class="nf">concat_results</span><span class="p">(</span><span class="n">list_of_results</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a list of DataFrames, use the supplied index</span>
+<span class="sd">    to concatenate the DataFrames.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    list_of_results: list of pandas Dataframes</span>
+<span class="sd">        List of DataFrames to be concatenated.</span>
+<span class="sd">    index: list</span>
+<span class="sd">        List of keys to use as row-indices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    concatenated_frames: DataFrame</span>
+<span class="sd">        Concatenated DataFrame&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_of_results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">concatenated_frames</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">list_of_results</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">concatenated_frames</span>
+</div>
+<div class="viewcode-block" id="poisson_interval"><a class="viewcode-back" href="../../generated/utilities/satlas.utilities.poisson_interval.html#satlas.utilities.poisson_interval">[docs]</a><span class="k">def</span> <span class="nf">poisson_interval</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.32</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the confidence interval</span>
+<span class="sd">    for the mean of a Poisson distribution.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data: array_like</span>
+<span class="sd">        Data giving the mean of the Poisson distributions.</span>
+<span class="sd">    alpha: float</span>
+<span class="sd">        Significance level of interval. Defaults to</span>
+<span class="sd">        one sigma (0.32).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    low, high: array_like</span>
+<span class="sd">        Lower and higher limits for the interval.&quot;&quot;&quot;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">alpha</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="p">(</span><span class="n">chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                 <span class="n">chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">data</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">low</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span></div>
 </pre></div>
 
           </div>
-          <footer>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2015, Wouter Gins.
-    </p>
-  </div>
-
-  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
-</footer>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
         </div>
       </div>
+        </div>
+      </div>
+    </div>
 
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'1.0.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
 </html>

@@ -1,0 +1,6 @@
+satlas.spectrum.Spectrum.get_result_frame
+=========================================
+
+.. currentmodule:: satlas.spectrum
+
+.. automethod:: Spectrum.get_result_frame

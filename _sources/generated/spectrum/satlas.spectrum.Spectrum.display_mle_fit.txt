@@ -1,0 +1,6 @@
+satlas.spectrum.Spectrum.display_mle_fit
+========================================
+
+.. currentmodule:: satlas.spectrum
+
+.. automethod:: Spectrum.display_mle_fit

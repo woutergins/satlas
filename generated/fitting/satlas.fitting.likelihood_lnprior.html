@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>satlas.fitting.likelihood_lnprior &mdash; SATLAS 0.0.1b2 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1b2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="up" title="satlas.fitting" href="../satlas.fitting.html" >
+    <link rel="next" title="satlas.fitting.likelihood_lnprob" href="satlas.fitting.likelihood_lnprob.html" >
+    <link rel="prev" title="satlas.fitting.likelihood_fit" href="satlas.fitting.likelihood_fit.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+	
+          <li class="active"><a href="../../api.html" >API reference</a></li>
+          <li class="active"><a href="../satlas.fitting.html" accesskey="U">satlas.fitting</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="satlas.fitting.likelihood_lnprob.html" title="satlas.fitting.likelihood_lnprob"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="satlas.fitting.likelihood_fit.html" title="satlas.fitting.likelihood_fit"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="satlas-fitting-likelihood-lnprior">
+<h1>satlas.fitting.likelihood_lnprior<a class="headerlink" href="#satlas-fitting-likelihood-lnprior" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="satlas.fitting.likelihood_lnprior">
+<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_lnprior</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_lnprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_lnprior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the logarithm of the prior given the parameter
+values. This is independent of the data to be fitted to.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>params</strong> (<em>lmfit.Parameters with satlas.PriorParameters</em>) &#8211; Collection of satlas.PriorParameters, which
+contain also prior bounds, so the boundary
+calculations are not triggered before this point.
+Allows easy interfacing with the emcee package.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Calculates a flat prior: returns 1.0 if all
+parameters are inside their boundaries,
+return -np.inf if one of them is not.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">1.0 or -np.inf</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In case a custom prior distribution is required,
+this function has to be overwritten.</p>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="satlas.fitting.likelihood_fit.html"
+                        title="previous chapter">satlas.fitting.likelihood_fit</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="satlas.fitting.likelihood_lnprob.html"
+                        title="next chapter">satlas.fitting.likelihood_lnprob</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/generated/fitting/satlas.fitting.likelihood_lnprior.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

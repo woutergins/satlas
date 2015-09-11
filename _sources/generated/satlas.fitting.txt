@@ -1,0 +1,20 @@
+satlas.fitting
+==============
+
+.. automodule:: satlas.fitting
+
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: fitting/
+
+      chisquare_fit
+      chisquare_model
+      chisquare_spectroscopic_fit
+      likelihood_fit
+      likelihood_lnprior
+      likelihood_lnprob
+      likelihood_loglikelihood
+      likelihood_plot
+      likelihood_walk
+      likelihood_x_err

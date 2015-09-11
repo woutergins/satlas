@@ -1,0 +1,6 @@
+satlas.fitting.likelihood_plot
+==============================
+
+.. currentmodule:: satlas.fitting
+
+.. autofunction:: likelihood_plot

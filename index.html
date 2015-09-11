@@ -1,171 +1,85 @@
-
-
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>SATLAS – Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments &mdash; SATLAS 1.0.0 documentation</title>
-  
 
-  
-  
-
-  
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
-
-  
-  
+<html>
+  <head>
+    <meta charset="utf-8">
     
-
-  
-
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="top" title="SATLAS 1.0.0 documentation" href="#"/>
-        <link rel="next" title="utilities – Collection of handy functions" href="utilities.html"/> 
-
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
-
-</head>
-
-<body class="wy-body-for-nav" role="document">
-
-  <div class="wy-grid-for-nav">
-
+    <title>SATLAS – Statistical Analysis Toolbox for Laser Spectroscopy &mdash; SATLAS 0.0.1b2 documentation</title>
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-nav-search">
-        <a href="#" class="fa fa-home"> SATLAS</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-      </div>
+    <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
+    <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1b2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="#" >
+    <link rel="next" title="API reference" href="api.html" > 
+  </head>
+  <body>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
         
-        
-            <ul>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html"><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-satlas.utilities">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="profiles.html#usage-example">Usage example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiles.html#module-satlas.profiles">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum.html#module-satlas.spectrum">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="relaxation.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="relaxation.html#module-satlas.relaxation">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="polar.html#module-satlas.polar">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="collaps.html"><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="collaps.html#module-collaps">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
-</ul>
-
-        
-      </div>
-      &nbsp;
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">SATLAS</a>
-      </nav>
-
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
-      
-    <li>SATLAS &#8211; Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments</li>
-      <li class="wy-breadcrumbs-aside">
-        
-          <a href="_sources/index.txt" rel="nofollow"> View page source</a>
-        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="genindex.html" title="General Index"
+           accesskey="I">index</a>
       </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main">
+      <li class="active">
+        <a href="py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="api.html" title="API reference"
+           accesskey="N">next</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
             
-  <div class="section" id="satlas-simulation-and-analysis-toolbox-for-laser-spectroscopy-and-nmr-experiments">
-<h1>SATLAS &#8211; Simulation and Analysis Toolbox for Laser Spectroscopy and NMR experiments<a class="headerlink" href="#satlas-simulation-and-analysis-toolbox-for-laser-spectroscopy-and-nmr-experiments" title="Permalink to this headline">¶</a></h1>
-<a class="reference internal image-reference" href="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18444-blue.svg"><img alt="DOI Identifier" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18444-blue.svg" /></a>
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="satlas-statistical-analysis-toolbox-for-laser-spectroscopy">
+<h1>SATLAS &#8211; Statistical Analysis Toolbox for Laser Spectroscopy<a class="headerlink" href="#satlas-statistical-analysis-toolbox-for-laser-spectroscopy" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://zenodo.org/badge/latestdoi/10132/woutergins/satlas"><img alt="DOI Identifier" src="https://zenodo.org/badge/10132/woutergins/satlas.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/License-MIT-blue.svg"><img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Python-3.4-green.svg"><img alt="Python version" src="https://img.shields.io/badge/Python-3.4-green.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Tested_on-Windows-green.svg"><img alt="Supported Platform" src="https://img.shields.io/badge/Tested_on-Windows-green.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg"><img alt="Unsupported platform" src="https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg" /></a>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html"><tt class="docutils literal"><span class="pre">utilities</span></tt> &#8211; Collection of handy functions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-satlas.utilities">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="profiles.html"><tt class="docutils literal"><span class="pre">profiles</span></tt> &#8211; Implementation of lineshapes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="profiles.html#usage-example">Usage example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profiles.html#module-satlas.profiles">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="spectrum.html"><tt class="docutils literal"><span class="pre">spectrum</span></tt> &#8211; Analysis of hyperfine structures</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="spectrum.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="spectrum.html#module-satlas.spectrum">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="loglikelihood.html"><tt class="docutils literal"><span class="pre">loglikelihood</span></tt> &#8211; Calculation of loglikelihood for common distributions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="loglikelihood.html#module-satlas.loglikelihood">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="relaxation.html"><tt class="docutils literal"><span class="pre">relaxation</span></tt> &#8211; Implementation of spin-lattice relaxation algorithms</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="relaxation.html#usage-examples">Usage examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="relaxation.html#module-satlas.relaxation">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="polar.html"><tt class="docutils literal"><span class="pre">polar</span></tt> &#8211; Polarization simulations</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="polar.html#module-satlas.polar">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="collaps.html"><tt class="docutils literal"><span class="pre">collaps</span></tt> &#8211; API for interfacing with COLLAPS data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="collaps.html#module-collaps">Code documentation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
-</ul>
-</div>
 <div class="section" id="purpose">
 <h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
 <div class="sidebar">
@@ -176,7 +90,7 @@
 <li>Hanne Heylen (<a class="reference external" href="mailto:hanne&#46;heylen&#37;&#52;&#48;fys&#46;kuleuven&#46;be">hanne<span>&#46;</span>heylen<span>&#64;</span>fys<span>&#46;</span>kuleuven<span>&#46;</span>be</a>)</li>
 </ul>
 </div>
-<p>This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both <img class="math" src="_images/math/8bd0685e3bf9101859d24cf0e851651f182364c9.png" alt="\chi^2"/>-fitting and Maximum Likelihood Estimation routines, are present, as well as interfaces for simulation of polarization and spin-lattice relaxation phenomena.</p>
+<p>This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both <img class="math" src="_images/math/8bd0685e3bf9101859d24cf0e851651f182364c9.png" alt="\chi^2"/>-fitting and Maximum Likelihood Estimation routines, are present.</p>
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
@@ -189,83 +103,81 @@
 <li><a class="reference external" href="http://www.pyqtgraph.org/">PyQtGraph</a></li>
 <li><a class="reference external" href="http://dan.iel.fm/emcee/current/">emcee</a></li>
 <li><a class="reference external" href="http://www.sympy.org/">sympy</a></li>
-<li>(optionally: <a class="reference external" href="http://stanford.edu/~mwaskom/software/seaborn/">seaborn</a>)</li>
+<li><a class="reference external" href="http://stanford.edu/~mwaskom/software/seaborn/">seaborn</a></li>
 </ul>
 </dd>
 </dl>
-<p>Code can be downloaded <a class="reference external" href="https://github.com/woutergins/satlas">here</a>. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the <tt class="xref py py-mod docutils literal"><span class="pre">sympy.physics.wigner</span></tt> module, in order to calculate the Wigner symbols. inspiration has been drawn from the <cite>triangle.py</cite> script, written by Dan Foreman-Mackey et al. <a class="reference internal" href="references.html#foreman-mackey2014" id="id1">[FMPWR+14]</a>.</p>
+<p>Code can be downloaded <a class="reference external" href="https://github.com/woutergins/satlas">here</a>. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the <code class="xref py py-mod docutils literal"><span class="pre">sympy.physics.wigner</span></code> module, in order to calculate the Wigner symbols. inspiration has been drawn from the <cite>triangle.py</cite> script, written by Dan Foreman-Mackey et al. <a class="reference internal" href="references.html#foreman-mackey2014" id="id1">[FMPWR+14]</a>.</p>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
-<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span>Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
 </ul>
 </div>
 </div>
 
 
           </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="utilities.html" class="btn btn-neutral float-right" title="utilities – Collection of handy functions"/>Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-    </div>
-  
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SATLAS &#8211; Statistical Analysis Toolbox for Laser Spectroscopy</a><ul>
+<li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
 
-  <hr/>
-
-  <div role="contentinfo">
-    <p>
-        &copy; Copyright 2015, Wouter Gins.
-    </p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API reference</a></p>
+  <h3>This Page</h3>
+  <div>
+    <a href="_sources/index.txt"
+       rel="nofollow">Show Source</a>
   </div>
-
-  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
-</footer>
         </div>
       </div>
+        </div>
+      </div>
+    </div>
 
-    </section>
-
-  </div>
-  
-
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'1.0.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
-
-  
-  
-  <script type="text/javascript">
-      jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
-      });
-  </script>
-   
-
-</body>
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
 </html>

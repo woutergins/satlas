@@ -1,0 +1,6 @@
+satlas.singlespectrum.SingleSpectrum.fix_ratio
+==============================================
+
+.. currentmodule:: satlas.singlespectrum
+
+.. automethod:: SingleSpectrum.fix_ratio

@@ -1,0 +1,6 @@
+satlas.combinedspectrum.CombinedSpectrum.plot_spectroscopic
+===========================================================
+
+.. currentmodule:: satlas.combinedspectrum
+
+.. automethod:: CombinedSpectrum.plot_spectroscopic

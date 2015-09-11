@@ -1,0 +1,29 @@
+satlas.spectrum.Spectrum
+========================
+
+.. currentmodule:: satlas.spectrum
+
+.. autoclass:: Spectrum
+
+
+   .. rubric:: Methods
+
+   .. autosummary::
+      :toctree: spectrum/
+
+      ~Spectrum.__init__
+      ~Spectrum.display_chisquare_fit
+      ~Spectrum.display_mle_fit
+      ~Spectrum.get_result_frame
+      ~Spectrum.vars
+
+
+
+
+
+   .. rubric:: Attributes
+
+   .. autosummary::
+
+      ~Spectrum.selected
+
