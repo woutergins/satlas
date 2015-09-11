@@ -16,8 +16,8 @@ except:
 import pandas as pd
 from . import loglikelihood as llh
 
-__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'likelihood_fit',
-           'likelihood_plot']
+__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
+           'likelihood_fit', 'likelihood_walk', 'likelihood_plot']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
@@ -31,8 +31,8 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     ----------
     params: lmfit.Parameters
         Instance of lmfit.Parameters object, to be assigned to the spectrum object.
-    spectrum: satlas.Spectrum
-        Instance of a satlas.Spectrum object, to be fitted to the data.
+    spectrum: :class:`.Spectrum`
+        Instance of a :class:`.Spectrum`, to be fitted to the data.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
@@ -41,13 +41,13 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
         Experimental errorbars on the y-axis.
     pearson: boolean
         If True, use the square root of the fitted value as the
-        experimental uncertainty.
+        uncertainty.
 
     Returns
     -------
     NumPy array
         Array containing the residuals for the given parameters, divided by the
-        experimental uncertainty
+        uncertainty.
 
     Note
     ----
@@ -65,26 +65,26 @@ def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum object
+    spectrum: :class:`.Spectrum`
         Spectrum object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis."""
-    x, y, _ = spectrum.sanitize_input(x, y)
+    x, y, _ = spectrum._sanitize_input(x, y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
     return chisquare_fit(spectrum, x, y, yerr, **kwargs)
 
-def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
+def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
-    algorithm to minimize the chi-square of the fit to data :attr:`x` and
-    :attr:`y` with errorbars :attr:`yerr`.
+    algorithm to minimize the chi-square of the fit to data *x* and
+    *y* with errorbars *yerr*.
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum object
+    spectrum: :class:`.Spectrum`
         Spectrum object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
@@ -92,17 +92,23 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
     y: array_like
         Experimental data for the y-axis.
     yerr: array_like
-        Error bars on :attr:`y`.
+        Error bars on *y*.
     pearson: boolean, optional
         Selects if the normal or Pearson chi-square statistic is used.
         The Pearson chi-square uses the model value to estimate the
-        uncertainty. Defaults to :attr:`True`.
+        uncertainty. Defaults to *True*.
     monitor: boolean, optional
         If True, a plot will be displayed during the fitting which gives the
         reduced chisquare statistic in function of the iteration
-        number."""
+        number.
 
-    x, y, yerr = spectrum.sanitize_input(x, y, yerr)
+    Return
+    ------
+    success, message: bool and string
+        Boolean indicating the success of the convergence, and the message
+        from the optimizer."""
+
+    x, y, yerr = spectrum._sanitize_input(x, y, yerr)
 
     params = spectrum.params
     try:
@@ -135,16 +141,17 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=True):
             ax.autoscale_view()
             plt.draw()
             plt.show(block=False)
-        result = lm.minimize(model, params, args=(spectrum, x, y, yerr, pearson), kws={'nfree': nfree, 'line': line, 'ax': ax},
+        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson), kws={'nfree': nfree, 'line': line, 'ax': ax},
                              iter_cb=plot)
     else:
-        result = lm.minimize(model, params, args=(spectrum, x, y, yerr, pearson))
+        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson))
 
     spectrum.params = copy.deepcopy(result.params)
     spectrum.chisq_res_par = copy.deepcopy(result.params)
     spectrum.ndof = copy.deepcopy(result.nfree)
     spectrum.redchi = copy.deepcopy(result.redchi)
     spectrum.chisqr = copy.deepcopy(result.chisqr)
+    return result.success, result.message
 
 ##########################################
 # MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #
@@ -174,7 +181,7 @@ def likelihood_x_err(spectrum, x, y, s, func):
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum object
+    spectrum: :class:`.Spectrum`
         Spectrum object set to current parameters.
     x: array_like
         Experimental data for the x-axis.
@@ -183,7 +190,7 @@ def likelihood_x_err(spectrum, x, y, s, func):
     s: float
         Experimental uncertainty on the x-axis
     func: function
-        Function taking (y_data, y_model) as input,
+        Function taking (*y_data*, *y_model*) as input,
         and returning the loglikelihood that the data is
         drawn from a distribution characterized by the model.
 
@@ -195,7 +202,7 @@ def likelihood_x_err(spectrum, x, y, s, func):
     ----
     This method uses the FFT algorithm to quickly calculate
     a convolution integral. If greater accuracy is required,
-    change :attr:`satlas.fitting.theta_array` to a suitable
+    change *satlas.fitting.theta_array* to a suitable
     range and length."""
     key = hash(x.data.tobytes()) + hash(y.data.tobytes())
     if key in _x_err_calculation_stored:
@@ -218,7 +225,7 @@ def likelihood_lnprob(params, spectrum, x, y, func):
     ----------
     params: lmfit.Parameters object with satlas.PriorParameters
         Group of parameters for which the fit has to be evaluated.
-    spectrum: satlas.Spectrum object
+    spectrum: :class:`.Spectrum`
         Spectrum object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
@@ -257,7 +264,7 @@ def likelihood_lnprior(params):
     1.0 or -np.inf
         Calculates a flat prior: returns 1.0 if all
         parameters are inside their boundaries,
-        reutnr -np.inf if one of them is not.
+        return -np.inf if one of them is not.
 
     Note
     ----
@@ -284,7 +291,7 @@ def likelihood_loglikelihood(params, spectrum, x, y, func):
     ----------
     params: lmfit.Parameters object with satlas.PriorParameters
         Group of parameters for which the fit has to be evaluated.
-    spectrum: satlas.Spectrum object
+    spectrum: :class:`.Spectrum`
         Spectrum object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
@@ -315,12 +322,14 @@ def likelihood_loglikelihood(params, spectrum, x, y, func):
         return_value = func(y, spectrum(x))
     return return_value
 
-def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_llh, walking=True, walk_kws={}):
+def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_llh, method='L-BFGS-B', method_kws={}, walking=False, walk_kws={}):
     """Fits the given spectrum to the given data using the Maximum Likelihood Estimation technique.
+    The given function is used to calculate the loglikelihood. After the fit, the message
+    from the optimizer is printed and returned.
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum
+    spectrum: :class:`.Spectrum`
         Spectrum to be fitted to the data.
     x: array_like
         Experimental data for the x-axis.
@@ -335,35 +344,48 @@ def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_ll
     vary_sigma: boolean, optional
         If True, the uncertainty on the x-values will be
         treated as a parameter and will be optimized.
+        Defaults to False.
     func: function, optional
         Used to calculate the loglikelihood that the data is drawn
         from a distribution given a model value. Should accept
         input as (y_data, y_model). Defaults to the Poisson
         loglikelihood.
+    method: str, optional
+        Selects the algorithm to be used by the minimizer used by LMFIT.
+        For an overview, see the LMFIT and SciPy documentation.
+        Defaults to 'L-BFGS-B'.
+    method_kws: dict, optional
+        Dictionary containing the keywords to be passed to the
+        minimizer.
     walking: boolean, optional
         If True, the uncertainty on the parameters is estimated
         by performing a random walk in parameter space and
-        evaluating the loglikelihood.
+        evaluating the loglikelihood. Defaults to False.
     walk_kws: dictionary
-        Contains the keywords for the :func:`likelihood_walk`
-        function, used if walking is set to True."""
-    def negativeloglikelihood(*args, **kwargs):
-        return -lnprob(*args, **kwargs)
+        Contains the keywords for the :func:`.likelihood_walk`
+        function, used if walking is set to True.
 
-    x, y, _ = spectrum.sanitize_input(x, y)
+    Returns
+    -------
+    success, message: boolean and str
+        Boolean indicating the success of the optimization and
+        the message from the optimizer."""
+
+    def negativeloglikelihood(*args, **kwargs):
+        return -likelihood_lnprob(*args, **kwargs)
+
+    x, y, _ = spectrum._sanitize_input(x, y)
     params = spectrum.params
     params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(spectrum, x, y, func))
-    result.scalar_minimize(method='L-BFGS-B')
-    # result.scalar_minimize(method='Nelder-Mead')
+    success = result.scalar_minimize(method=method, **method_kws)
     spectrum.params = result.params
     spectrum.mle_fit = result.params
     spectrum.mle_result = result.message
-    print(result.message)
 
     if walking:
         likelihood_walk(spectrum, x, y, func=func, **walk_kws)
-    return None
+    return success, result.message
 
 def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=20, burnin=10.0,
                     verbose=True, store_walks=False):
@@ -374,7 +396,7 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum
+    spectrum: :class:`.Spectrum`
         Spectrum to be fitted to the data.
     x: array_like
         Experimental data for the x-axis.
@@ -404,9 +426,9 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
         If True, a progressbar is printed and updated every second.
         This progressbar displays the progress of the walk, with a primitive
         estimate of the remaining time in the calculation.
-    stor_walks: boolean, optional
+    store_walks: boolean, optional
         If True, the data from the walks is stored in the spectrum
-        object under the attribute :attr:`walks`. Defaults to False."""
+        object under the attribute *walks*. Defaults to False."""
 
     params = spectrum.mle_fit
     var_names = []
@@ -417,7 +439,7 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
             vars.append(params[key].value)
     ndim = len(vars)
     pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
-    x, y, _ = spectrum.sanitize_input(x, y)
+    x, y, _ = spectrum._sanitize_input(x, y)
 
     if verbose:
         try:
@@ -438,7 +460,8 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
             pbar += 1
         except:
             pass
-        return lnprob(groupParams, spectrum, x, y, func)
+        return likelihood_lnprob(groupParams, spectrum, x, y, func)
+
     groupParams = lm.Parameters()
     for key in params.keys():
         groupParams[key] = PriorParameter(key,
@@ -480,12 +503,12 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
         spectrum.walks = [(name, sampler.chain[:, :, i].T)
                       for i, name in enumerate(var_names)]
 
-def likelihood_plot(spectrum, x, y, xerr=None):
+def likelihood_plot(spectrum, x, y, xerr=None, fitting=False):
     """Plots the likelihood for relevant HFS structure parameters.
 
     Parameters
     ----------
-    spectrum: satlas.Spectrum
+    spectrum: :class:`.Spectrum`
         Spectrum to be fitted to the data.
     x: array_like
         Experimental data for the x-axis.
@@ -497,6 +520,10 @@ def likelihood_plot(spectrum, x, y, xerr=None):
     xerr: float or list of floats
         Repeats the calculations, but taking the given values
         as errors on the data for the x-axis.
+    fitting: boolean, optional
+        Controls if the plot is a slice in loglikelihoodspace,
+        or a line along the best fitting values. If the best
+        fitting line is taken, this might take a long while!
 
     Returns
     -------
@@ -534,14 +561,18 @@ def likelihood_plot(spectrum, x, y, xerr=None):
         params['sigma_x'].value = 0
         for i, v in enumerate(value_range):
             params[s].value = v
+            if fitting:
+                likelihood_fit(spectrum, x, y, xerr=params['sigma_x'].value, func=llh.poisson_llh)
             likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
         likeli = likeli - likeli.max()
 
         line, = a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
         for i, v in enumerate(value_range):
             params[s].value = v
+            if fitting:
+                likelihood_fit(spectrum, x, y, xerr=params['sigma_x'].value, func=llh.gaussian_llh)
             likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
-        loc = -0.5 #(likeli.max()-1)#/likeli.max()
+        loc = -0.5
         likeli = likeli - likeli.max()
 
         line, = a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))
@@ -553,11 +584,15 @@ def likelihood_plot(spectrum, x, y, xerr=None):
                 if params['sigma_x'].value != 0:
                     for i, v in enumerate(value_range):
                         params[s].value = v
+                        if fitting:
+                            likelihood_fit(spectrum, x, y, xerr=params['sigma_x'].value, func=llh.poisson_llh)
                         likeli[i] = lnprob(params, spectrum, x, y, llh.poisson_llh)
                     likeli = likeli - likeli.max()
                     a.plot(value_range, likeli, label=label_pois.format(params['sigma_x'].value))
                     for i, v in enumerate(value_range):
                         params[s].value = v
+                        if fitting:
+                            likelihood_fit(spectrum, x, y, xerr=params['sigma_x'].value, func=llh.gaussian_llh)
                         likeli[i] = lnprob(params, spectrum, x, y, llh.gaussian_llh)
                     likeli = likeli - likeli.max()
                     a.plot(value_range, likeli, label=label_gauss.format(params['sigma_x'].value))

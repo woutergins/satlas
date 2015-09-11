@@ -14,14 +14,15 @@ __all__ = ['CombinedSpectrum']
 
 class CombinedSpectrum(Spectrum):
 
-    """Combines different spectra for simultaneous fitting.
-
-    Parameters
-    ----------
-    spectra: list of :class:`IsomerSpectrum` or :class:`SingleSpectrum` objects
-        A list defining the different spectra."""
+    """Combines different spectra for simultaneous fitting."""
 
     def __init__(self, spectra):
+        """Initializes the class for simultaneous fitting of different spectra.
+
+        Parameters
+        ----------
+        spectra: list of :class:`.IsomerSpectrum` or :class:`.SingleSpectrum` objects
+            A list defining the different spectra."""
         super(CombinedSpectrum, self).__init__()
         self.spectra = spectra
         self.shared = ['Al',
@@ -33,9 +34,9 @@ class CombinedSpectrum(Spectrum):
                        'Offset']
 
     def _sanitize_input(self, x, y, yerr=None):
-        # Take the :attr:`x`, :attr:`y`, and :attr:`yerr` inputs, and sanitize
-        # them for the fit, meaning it should convert :attr:`y`/:attr:`yerr` to
-        # the output format of the class, and :attr:`x` to the input format of
+        # Take the *x*, *y*, and *yerr* inputs, and sanitize
+        # them for the fit, meaning it should convert *y*/*yerr* to
+        # the output format of the class, and *x* to the input format of
         # the class.
         if isinstance(y, list):
             y = np.hstack(y)
@@ -45,7 +46,18 @@ class CombinedSpectrum(Spectrum):
         return x, y, yerr
 
     @property
+    def shared(self):
+        """Contains all parameters which share the same value among all spectra."""
+        return self._shared
+
+    @shared.setter
+    def shared(self, value):
+        self._shared = value
+
+    @property
     def params(self):
+        """Instance of lmfit.Parameters object characterizing the
+        shape of the HFS."""
         params = lm.Parameters()
         for i, s in enumerate(self.spectra):
             p = copy.deepcopy(s.params)
@@ -85,11 +97,7 @@ class CombinedSpectrum(Spectrum):
                             expr=expr)
             spec.params = par
 
-    #################################
-    #      CONVENIENCE METHODS      #
-    #################################
-
-    def _seperate_response(self, x):
+    def seperate_response(self, x):
         """Generates the response for each subspectrum.
 
         Parameters
@@ -213,6 +221,13 @@ class CombinedSpectrum(Spectrum):
     ###########################
 
     def __add__(self, other):
+        """Adding another CombinedSpectrum adds the spectra therein
+        to the list of spectra, adding an IsomerSpectrum or SingleSpectrum
+        adds that one spectrum to the list.
+
+        Returns
+        -------
+        CombinedSpectrum"""
         if isinstance(other, CombinedSpectrum):
             return_object = CombinedSpectrum(self.spectra.extend(other.spectra))
         elif isinstance(other, Spectrum):
@@ -220,4 +235,16 @@ class CombinedSpectrum(Spectrum):
         return return_object
 
     def __call__(self, x):
+        """Pass the seperate frequency arrays to the subspectra,
+        and return their response values as a list of arrays.
+
+        Parameters
+        ----------
+        x : list of floats or array_likes
+            Frequency in MHz
+
+        Returns
+        -------
+        list of floats or NumPy arrays
+            Response of each spectrum for each seperate value in *x*."""
         return np.hstack([s(X) for s, X in zip(self.spectra, x)])

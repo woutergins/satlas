@@ -26,63 +26,8 @@ __all__ = ['SingleSpectrum']
 class SingleSpectrum(Spectrum):
 
     r"""Constructs a HFS spectrum, consisting of different
-    peaks described by a certain profile. The number of peaks and their
-    positions is governed by the atomic HFS.
-    Calling an instance of the Spectrum class returns the response value of the
-    HFS spectrum for that frequency in MHz.
-
-    Parameters
-    ----------
-    I: float
-        The nuclear spin.
-    J: list of 2 floats
-        The spins of the fine structure levels.
-    ABC: list of 6 floats
-        The hyperfine structure constants A, B and C for ground- and excited
-        fine level. The list should be given as [A :sub:`lower`,
-        A :sub:`upper`, B :sub:`lower`, B :sub:`upper`, C :sub:`upper`,
-        C :sub:`lower`].
-    centroid: float
-        Centroid of the spectrum.
-    fwhm: float or list of 2 floats, optional
-        Depending on the used shape, the FWHM is defined by one or two floats.
-        Defaults to [50.0, 50.0]
-    scale: float, optional
-        Sets the strength of the spectrum, defaults to 1.0. Comparable to the
-        amplitude of the spectrum.
-
-    Other parameters
-    ----------------
-    shape : string, optional
-        Sets the transition shape. String is converted to lowercase. For
-        possible values, see :attr:`Spectrum.__shapes__.keys()`.
-        Defaults to Voigt if an incorrect value is supplied.
-    racah_int: boolean, optional
-        If True, fixes the relative peak intensities to the Racah intensities.
-        Otherwise, gives them equal intensities and allows them to vary during
-        fitting.
-    shared_fwhm: boolean, optional
-        If True, the same FWHM is used for all peaks. Otherwise, give them all
-        the same initial FWHM and let them vary during the fitting.
-
-    Note
-    ----
-    The list of parameter keys is:
-        * :attr:`FWHM` (only for profiles with one float for the FWHM)
-        * :attr:`FWHMG` (only for profiles with two floats for the FWHM)
-        * :attr:`FWHML` (only for profiles with two floats for the FWHM)
-        * :attr:`Al`
-        * :attr:`Au`
-        * :attr:`Bl`
-        * :attr:`Bu`
-        * :attr:`Cl`
-        * :attr:`Cu`
-        * :attr:`Centroid`
-        * :attr:`Background`
-        * :attr:`Poisson` (only if the attribute *n* is greater than 0)
-        * :attr:`Offset` (only if the attribute *n* is greater than 0)
-        * :attr:`Amp` (with the correct labeling of the transition)
-        * :attr:`scale`"""
+    peaks described by a certain profile. The number of peaks is governed by
+    the nuclear spin and the atomic spins of the levels."""
 
     __shapes__ = {'gaussian': p.Gaussian,
                   'lorentzian': p.Lorentzian,
@@ -91,6 +36,70 @@ class SingleSpectrum(Spectrum):
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  background=0.1, shape='voigt', racah_int=True,
                  shared_fwhm=True, n=0, poisson=0.68, offset=0):
+        """Builds the HFS with the given atomic and nuclear information.
+
+        Parameters
+        ----------
+        I: float
+            The nuclear spin.
+        J: list of 2 floats
+            The spins of the fine structure levels.
+        ABC: list of 6 floats
+            The hyperfine structure constants A, B and C for ground- and excited
+            fine level. The list should be given as [A :sub:`lower`,
+            A :sub:`upper`, B :sub:`lower`, B :sub:`upper`, C :sub:`upper`,
+            C :sub:`lower`].
+        centroid: float
+            Centroid of the spectrum.
+
+        Other parameters
+        ----------------
+        fwhm: float or list of 2 floats, optional
+            Depending on the used shape, the FWHM is defined by one or two floats.
+            Defaults to [50.0, 50.0]
+        scale: float, optional
+            Sets the strength of the spectrum, defaults to 1.0. Comparable to the
+            amplitude of the spectrum.
+        background: float, optional
+            Sets the constant background to the supplied value. Defaults to 0.1.
+        shape : string, optional
+            Sets the transition shape. String is converted to lowercase. For
+            possible values, see *Spectrum__shapes__*.keys()`.
+            Defaults to Voigt if an incorrect value is supplied.
+        racah_int: boolean, optional
+            If True, fixes the relative peak intensities to the Racah intensities.
+            Otherwise, gives them equal intensities and allows them to vary during
+            fitting.
+        shared_fwhm: boolean, optional
+            If True, the same FWHM is used for all peaks. Otherwise, give them all
+            the same initial FWHM and let them vary during the fitting.
+        n: int, optional
+            Sets the number of sidepeaks that are present in the spectrum.
+            Defaults to 0.
+        poisson: float, optional
+            Sets the relative intensity of the first side peak. The intensity of the
+            other sidepeaks is calculated from the Poisson-factor.
+        offset: float, optional
+            Sets the distance (in MHz) of each sidepeak in the spectrum.
+
+        Note
+        ----
+        The list of parameter keys is:
+            * *FWHM* (only for profiles with one float for the FWHM)
+            * *FWHMG* (only for profiles with two floats for the FWHM)
+            * *FWHML* (only for profiles with two floats for the FWHM)
+            * *Al*
+            * *Au*
+            * *Bl*
+            * *Bu*
+            * *Cl*
+            * *Cu*
+            * *Centroid*
+            * *Background*
+            * *Poisson* (only if the attribute *n* is greater than 0)
+            * *Offset* (only if the attribute *n* is greater than 0)
+            * *Amp* (with the correct labeling of the transition)
+            * *scale*"""
         super(SingleSpectrum, self).__init__()
         shape = shape.lower()
         if shape not in self.__shapes__:
@@ -140,7 +149,7 @@ class SingleSpectrum(Spectrum):
 
     @property
     def locations(self):
-        """Contains the locations of the peak"""
+        """Contains the locations of the peaks."""
         return self._locations
 
     @locations.setter
@@ -183,8 +192,19 @@ class SingleSpectrum(Spectrum):
         # Finally, the fwhm of each peak needs to be set
         self._set_fwhm()
 
+    @property
+    def ftof(self):
+        """List of transition labels, of the form *Flow__Fhigh* (half-integers
+        have an underscore instead of a division sign), same ordering
+        as given by the attribute :attr:`.locations`."""
+        return self._ftof
+
+    @ftof.setter
+    def ftof(self, value):
+        self._ftof = value
+
     def _calculate_energies(self):
-        r"""The hyperfine addition to a central frequency (attribute :attr:`centroid`)
+        r"""The hyperfine addition to a central frequency (attribute *centroid*)
         for a specific level is calculated. The formula comes from
         :cite:`Schwartz1955` and in a simplified form, reads
 
@@ -321,6 +341,7 @@ class SingleSpectrum(Spectrum):
                     fixed, free = u, l
                 par[fixed].expr = str(r[0]) + '*' + free
                 par[fixed].vary = False
+                par[free].vary = True
         return par
 
     def _check_variation(self, par):
@@ -454,7 +475,7 @@ class SingleSpectrum(Spectrum):
         ----------
         boundaryDict: dictionary
             A dictionary containing "key: {'min': value, 'max': value}" mappings.
-            A value of :attr:`None` or a missing key gives no boundary
+            A value of *None* or a missing key gives no boundary
             in that direction."""
         for k in boundaryDict.keys():
             self._constraints[k] = boundaryDict[k]
@@ -484,19 +505,26 @@ class SingleSpectrum(Spectrum):
             self.ratioC = (value, target)
         self.params = self._set_ratios(self.params)
 
-    def set_value(self, values, name=None):
+    def set_value(self, value, name):
         """Sets the value of the selected parameter to the given value.
 
         Parameters
         ----------
-        values: float or iterable of floats
-        name: string or iterable of strings"""
+        value: float
+            Value for the parameter.
+        name: string
+            Parameter name.
+
+        Note
+        ----
+        If an iterable is supplied for both *value* and *name*,
+        all parameters in *name* are set to the corresponding *value*."""
         par = self._params
         try:
-            for v, n in zip(values, name):
+            for v, n in zip(value, name):
                 par[n].value = v
         except:
-            par[name].value = values
+            par[name].value = value
         self.params = par
 
     #######################################
@@ -507,8 +535,8 @@ class SingleSpectrum(Spectrum):
         return x, y, yerr
 
     def seperate_response(self, x):
-        """Get the response for each seperate spectrum for the values :attr:`x`
-        , without background.
+        """Wraps the output of the :meth:`__call__` in a list, for
+        ease of coding in the fitting routines.
 
         Parameters
         ----------
@@ -518,7 +546,7 @@ class SingleSpectrum(Spectrum):
         Returns
         -------
         list of floats or NumPy arrays
-            Seperate responses of spectra to the input :attr:`x`."""
+            Seperate responses of spectra to the input *x*."""
         return [self(x)]
 
     ###########################
@@ -526,7 +554,7 @@ class SingleSpectrum(Spectrum):
     ###########################
 
     def __add__(self, other):
-        """Add two spectra together to get an :class:`IsomerSpectrum`.
+        """Add two spectra together to get an :class:`.IsomerSpectrum`.
 
         Parameters
         ----------
@@ -550,7 +578,7 @@ class SingleSpectrum(Spectrum):
             return self.__add__(other)
 
     def __call__(self, x):
-        """Get the response for frequency :attr:`x` (in MHz) of the spectrum.
+        """Get the response for frequency *x* (in MHz) of the spectrum.
 
         Parameters
         ----------
@@ -560,7 +588,7 @@ class SingleSpectrum(Spectrum):
         Returns
         -------
         float or NumPy array
-            Response of the spectrum for each value of :attr:`x`."""
+            Response of the spectrum for each value of *x*."""
         if self.params['N'].value > 0:
             s = np.zeros(x.shape)
             for i in range(self.params['N'].value + 1):
@@ -579,7 +607,7 @@ class SingleSpectrum(Spectrum):
     def plot(self, x=None, y=None, yerr=None,
              no_of_points=10**3, ax=None, show=True, legend=None,
              data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             bayesian=False, colormap='bone_r'):
+             indicate=False, bayesian=False, colormap='bone_r'):
         """Plot the hfs, possibly on top of experimental data.
 
         Parameters
@@ -611,7 +639,7 @@ class SingleSpectrum(Spectrum):
             If given, the region around the fitted line will be shaded, with
             the luminosity indicating the pmf of the Poisson
             distribution characterized by the value of the fit. Note that
-            the argument :attr:`yerr` is ignored if :attr:`bayesian` is True.
+            the argument *yerr* is ignored if *bayesian* is True.
 
         Returns
         -------
@@ -654,15 +682,26 @@ class SingleSpectrum(Spectrum):
                 ax.plot(x, y, 'o')
         if bayesian:
             range = (superx.min(), superx.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, finish=None)[1])
-            y = np.arange(0, max_counts + 3 * max_counts ** 0.5 + 1)
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True)[1])
+            min_counts = self.params['Background'].value
+            min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
+            y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
             z = poisson_llh(self(x), y)
             z = np.exp(z - z.max(axis=0))
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
-        ax.plot(superx, self(superx), label=legend, lw=0.5)
+        if bayesian:
+            line, = ax.plot(superx, self(superx), label=legend, lw=0.5)
+        else:
+            line, = ax.plot(superx, self(superx), label=legend)
+        if indicate:
+            for (p, l) in zip(self.locations, self.ftof):
+                lab = l.split('__')
+                lab = lab[0] + '$\\rightarrow$' + lab[1]
+                ax.annotate(lab, xy=(p, self(p)), rotation=90, color=line.get_color(),
+                            weight='bold', size=14, ha='center')
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if show:
