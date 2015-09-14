@@ -6,11 +6,11 @@
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-
 import numpy as np
+__all__ = ['poisson_llh', 'gaussian_llh']
 
 
-def Poisson(x, l):
+def poisson_llh(x, l):
     """Returns the loglikelihood for a Poisson distribution.
     In this calculation, it is assumed that the parameters
     are true, and the loglikelihood that the data is drawn from
@@ -30,10 +30,10 @@ def Poisson(x, l):
     return x * np.log(l) - l
 
 
-def Gaussian(x, l):
+def gaussian_llh(x, l):
     """Returns the loglikelihood for a Gaussian distribution,
-    assuming the variance is given by the square root of the data
-    points. It is assumed that the parameters are true, and the
+    assuming the variance is given by the square root of the fit value.
+    It is assumed that the parameters are true, and the
     loglikelihood that the data is drawn from the distribution
     established by the parameters is calculated.
 
@@ -42,12 +42,12 @@ def Gaussian(x, l):
     x : array_like
         Data that has to be tested.
     l : array_like
-        Parameter for the Poisson distrbution.
+        Parameter for the Gaussian distrbution.
 
     Returns
     -------
     array_like
         Array with the loglikelihoods for the data"""
-    s = x ** 0.5
-    return -((x - l)/(2 * s)) ** 2
-    # return -np.log(np.sqrt(2*np.pi)*s)-(x-l)**2/(2.0*s**2)
+    s = l ** 0.5
+    deviation = (x-l)/s
+    return -(deviation*deviation + np.log(l))
