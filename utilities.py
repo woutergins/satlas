@@ -89,33 +89,52 @@ def _make_axes_grid(no_variables):
 
     padding = 2  #cm
     cbar_size = 0.5  #cm
+    axis_padding = 0.5  #cm
+
+    # Convert to inches.
     padding = padding * 0.393700787
     cbar_size = cbar_size * 0.393700787
-    axis_padding = 0.5
     axis_padding = axis_padding * 0.393700787
+
+    # Generate the figure, convert padding to percentages.
     fig = plt.figure()
     fig.set_size_inches(4*no_variables+cbar_size, 4*no_variables, forward=True)
+
     cbar_size = cbar_size / fig.get_figwidth()
     left_padding = padding / fig.get_figwidth()
     left_axis_padding = axis_padding / fig.get_figwidth()
     up_padding = padding / fig.get_figheight()
     up_axis_padding = axis_padding / fig.get_figheight()
-    axes = np.array([[None for _ in range(no_variables)] for _ in range(no_variables)], dtype='object')
-
     axis_size = (1-cbar_size-2*left_padding) / no_variables
+
+    # Pre-allocate a 2D-array to hold the axes.
+    axes = np.array([[None for _ in range(no_variables)] for _ in range(no_variables)],
+                    dtype='object')
+
     for i, I in zip(range(no_variables), reversed(range(no_variables))):
         for j in reversed(range(no_variables)):
+            # Only create axes on the lower triangle.
             if I+j < no_variables:
+                # Share the x-axis with the plot on the diagonal,
+                # directly above the plot.
                 sharex = axes[j, j] if i != j else None
+                # Share the y-axis among the 2D maps along one row,
+                # but not the plot on the diagonal!
                 sharey = axes[i, i-1] if (i != j and i-1 != j) else None
-                a = plt.axes([j*axis_size+left_padding, I*axis_size+up_padding, axis_size-left_axis_padding, axis_size-up_axis_padding],
+                # Determine the place and size of the axes
+                left_edge = j * axis_size + left_padding
+                bottom_edge = I * axis_size + up_padding
+                width = axis_size - left_axis_padding
+                height = axis_size - up_axis_padding
+
+                a = plt.axes([left_edge, bottom_edge, width, height],
                              sharex=sharex, sharey=sharey)
-                # a.set_title(str(i)+', '+str(j))
                 plt.setp(a.xaxis.get_majorticklabels(), rotation=45)
                 plt.setp(a.yaxis.get_majorticklabels(), rotation=45)
             else:
                 a = None
             axes[i, j] = a
+
     axes = np.array(axes)
     for a in axes[:-1, :].flatten():
         if a is not None:
@@ -123,7 +142,14 @@ def _make_axes_grid(no_variables):
     for a in axes[:, 1:].flatten():
         if a is not None:
             plt.setp(a.get_yticklabels(), visible=False)
-    cbar = plt.axes([no_variables*axis_size+left_padding, up_padding, cbar_size, no_variables*(axis_size-up_axis_padding)+(no_variables-1)*up_axis_padding])
+    left_edge = no_variables*axis_size+left_padding
+    bottom_edge = up_padding
+    width = cbar_size
+    # The height is calculated as the number of axis times the height of
+    # these axes, plus the dividing paddings between them.
+    height = no_variables * (axis_size - up_axis_padding) \
+            + (no_variables - 1) * up_axis_padding
+    cbar = plt.axes([left_edge, bottom_edge, width, height])
     plt.setp(cbar.get_xticklabels(), visible=False)
     plt.setp(cbar.get_yticklabels(), visible=False)
     return fig, axes, cbar
@@ -166,7 +192,9 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
     Warning
     -------
     At the moment, only the chisquare fitting routine is selected."""
-    def fit_new_value(value, spectrum, params, params_name, x, y, orig_value):
+    from . import fitting
+
+    def fit_new_value(value, spectrum, params, params_name, x, y, orig_value, func):
         try:
             for v, n in zip(value, params_name):
                 params[n].value = v
@@ -177,14 +205,15 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         spectrum.params = params
         success = False
         while not success:
-            success, message = fitting.chisquare_spectroscopic_fit(spectrum, x, y, **fit_kws)
-        return spectrum.chisqr-orig_value
+            success, message = func(spectrum, x, y, **fit_kws)
+        return spectrum.chisqr - orig_value
 
-    from . import fitting
-
+    #  Save the original chisquare and parameters for later use
     orig_value = spectrum.chisqr
-
     orig_params = copy.deepcopy(spectrum.params)
+    func = fitting.chisquare_spectroscopic_fit
+
+    # Select all variable parameters, generate the figure
     param_names = []
     no_params = 0
     for p in orig_params:
@@ -194,28 +223,51 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
 
     fig, axes, cbar = _make_axes_grid(no_params)
 
+    # Make the plots on the diagonal: plot the chisquare/likelihood
+    # for the best fitting values while setting one parameter to
+    # a fixed value.
     for i in range(no_params):
-        widgets = [param_names[i]+': ', progressbar.Percentage(), ' ',
+        # Initialize the progressbar and set the y-ticklabels.
+        widgets = [param_names[i]+': ',
+                   progressbar.Percentage(),
+                   ' ',
                    progressbar.Bar(marker=progressbar.RotatingMarker()),
-                   ' ', progressbar.AdaptiveETA()]
+                   ' ',
+                   progressbar.AdaptiveETA()]
         params = spectrum.params
         ax = axes[i, i]
         ax.set_title(param_names[i])
+        plt.setp(ax.get_yticklabels(), visible=True)
+        ax.set_ylabel(r'$\Delta\chi^2$')
+
+        # Extract the uncertainty on this parameter,
+        # set to 50 is this is not set yet. Also
+        # extract the value.
         stderr = spectrum.params[param_names[i]].stderr
         stderr = stderr if stderr is not None else 50
         value = spectrum.params[param_names[i]].value
+
+        # Keep the parameter fixed, and let it vary (with given number of points)
+        # in a deviation of 3 sigma in both directions.
         params[param_names[i]].vary = False
         value_range = np.linspace(value - 3*stderr, value + 3*stderr, resolution_diag)
         chisquare = np.zeros(len(value_range))
         pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
+        # Calculate the new value, and store it in the array. Update the progressbar.
         for j, v in enumerate(value_range):
-            chisquare[j] = fit_new_value(v, spectrum, params, param_names[i], x_data, y_data, orig_value)
+            chisquare[j] = fit_new_value(v, spectrum, params, param_names[i],
+                                         x_data, y_data, orig_value, func)
             pbar += 1
         pbar.finish()
+        # Plot the result
         ax.plot(value_range, chisquare)
+
+        # For chisquare, an increase of 1 corresponds to 1 sigma errorbars.
         ax.axhline(1, ls="dashed")
+        # Indicate the used interval.
         ax.axvline(value + stderr)
         ax.axvline(value - stderr)
+        # Restore the parameters.
         spectrum.params = orig_params
         fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
 
@@ -230,7 +282,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         x_value, x_stderr = params[x_name].value, params[x_name].stderr
         x_stderr = x_stderr if x_stderr is not None else 50
         params[x_name].vary = False
-        x_range = np.linspace(x_value - 3*x_stderr, x_value + 3*x_stderr, resolution_map)
+        x_range = np.linspace(x_value - 5*x_stderr, x_value + 5*x_stderr, resolution_map)
         y_value, y_stderr = params[y_name].value, params[y_name].stderr
         y_stderr = y_stderr if y_stderr is not None else 50
         params[y_name].vary = False
@@ -242,7 +294,8 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         for k, l in zip(i_indices.flatten(), j_indices.flatten()):
             x = X[k, l]
             y = Y[k, l]
-            Z[k, l] = fit_new_value([x, y], spectrum, params, [x_name, y_name], x_data, y_data, orig_value)
+            Z[k, l] = fit_new_value([x, y], spectrum, params, [x_name, y_name],
+                                    x_data, y_data, orig_value, func)
             pbar += 1
         pbar.finish()
         Z = -Z
