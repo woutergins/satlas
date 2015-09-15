@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import chi2
+import copy
+import progressbar
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -72,6 +74,192 @@ def weighted_average(x, sigma, axis=None):
     Xstat = 1 / Xstat
     return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
 
+def _make_axes_grid(no_variables):
+    """Makes a triangular grid of axes, with a colorbar axis next to it.
+
+    Parameters
+    ----------
+    no_variables: int
+        Number of variables for which to generate a figure.
+
+    Returns
+    -------
+    fig, axes, cbar: tuple
+        Tuple containing the figure, a 2D-array of axes and the colorbar axis."""
+
+    padding = 2  #cm
+    cbar_size = 0.5  #cm
+    padding = padding * 0.393700787
+    cbar_size = cbar_size * 0.393700787
+    axis_padding = 0.5
+    axis_padding = axis_padding * 0.393700787
+    fig = plt.figure()
+    fig.set_size_inches(4*no_variables+cbar_size, 4*no_variables, forward=True)
+    cbar_size = cbar_size / fig.get_figwidth()
+    left_padding = padding / fig.get_figwidth()
+    left_axis_padding = axis_padding / fig.get_figwidth()
+    up_padding = padding / fig.get_figheight()
+    up_axis_padding = axis_padding / fig.get_figheight()
+    axes = np.array([[None for _ in range(no_variables)] for _ in range(no_variables)], dtype='object')
+
+    axis_size = (1-cbar_size-2*left_padding) / no_variables
+    for i, I in zip(range(no_variables), reversed(range(no_variables))):
+        for j in reversed(range(no_variables)):
+            if I+j < no_variables:
+                sharex = axes[j, j] if i != j else None
+                sharey = axes[i, i-1] if (i != j and i-1 != j) else None
+                a = plt.axes([j*axis_size+left_padding, I*axis_size+up_padding, axis_size-left_axis_padding, axis_size-up_axis_padding],
+                             sharex=sharex, sharey=sharey)
+                # a.set_title(str(i)+', '+str(j))
+                plt.setp(a.xaxis.get_majorticklabels(), rotation=45)
+                plt.setp(a.yaxis.get_majorticklabels(), rotation=45)
+            else:
+                a = None
+            axes[i, j] = a
+    axes = np.array(axes)
+    for a in axes[:-1, :].flatten():
+        if a is not None:
+            plt.setp(a.get_xticklabels(), visible=False)
+    for a in axes[:, 1:].flatten():
+        if a is not None:
+            plt.setp(a.get_yticklabels(), visible=False)
+    cbar = plt.axes([no_variables*axis_size+left_padding, up_padding, cbar_size, no_variables*(axis_size-up_axis_padding)+(no_variables-1)*up_axis_padding])
+    plt.setp(cbar.get_xticklabels(), visible=False)
+    plt.setp(cbar.get_yticklabels(), visible=False)
+    return fig, axes, cbar
+
+def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
+    """Generates a correlation map for either the chisquare or the MLE method.
+    On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
+    Refitting to the data each time gives the points on the line. A dashed line is drawn on these
+    plots, with the intersection with the plots giving the correct confidence interval for the
+    parameter. In solid lines, the interval estimated by the fitting routine is drawn.
+    On the offdiagonal, two parameters are fixed and the spectrum is again fitted to the data.
+    The change in chisquare/loglikelihood is mapped to 1, 2 and 3 sigma contourmaps.
+
+    Parameters
+    ----------
+    spectrum: :class:`.Spectrum`
+        Instance of the spectrum for which the contour map has to be generated.
+    x_data: array_like or list of array_likes
+        Data on the x-axis for the fit. Must be appropriate input for the *spectrum*
+        instance.
+    y_data: array_like or list of array_likes
+        Data on the y-axis for the fit. Must be appropriate input for the *spectrum*
+        instance.
+
+    Other parameters
+    ----------------
+    method: {'chisquare', 'mle'}
+        Chooses between generating the map for the chisquare routine or for
+        the likelihood routine.
+    filter: list of strings
+        Only the parameters matching the names given in this list will be used
+        to generate the maps.
+    resolution_diag: int
+        Number of points for the line plot on each diagonal.
+    resolution_map: int
+        Number of points along each dimension for the meshgrids.
+    fit_kws: dictionary
+        Dictionary of keywords to pass on to the fitting routine.
+
+    Warning
+    -------
+    At the moment, only the chisquare fitting routine is selected."""
+    def fit_new_value(value, spectrum, params, params_name, x, y, orig_value):
+        try:
+            for v, n in zip(value, params_name):
+                params[n].value = v
+                params[n].vary = False
+        except:
+            params[params_name].value = value
+            params[params_name].vary = False
+        spectrum.params = params
+        success = False
+        while not success:
+            success, message = fitting.chisquare_spectroscopic_fit(spectrum, x, y, **fit_kws)
+        return spectrum.chisqr-orig_value
+
+    from . import fitting
+
+    orig_value = spectrum.chisqr
+
+    orig_params = copy.deepcopy(spectrum.params)
+    param_names = []
+    no_params = 0
+    for p in orig_params:
+        if orig_params[p].vary and (filter is None or p in filter):
+            no_params += 1
+            param_names.append(p)
+
+    fig, axes, cbar = _make_axes_grid(no_params)
+
+    for i in range(no_params):
+        widgets = [param_names[i]+': ', progressbar.Percentage(), ' ',
+                   progressbar.Bar(marker=progressbar.RotatingMarker()),
+                   ' ', progressbar.AdaptiveETA()]
+        params = spectrum.params
+        ax = axes[i, i]
+        ax.set_title(param_names[i])
+        stderr = spectrum.params[param_names[i]].stderr
+        stderr = stderr if stderr is not None else 50
+        value = spectrum.params[param_names[i]].value
+        params[param_names[i]].vary = False
+        value_range = np.linspace(value - 3*stderr, value + 3*stderr, resolution_diag)
+        chisquare = np.zeros(len(value_range))
+        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
+        for j, v in enumerate(value_range):
+            chisquare[j] = fit_new_value(v, spectrum, params, param_names[i], x_data, y_data, orig_value)
+            pbar += 1
+        pbar.finish()
+        ax.plot(value_range, chisquare)
+        ax.axhline(1, ls="dashed")
+        ax.axvline(value + stderr)
+        ax.axvline(value - stderr)
+        spectrum.params = orig_params
+        fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
+
+    for i, j in zip(*np.tril_indices_from(axes, -1)):
+        widgets = [param_names[j]+' ' + param_names[i]+': ', progressbar.Percentage(), ' ',
+                   progressbar.Bar(marker=progressbar.RotatingMarker()),
+                   ' ', progressbar.AdaptiveETA()]
+        params = copy.deepcopy(spectrum.params)
+        ax = axes[i, j]
+        x_name = param_names[j]
+        y_name = param_names[i]
+        x_value, x_stderr = params[x_name].value, params[x_name].stderr
+        x_stderr = x_stderr if x_stderr is not None else 50
+        params[x_name].vary = False
+        x_range = np.linspace(x_value - 3*x_stderr, x_value + 3*x_stderr, resolution_map)
+        y_value, y_stderr = params[y_name].value, params[y_name].stderr
+        y_stderr = y_stderr if y_stderr is not None else 50
+        params[y_name].vary = False
+        y_range = np.linspace(y_value - 5*y_stderr, y_value + 5*y_stderr, resolution_map)
+        X, Y = np.meshgrid(x_range, y_range)
+        Z = np.zeros(X.shape)
+        i_indices, j_indices = np.indices(Z.shape)
+        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(Z.flatten())).start()
+        for k, l in zip(i_indices.flatten(), j_indices.flatten()):
+            x = X[k, l]
+            y = Y[k, l]
+            Z[k, l] = fit_new_value([x, y], spectrum, params, [x_name, y_name], x_data, y_data, orig_value)
+            pbar += 1
+        pbar.finish()
+        Z = -Z
+        bounds = [-9, -6, -2, 0]
+        norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+        contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
+        spectrum.params = orig_params
+        fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
+    try:
+        cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
+        cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+    except:
+        pass
+
+    return fig, axes, cbar
+
 def generate_correlation_plot(data, filter=None):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
@@ -90,304 +278,61 @@ def generate_correlation_plot(data, filter=None):
     -------
     figure
         Returns the MatPlotLib figure created."""
-    if filter is None:
-        g = WalkingGrid(data, diag_sharey=False,
-                        despine=False)
-        returnfig = g.fig
-    else:
+    if filter is not None:
         filter = [c for f in filter for c in data.columns.tolist() if f in c]
         data = data[filter]
-        g = WalkingGrid(data, diag_sharey=False,
-                        despine=False)
-        returnfig = g.fig
-    return returnfig
+    fig, axes, cbar = _make_axes_grid(len(data.columns))
+    for i, val in enumerate(data.columns):
+        ax = axes[i, i]
+        x = data[val]
+        bins = 50
+        ax.hist(x.values, bins)
+        q = [16.0, 50.0, 84.0]
+        q16, q50, q84 = np.percentile(x.values, q)
 
-def contour2d(x, y, ax=None, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-    bins = kwargs.pop("bins", 50)
+        title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+        ax.set_title(title.format(q50, q50-q16, q84-q50))
+        qvalues = [q16, q50, q84]
+        for q in qvalues:
+            ax.axvline(q, ls="dashed")
 
-    try:
-        x = x.values
-    except:
-        x = x.astype(np.float64)
-    try:
-        y = y.values
-    except:
-        y = y.astype(np.float64)
-    X = np.linspace(x.min(), x.max(), bins + 1)
-    Y = np.linspace(y.min(), y.max(), bins + 1)
-    H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
-                             weights=kwargs.get('weights', None))
-    X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
-    X, Y = X[:-1], Y[:-1]
-    H = (H - H.min()) / (H.max() - H.min())
+    for i, j in zip(*np.tril_indices_from(axes, -1)):
+        ax = axes[i, j]
+        x = data[data.columns[j]].values
+        y = data[data.columns[i]].values
+        if j == 0:
+            ax.set_ylabel(data.columns[i])
+        if i == len(data.columns) - 1:
+            ax.set_xlabel(data.columns[j])
+        X = np.linspace(x.min(), x.max(), bins + 1)
+        Y = np.linspace(y.min(), y.max(), bins + 1)
+        H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
+                                 weights=None)
+        X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
+        X, Y = X[:-1], Y[:-1]
+        H = (H - H.min()) / (H.max() - H.min())
 
-    Hflat = H.flatten()
-    inds = np.argsort(Hflat)[::-1]
-    Hflat = Hflat[inds]
-    sm = np.cumsum(Hflat)
-    sm /= sm[-1]
-    levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
-    V = np.empty(len(levels))
-    for i, v0 in enumerate(levels):
-        try:
-            V[i] = Hflat[sm <= v0][-1]
-        except:
-            V[i] = Hflat[0]
-
-    bounds = np.concatenate([[H.max()], V])[::-1]
-    norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
-
-    contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
-
-    ax.set_xlim((x.min(), x.max()))
-    ax.set_ylim((y.min(), y.max()))
-    labels = ax.get_xticklabels()
-    for label in labels:
-        label.set_rotation(45)
-    labels = ax.get_yticklabels()
-    for label in labels:
-        label.set_rotation(45)
-
-    return ax, contourset
-
-def removeAxis(x, y, ax=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-    ax.set_visible(False)
-    ax.set_frame_on(False)
-    ax.set_axis_off()
-    return ax
-
-def addTitle(x, ax=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-
-    q = [16.0, 50.0, 84.0]
-    q16, q50, q84 = np.percentile(x.values, q)
-
-    title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
-    ax.set_title(title.format(q50, q50-q16, q84-q50))
-    qvalues = [q16, q50, q84]
-    for q in qvalues:
-        ax.axvline(q, ls="dashed")
-    return ax
-
-def addTruths(x, truth=None, ax=None, *args, **kwargs):
-    if ax is None:
-        ax = plt.gca()
-
-    if truth is None:
-        raise ValueError('truth should be a value')
-    else:
-        ax.axvline(truth)
-
-class WalkingGrid(sns.PairGrid):
-
-    def __init__(self, *args, **kwargs):
-        super(WalkingGrid, self).__init__(*args, **kwargs)
-
-        size = kwargs.pop("size", 4)
-        aspect = kwargs.pop("aspect", 1)
-        despine = kwargs.pop("despine", True)
-        # Create the figure and the array of subplots
-        figsize = len(self.x_vars) * size * aspect, len(self.y_vars) * size
-
-        plt.close(self.fig)
-
-        fig, axes = plt.subplots(len(self.y_vars), len(self.x_vars),
-                                 figsize=figsize,
-                                 squeeze=False)
-
-        self.fig = fig
-        self.axes = axes
-
-        l, b, r, t = (0.25 * size * aspect / figsize[0],
-                      0.4 * size / figsize[1],
-                      1 - 0.1 * size * aspect / figsize[0],
-                      1 - 0.2 * size * aspect / figsize[1])
-
-        fig.subplots_adjust(left=l, bottom=b, right=r, top=t,
-                            wspace=0.02, hspace=0.02)
-        for ax in np.diag(self.axes):
-            ax.set_yticks([])
-        for ax in self.axes[:-1, :].flatten():
-            ax.set_xticks([])
-        for ax in self.axes[:, 1:].flatten():
-            ax.set_yticks([])
-        for ax in self.axes.flatten():
-            labels = ax.get_xticklabels()
-            for label in labels:
-                label.set_rotation(45)
-            labels = ax.get_yticklabels()
-            for label in labels:
-                label.set_rotation(45)
-        y, x = np.triu_indices_from(self.axes, k=1)
-        for i, j in zip(y, x):
-            self.axes[i, j].set_visible(False)
-            self.axes[i, j].set_frame_on(False)
-            self.axes[i, j].set_axis_off()
-
-        # Make the plot look nice
-        if despine:
-            sns.despine(fig=fig)
-        self.map_diag(sns.distplot, kde=False)
-        self.map_diag(addTitle)
-        self.map_lower_with_colorbar(contour2d)
-
-    def map_diag(self, func, **kwargs):
-        """Plot with a univariate function on each diagonal subplot.
-
-        Parameters
-        ----------
-        func : callable plotting function
-            Must take an x array as a positional arguments and draw onto the
-            "currently active" matplotlib Axes. There is a special case when
-            using a ``hue`` variable and ``plt.hist``; the histogram will be
-            plotted with stacked bars.
-
-        """
-        # Add special diagonal axes for the univariate plot
-        if self.square_grid and self.diag_axes is None:
-            # diag_axes = []
-            # for ax in np.diag(self.axes):
-            #     diag_axes.append(ax)
-            # self.diag_axes = np.array(diag_axes, np.object)
-            self.diag_axes = np.diag(self.axes)
-        else:
-            pass
-            # self.diag_axes = None
-
-        # Plot on each of the diagonal axes
-        for i, var in enumerate(self.x_vars):
-            ax = self.diag_axes[i]
-            hue_grouped = self.data[var].groupby(self.hue_vals)
-
-            # Special-case plt.hist with stacked bars
-            if func is plt.hist:
-                plt.sca(ax)
-                vals = [v.values for g, v in hue_grouped]
-                func(vals, color=self.palette, histtype="barstacked",
-                     **kwargs)
-            else:
-                for k, (label_k, data_k) in enumerate(hue_grouped):
-                    plt.sca(ax)
-                    func(data_k, label=label_k,
-                         color=self.palette[k], **kwargs)
-
-            self._clean_axis(ax)
-
-        self._add_axis_labels()
-
-    def map_lower_with_colorbar(self, func, **kwargs):
-        """Plot with a bivariate function on the lower diagonal subplots.
-
-        Parameters
-        ----------
-        func : callable plotting function
-            Must take x, y arrays as positional arguments and draw onto the
-            "currently active" matplotlib Axes.
-
-        """
-        kw_color = kwargs.pop("color", None)
-        for i, j in zip(*np.tril_indices_from(self.axes, -1)):
-            hue_grouped = self.data.groupby(self.hue_vals)
-            for k, (label_k, data_k) in enumerate(hue_grouped):
-
-                ax = self.axes[i, j]
-                plt.sca(ax)
-
-                x_var = self.x_vars[j]
-                y_var = self.y_vars[i]
-
-                # Insert the other hue aesthetics if appropriate
-                for kw, val_list in self.hue_kws.items():
-                    kwargs[kw] = val_list[k]
-
-                color = self.palette[k] if kw_color is None else kw_color
-                ax, c = func(data_k[x_var], data_k[y_var], label=label_k,
-                             color=color, **kwargs)
-
-            self._clean_axis(ax)
-            self._update_legend_data(ax)
-
-        if kw_color is not None:
-            kwargs["color"] = kw_color
-        self._add_axis_labels()
-        cax, kw = mpl.colorbar.make_axes([a for a in self.axes.flat])
-        cbar = plt.colorbar(c, cax=cax)
-        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
-
-    def map_upper(self, func, **kwargs):
-        """Plot with a bivariate function on the upper diagonal subplots.
-
-        Parameters
-        ----------
-        func : callable plotting function
-            Must take x, y arrays as positional arguments and draw onto the
-            "currently active" matplotlib Axes.
-
-        """
-        kw_color = kwargs.pop("color", None)
-        for i, j in zip(*np.triu_indices_from(self.axes, 1)):
-
-            hue_grouped = self.data.groupby(self.hue_vals)
-            for k, (label_k, data_k) in enumerate(hue_grouped):
-
-                ax = self.axes[i, j]
-                plt.sca(ax)
-
-                x_var = self.x_vars[j]
-                y_var = self.y_vars[i]
-
-                # Insert the other hue aesthetics if appropriate
-                for kw, val_list in self.hue_kws.items():
-                    kwargs[kw] = val_list[k]
-
-                color = self.palette[k] if kw_color is None else kw_color
-                func(data_k[x_var], data_k[y_var], label=label_k,
-                     color=color, **kwargs)
-
-            self._clean_axis(ax)
-            self._update_legend_data(ax)
-
-        if kw_color is not None:
-            kwargs["color"] = kw_color
-
-    def map_offdiag(self, func, **kwargs):
-        """Plot with a bivariate function on the off-diagonal subplots.
-
-        Parameters
-        ----------
-        func : callable plotting function
-            Must take x, y arrays as positional arguments and draw onto the
-            "currently active" matplotlib Axes.
-
-        """
-
-        self.map_lower(func, **kwargs)
-        self.map_upper(func, **kwargs)
-
-    def _add_axis_labels(self):
-        """Add labels to the left and bottom Axes."""
-        for ax, label in zip(self.axes[-1, :], self.x_vars):
-            ax.set_xlabel(label)
-        for ax, label in zip(self.axes[:, 0], self.y_vars):
-            ax.set_ylabel(label)
-
-    def _find_numeric_cols(self, data):
-        """Find which variables in a DataFrame are numeric."""
-        # This can't be the best way to do this, but  I do not
-        # know what the best way might be, so this seems ok
-        numeric_cols = []
-        for col in data:
+        Hflat = H.flatten()
+        inds = np.argsort(Hflat)[::-1]
+        Hflat = Hflat[inds]
+        sm = np.cumsum(Hflat)
+        sm /= sm[-1]
+        levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
+        V = np.empty(len(levels))
+        for i, v0 in enumerate(levels):
             try:
-                data[col].astype(np.float)
-                numeric_cols.append(col)
-            except (ValueError, TypeError):
-                pass
-        return numeric_cols
+                V[i] = Hflat[sm <= v0][-1]
+            except:
+                V[i] = Hflat[0]
+
+        bounds = np.concatenate([[H.max()], V])[::-1]
+        norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+
+        contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+    cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
+    cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+    cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+    return fig, axes, cbar
 
 def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
     """Generates a spectrum by random sampling from the provided hyperfine
