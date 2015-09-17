@@ -527,6 +527,29 @@ class SingleSpectrum(Spectrum):
             par[name].value = value
         self.params = par
 
+    def set_expr(self, expr, name):
+        """Sets the expression of the selected parameter
+        to the given expression.
+
+        Parameters
+        ----------
+        expr: str
+            Expression for the parameter evaluation.
+        name: str
+            Parameter name.
+
+        Note
+        ----
+        If an iterable is supplied for both *expr* and *name*,
+        all parameters in *name* are set to the corresponding *expr*."""
+        par = self.params
+        if isinstance(name, list):
+            for n, e in zip(name, expr):
+                par[n].expr = e
+        else:
+            par[name].expr = expr
+        self.params = par
+
     #######################################
     #      METHODS CALLED BY FITTING      #
     #######################################
