@@ -74,38 +74,47 @@ def weighted_average(x, sigma, axis=None):
     Xstat = 1 / Xstat
     return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
 
-def _make_axes_grid(no_variables):
+def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5):
     """Makes a triangular grid of axes, with a colorbar axis next to it.
 
     Parameters
     ----------
     no_variables: int
         Number of variables for which to generate a figure.
+    padding: float
+        Padding around the figure (in cm).
+    cbar_size: float
+        Width of the colorbar (in cm).
+    axis_padding: float
+        Padding between axes (in cm).
 
     Returns
     -------
     fig, axes, cbar: tuple
         Tuple containing the figure, a 2D-array of axes and the colorbar axis."""
 
-    padding = 2  #cm
-    cbar_size = 0.5  #cm
-    axis_padding = 0.5  #cm
-
     # Convert to inches.
-    padding = padding * 0.393700787
-    cbar_size = cbar_size * 0.393700787
-    axis_padding = axis_padding * 0.393700787
+    padding, cbar_size, axis_padding = (padding * 0.393700787,
+                                        cbar_size * 0.393700787,
+                                        axis_padding * 0.393700787)
 
     # Generate the figure, convert padding to percentages.
     fig = plt.figure()
-    fig.set_size_inches(4*no_variables+cbar_size, 4*no_variables, forward=True)
+
+    axis_size = 4
+    width = axis_size * no_variables + cbar_size + 2 * padding + no_variables * axis_padding
+    height = axis_size * no_variables + 2 * padding
+    if no_variables > 1:
+        height += (no_variables - 1) * axis_padding
+    fig.set_size_inches(width, height, forward=True)
 
     cbar_size = cbar_size / fig.get_figwidth()
     left_padding = padding / fig.get_figwidth()
     left_axis_padding = axis_padding / fig.get_figwidth()
     up_padding = padding / fig.get_figheight()
     up_axis_padding = axis_padding / fig.get_figheight()
-    axis_size = (1-cbar_size-2*left_padding) / no_variables
+    axis_size_left = axis_size / fig.get_figwidth()
+    axis_size_up = axis_size / fig.get_figheight()
 
     # Pre-allocate a 2D-array to hold the axes.
     axes = np.array([[None for _ in range(no_variables)] for _ in range(no_variables)],
@@ -122,12 +131,14 @@ def _make_axes_grid(no_variables):
                 # but not the plot on the diagonal!
                 sharey = axes[i, i-1] if (i != j and i-1 != j) else None
                 # Determine the place and size of the axes
-                left_edge = j * axis_size + left_padding
-                bottom_edge = I * axis_size + up_padding
-                width = axis_size - left_axis_padding
-                height = axis_size - up_axis_padding
+                left_edge = j * axis_size_left + left_padding
+                bottom_edge = I * axis_size_up + up_padding
+                if j > 0:
+                    left_edge += j * left_axis_padding
+                if I > 0:
+                    bottom_edge += I * up_axis_padding
 
-                a = plt.axes([left_edge, bottom_edge, width, height],
+                a = plt.axes([left_edge, bottom_edge, axis_size_left, axis_size_up],
                              sharex=sharex, sharey=sharey)
                 plt.setp(a.xaxis.get_majorticklabels(), rotation=45)
                 plt.setp(a.yaxis.get_majorticklabels(), rotation=45)
@@ -142,13 +153,12 @@ def _make_axes_grid(no_variables):
     for a in axes[:, 1:].flatten():
         if a is not None:
             plt.setp(a.get_yticklabels(), visible=False)
-    left_edge = no_variables*axis_size+left_padding
+    left_edge = no_variables*(axis_size_left+left_axis_padding)+left_padding
     bottom_edge = up_padding
     width = cbar_size
-    # The height is calculated as the number of axis times the height of
-    # these axes, plus the dividing paddings between them.
-    height = no_variables * (axis_size - up_axis_padding) \
-            + (no_variables - 1) * up_axis_padding
+
+    height = 1 - 2 * up_padding
+
     cbar = plt.axes([left_edge, bottom_edge, width, height])
     plt.setp(cbar.get_xticklabels(), visible=False)
     plt.setp(cbar.get_yticklabels(), visible=False)
@@ -222,11 +232,11 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
     param_names = []
     no_params = 0
     for p in orig_params:
-        if orig_params[p].vary and (filter is None or p in filter):
+        if orig_params[p].vary and (filter is None or any([f in p for f in filter])):
             no_params += 1
             param_names.append(p)
 
-    fig, axes, cbar = _make_axes_grid(no_params)
+    fig, axes, cbar = _make_axes_grid(no_params, axis_padding=2.0)
 
     # Make the plots on the diagonal: plot the chisquare/likelihood
     # for the best fitting values while setting one parameter to
@@ -284,6 +294,10 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         ax = axes[i, j]
         x_name = param_names[j]
         y_name = param_names[i]
+        if j == 0:
+            ax.set_ylabel(y_name)
+        if i == no_params - 1:
+            ax.set_xlabel(x_name)
         x_value, x_stderr = params[x_name].value, params[x_name].stderr
         x_stderr = x_stderr if x_stderr is not None else 50
         params[x_name].vary = False
