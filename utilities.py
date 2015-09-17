@@ -353,7 +353,7 @@ def generate_correlation_plot(data, filter=None):
     if filter is not None:
         filter = [c for f in filter for c in data.columns.tolist() if f in c]
         data = data[filter]
-    fig, axes, cbar = _make_axes_grid(len(data.columns))
+    fig, axes, cbar = _make_axes_grid(len(data.columns), axis_padding=0)
     for i, val in enumerate(data.columns):
         ax = axes[i, i]
         x = data[val]
@@ -367,6 +367,8 @@ def generate_correlation_plot(data, filter=None):
         qvalues = [q16, q50, q84]
         for q in qvalues:
             ax.axvline(q, ls="dashed")
+        ax.set_yticks([])
+        ax.set_yticklabels([])
 
     for i, j in zip(*np.tril_indices_from(axes, -1)):
         ax = axes[i, j]
