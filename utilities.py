@@ -255,7 +255,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         # Keep the parameter fixed, and let it vary (with given number of points)
         # in a deviation of 3 sigma in both directions.
         params[param_names[i]].vary = False
-        value_range = np.linspace(value - 1*stderr, value + 1*stderr, resolution_diag)
+        value_range = np.linspace(value - 5*stderr, value + 5*stderr, resolution_diag)
         chisquare = np.zeros(len(value_range))
         pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
         # Calculate the new value, and store it in the array. Update the progressbar.
@@ -287,11 +287,11 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         x_value, x_stderr = params[x_name].value, params[x_name].stderr
         x_stderr = x_stderr if x_stderr is not None else 50
         params[x_name].vary = False
-        x_range = np.linspace(x_value - 1*x_stderr, x_value + 1*x_stderr, resolution_map)
+        x_range = np.linspace(x_value - 5*x_stderr, x_value + 5*x_stderr, resolution_map)
         y_value, y_stderr = params[y_name].value, params[y_name].stderr
         y_stderr = y_stderr if y_stderr is not None else 50
         params[y_name].vary = False
-        y_range = np.linspace(y_value - 1*y_stderr, y_value + 1*y_stderr, resolution_map)
+        y_range = np.linspace(y_value - 5*y_stderr, y_value + 5*y_stderr, resolution_map)
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
         i_indices, j_indices = np.indices(Z.shape)

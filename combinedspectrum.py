@@ -89,12 +89,15 @@ class CombinedSpectrum(Spectrum):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par.add(new_key,
-                            value=params[key].value,
-                            vary=params[key].vary,
-                            min=params[key].min,
-                            max=params[key].max,
-                            expr=expr)
+                    params[key].expr = expr
+                    # par.add(new_key,
+                    #         value=params[key].value,
+                    #         vary=params[key].vary,
+                    #         min=params[key].min,
+                    #         max=params[key].max,
+                    #         expr=expr)
+                    par[new_key] = lm.Parameter()
+                    par[new_key].__setstate__(params[key].__getstate__())
             spec.params = par
 
     def seperate_response(self, x):
