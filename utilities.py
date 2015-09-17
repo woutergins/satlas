@@ -221,12 +221,15 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             if counter > 10:
                 success = True
                 print('Fitting did not converge, carrying on...')
-        return spectrum.chisqr - orig_value
+        return getattr(spectrum, attr) - orig_value
 
     #  Save the original chisquare and parameters for later use
-    orig_value = spectrum.chisqr
+    mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
+               'mle': (fitting.likelihood_fit, 'mle_likelihood')}
+    func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
+
+    orig_value = getattr(spectrum, attr)
     orig_params = copy.deepcopy(spectrum.params)
-    func = fitting.chisquare_spectroscopic_fit
 
     # Select all variable parameters, generate the figure
     param_names = []
@@ -253,7 +256,10 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         ax = axes[i, i]
         ax.set_title(param_names[i])
         plt.setp(ax.get_yticklabels(), visible=True)
-        ax.set_ylabel(r'$\Delta\chi^2$')
+        if method.lower() == 'chisquare':
+            ax.set_ylabel(r'$\Delta\chi^2$')
+        else:
+            ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
         # Extract the uncertainty on this parameter,
         # set to 50 is this is not set yet. Also
@@ -278,7 +284,8 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         ax.plot(value_range, chisquare)
 
         # For chisquare, an increase of 1 corresponds to 1 sigma errorbars.
-        ax.axhline(1, ls="dashed")
+        # For the loglikelihood, this need to be reduced by a factor of 2.
+        ax.axhline(1-0.5*(method.lower()=='mle'), ls="dashed")
         # Indicate the used interval.
         ax.axvline(value + stderr)
         ax.axvline(value - stderr)
@@ -319,6 +326,8 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         pbar.finish()
         Z = -Z
         bounds = [-9, -6, -2, 0]
+        if method.lower() == 'mle':
+            bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
         contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
         spectrum.params = orig_params
@@ -353,7 +362,9 @@ def generate_correlation_plot(data, filter=None):
     if filter is not None:
         filter = [c for f in filter for c in data.columns.tolist() if f in c]
         data = data[filter]
+
     fig, axes, cbar = _make_axes_grid(len(data.columns), axis_padding=0)
+
     for i, val in enumerate(data.columns):
         ax = axes[i, i]
         x = data[val]

@@ -382,6 +382,7 @@ def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_ll
     spectrum.params = result.params
     spectrum.mle_fit = result.params
     spectrum.mle_result = result.message
+    spectrum.mle_likelihood = negativeloglikelihood(params, spectrum, x, y, func)
 
     if walking:
         likelihood_walk(spectrum, x, y, func=func, **walk_kws)
