@@ -74,7 +74,7 @@ def weighted_average(x, sigma, axis=None):
     Xstat = 1 / Xstat
     return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
 
-def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5):
+def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cbar=True):
     """Makes a triangular grid of axes, with a colorbar axis next to it.
 
     Parameters
@@ -97,6 +97,8 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5):
     padding, cbar_size, axis_padding = (padding * 0.393700787,
                                         cbar_size * 0.393700787,
                                         axis_padding * 0.393700787)
+    if not cbar:
+        cbar_size = 0
 
     # Generate the figure, convert padding to percentages.
     fig = plt.figure()
@@ -123,7 +125,7 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5):
     for i, I in zip(range(no_variables), reversed(range(no_variables))):
         for j in reversed(range(no_variables)):
             # Only create axes on the lower triangle.
-            if I+j < no_variables:
+            if I + j < no_variables:
                 # Share the x-axis with the plot on the diagonal,
                 # directly above the plot.
                 sharex = axes[j, j] if i != j else None
@@ -159,9 +161,12 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5):
 
     height = 1 - 2 * up_padding
 
-    cbar = plt.axes([left_edge, bottom_edge, width, height])
-    plt.setp(cbar.get_xticklabels(), visible=False)
-    plt.setp(cbar.get_yticklabels(), visible=False)
+    if cbar:
+        cbar = plt.axes([left_edge, bottom_edge, width, height])
+        plt.setp(cbar.get_xticklabels(), visible=False)
+        plt.setp(cbar.get_yticklabels(), visible=False)
+    else:
+        cbar = None
     return fig, axes, cbar
 
 def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
@@ -197,11 +202,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
     resolution_map: int
         Number of points along each dimension for the meshgrids.
     fit_kws: dictionary
-        Dictionary of keywords to pass on to the fitting routine.
-
-    Warning
-    -------
-    At the moment, only the chisquare fitting routine is selected."""
+        Dictionary of keywords to pass on to the fitting routine."""
     from . import fitting
 
     def fit_new_value(value, spectrum, params, params_name, x, y, orig_value, func):
@@ -223,7 +224,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
                 print('Fitting did not converge, carrying on...')
         return getattr(spectrum, attr) - orig_value
 
-    #  Save the original chisquare and parameters for later use
+    # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
@@ -239,7 +240,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             no_params += 1
             param_names.append(p)
 
-    fig, axes, cbar = _make_axes_grid(no_params, axis_padding=2.0)
+    fig, axes, cbar = _make_axes_grid(no_params, axis_padding=2.0, cbar=no_params > 1)
 
     # Make the plots on the diagonal: plot the chisquare/likelihood
     # for the best fitting values while setting one parameter to
@@ -262,11 +263,12 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
         # Extract the uncertainty on this parameter,
-        # set to 50 is this is not set yet. Also
+        # set to 10% is this is not set yet. Also
         # extract the value.
-        stderr = spectrum.params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 50
         value = spectrum.params[param_names[i]].value
+        stderr = spectrum.params[param_names[i]].stderr
+        draw = stderr is not None
+        stderr = stderr if stderr is not None else 0.1 * value
 
         # Keep the parameter fixed, and let it vary (with given number of points)
         # in a deviation of 3 sigma in both directions.
@@ -287,8 +289,9 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         # For the loglikelihood, this need to be reduced by a factor of 2.
         ax.axhline(1-0.5*(method.lower()=='mle'), ls="dashed")
         # Indicate the used interval.
-        ax.axvline(value + stderr)
-        ax.axvline(value - stderr)
+        if draw:
+            ax.axvline(value + stderr)
+            ax.axvline(value - stderr)
         # Restore the parameters.
         spectrum.params = orig_params
         fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
@@ -306,13 +309,13 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         if i == no_params - 1:
             ax.set_xlabel(x_name)
         x_value, x_stderr = params[x_name].value, params[x_name].stderr
-        x_stderr = x_stderr if x_stderr is not None else 50
+        x_stderr = x_stderr if x_stderr is not None else 0.1 * x_value
         params[x_name].vary = False
-        x_range = np.linspace(x_value - 5*x_stderr, x_value + 5*x_stderr, resolution_map)
+        x_range = np.linspace(x_value - 5 * x_stderr, x_value + 5 * x_stderr, resolution_map)
         y_value, y_stderr = params[y_name].value, params[y_name].stderr
-        y_stderr = y_stderr if y_stderr is not None else 50
+        y_stderr = y_stderr if y_stderr is not None else 0.1 * y_value
         params[y_name].vary = False
-        y_range = np.linspace(y_value - 5*y_stderr, y_value + 5*y_stderr, resolution_map)
+        y_range = np.linspace(y_value - 5 * y_stderr, y_value + 5 * y_stderr, resolution_map)
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
         i_indices, j_indices = np.indices(Z.shape)

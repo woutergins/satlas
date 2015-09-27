@@ -1,8 +1,5 @@
 """
-.. module:: loglikelihood
-    :platform: Windows
-    :synopsis: Implementation of calculation of the
-     loglikelihood for common distributions
+Implementation of calculation of the loglikelihood for common distributions.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
