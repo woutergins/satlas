@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import chi2
+from scipy import optimize
 import copy
 import progressbar
 
@@ -207,10 +208,14 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
 
     def fit_new_value(value, spectrum, params, params_name, x, y, orig_value, func):
         try:
+            if all(value == orig_value):
+                return 0
             for v, n in zip(value, params_name):
                 params[n].value = v
                 params[n].vary = False
         except:
+            if value == orig_value:
+                return 0
             params[params_name].value = value
             params[params_name].vary = False
         spectrum.params = params
@@ -222,15 +227,22 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             if counter > 10:
                 success = True
                 print('Fitting did not converge, carrying on...')
+        return_value = getattr(spectrum, attr) - orig_value
+        print(value, return_value)
         return getattr(spectrum, attr) - orig_value
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
+    title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+
+    func(spectrum, x_data, y_data, **fit_kws)
 
     orig_value = getattr(spectrum, attr)
     orig_params = copy.deepcopy(spectrum.params)
+
+    ranges = {}
 
     # Select all variable parameters, generate the figure
     param_names = []
@@ -246,6 +258,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
     # for the best fitting values while setting one parameter to
     # a fixed value.
     for i in range(no_params):
+        ranges[param_names[i]] = {}
         # Initialize the progressbar and set the y-ticklabels.
         widgets = [param_names[i]+': ',
                    progressbar.Percentage(),
@@ -262,18 +275,39 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         else:
             ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
-        # Extract the uncertainty on this parameter,
-        # set to 10% is this is not set yet. Also
-        # extract the value.
-        value = spectrum.params[param_names[i]].value
-        stderr = spectrum.params[param_names[i]].stderr
-        draw = stderr is not None
-        stderr = stderr if stderr is not None else 0.1 * value
+        # Select starting point to determine error widths.
+        value = orig_params[param_names[i]].value
+        stderr = orig_params[param_names[i]].stderr
+        stderr = stderr if stderr is not None else 0.01 * value
+        # Search for a value to the right which gives an increase greater than 1.
+        search_value = value
+        while True:
+            search_value += 0.5*stderr
+            new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
+            if new_value > 1 - 0.5*(method.lower() == 'mle'):
+                ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
+                                                                  args=(spectrum, params, param_names[i], x_data,
+                                                                        y_data, orig_value, func))
+                break
+        search_value = value
+        # Do the same for the left
+        while True:
+            search_value -= 0.5*stderr
+            new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
+            if new_value > 1 - 0.5*(method.lower() == 'mle'):
+                ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
+                                                                  args=(spectrum, params, param_names[i], x_data,
+                                                                        y_data, orig_value, func))
+                break
 
         # Keep the parameter fixed, and let it vary (with given number of points)
-        # in a deviation of 3 sigma in both directions.
+        # in a deviation of 4 sigma in both directions.
+        # middle = (ranges[param_names[i]]['left'] + ranges[param_names[i]]['right']) * 0.5
+        right = np.abs(ranges[param_names[i]]['right'] - value)
+        left = np.abs(ranges[param_names[i]]['left'] - value)
         params[param_names[i]].vary = False
-        value_range = np.linspace(value - 5*stderr, value + 5*stderr, resolution_diag)
+
+        value_range = np.linspace(value - 4 * left, value + 4 * right, resolution_diag)
         chisquare = np.zeros(len(value_range))
         pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
         # Calculate the new value, and store it in the array. Update the progressbar.
@@ -287,20 +321,20 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
 
         # For chisquare, an increase of 1 corresponds to 1 sigma errorbars.
         # For the loglikelihood, this need to be reduced by a factor of 2.
-        ax.axhline(1-0.5*(method.lower()=='mle'), ls="dashed")
+        ax.axhline(1 - 0.5*(method.lower()=='mle'), ls="dashed")
         # Indicate the used interval.
-        if draw:
-            ax.axvline(value + stderr)
-            ax.axvline(value - stderr)
+        ax.axvline(value + right)
+        ax.axvline(value - left)
+        ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
-        spectrum.params = orig_params
-        fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
+        spectrum.params = copy.deepcopy(orig_params)
+        func(spectrum, x_data, y_data, **fit_kws)
 
     for i, j in zip(*np.tril_indices_from(axes, -1)):
         widgets = [param_names[j]+' ' + param_names[i]+': ', progressbar.Percentage(), ' ',
                    progressbar.Bar(marker=progressbar.RotatingMarker()),
                    ' ', progressbar.AdaptiveETA()]
-        params = copy.deepcopy(spectrum.params)
+        params = copy.deepcopy(orig_params)
         ax = axes[i, j]
         x_name = param_names[j]
         y_name = param_names[i]
@@ -308,14 +342,19 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             ax.set_ylabel(y_name)
         if i == no_params - 1:
             ax.set_xlabel(x_name)
-        x_value, x_stderr = params[x_name].value, params[x_name].stderr
-        x_stderr = x_stderr if x_stderr is not None else 0.1 * x_value
+        # middle = (ranges[x_name]['left'] + ranges[x_name]['right']) * 0.5
+        value = params[x_name].value
+        right = np.abs(ranges[x_name]['right'] - value)
+        left = np.abs(ranges[x_name]['left'] - value)
         params[x_name].vary = False
-        x_range = np.linspace(x_value - 5 * x_stderr, x_value + 5 * x_stderr, resolution_map)
-        y_value, y_stderr = params[y_name].value, params[y_name].stderr
-        y_stderr = y_stderr if y_stderr is not None else 0.1 * y_value
+        x_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+
+        value = params[y_name].value
+        right = np.abs(ranges[y_name]['right'] - value)
+        left = np.abs(ranges[y_name]['left'] - value)
         params[y_name].vary = False
-        y_range = np.linspace(y_value - 5 * y_stderr, y_value + 5 * y_stderr, resolution_map)
+        y_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
         i_indices, j_indices = np.indices(Z.shape)
@@ -334,7 +373,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
         contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
         spectrum.params = orig_params
-        fitting.chisquare_spectroscopic_fit(spectrum, x_data, y_data, **fit_kws)
+        func(spectrum, x_data, y_data, **fit_kws)
     try:
         cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
         cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
