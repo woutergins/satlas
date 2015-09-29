@@ -77,7 +77,7 @@ def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
     yerr[np.isclose(yerr, 0.0)] = 1.0
     return chisquare_fit(spectrum, x, y, yerr, **kwargs)
 
-def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
+def chisquare_fit(spectrum, x, y, yerr, monitor=False, **kwargs):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -117,7 +117,7 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
         pass
 
     if monitor:
-        result = lm.Minimizer(chisquare_model, params, fcn_args=(spectrum, x, y, yerr, pearson))
+        result = lm.Minimizer(chisquare_model, params, fcn_args=(spectrum, x, y, yerr, kwargs))
         result.prepare_fit(params)
         try:
             X = np.concatenate(x)
@@ -141,10 +141,10 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
             ax.autoscale_view()
             plt.draw()
             plt.show(block=False)
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson), kws={'nfree': nfree, 'line': line, 'ax': ax},
+        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, kwargs), kws={'nfree': nfree, 'line': line, 'ax': ax},
                              iter_cb=plot)
     else:
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson))
+        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, kwargs))
 
     spectrum.params = copy.deepcopy(result.params)
     spectrum.chisq_res_par = copy.deepcopy(result.params)

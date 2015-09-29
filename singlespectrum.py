@@ -34,7 +34,7 @@ class SingleSpectrum(Spectrum):
                   'voigt': p.Voigt}
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
-                 background=0.1, shape='voigt', racah_int=True,
+                 background=0.1, shape='voigt', racah_int=True, saturation=0,
                  shared_fwhm=True, n=0, poisson=0.68, offset=0):
         """Builds the HFS with the given atomic and nuclear information.
 
@@ -70,6 +70,10 @@ class SingleSpectrum(Spectrum):
             If True, fixes the relative peak intensities to the Racah intensities.
             Otherwise, gives them equal intensities and allows them to vary during
             fitting.
+        saturation: float, optional
+            If different than 0, calculate the saturation effect on the intensity of
+            transition intensity. This is done by an exponential transition between
+            Racah intensities and the saturated intensities.
         shared_fwhm: boolean, optional
             If True, the same FWHM is used for all peaks. Otherwise, give them all
             the same initial FWHM and let them vary during the fitting.
@@ -145,7 +149,7 @@ class SingleSpectrum(Spectrum):
         self.ratioC = (None, 'lower')
 
         self._populate_params(ABC, fwhm, scale, background, n,
-                              poisson, offset, centroid)
+                              poisson, offset, centroid, saturation)
 
     @property
     def locations(self):
@@ -167,7 +171,8 @@ class SingleSpectrum(Spectrum):
     @racah_int.setter
     def racah_int(self, value):
         self._racah_int = value
-        self.params['scale'].vary = self._racah_int
+        self.params['Scale'].vary = self._racah_int
+        self.params['Saturation'].vary = self._racah_int
         for label in self.ftof:
             self.params['Amp' + label].vary = not self._racah_int
 
@@ -189,8 +194,16 @@ class SingleSpectrum(Spectrum):
             # When not using set amplitudes, they need
             # to be changed after every iteration
             self._set_amplitudes()
+        else:
+            self._set_transitional_amplitudes()
         # Finally, the fwhm of each peak needs to be set
         self._set_fwhm()
+
+    def _set_transitional_amplitudes(self):
+        values = self._calculate_transitional_intensities(self._params['Saturation'].value)
+        for p, l, v in zip(self.parts, self.ftof, values):
+            self._params['Amp' + l].value = v
+            p.amp = v
 
     @property
     def ftof(self):
@@ -254,13 +267,13 @@ class SingleSpectrum(Spectrum):
 
     def _set_amplitudes(self):
         for p, label in zip(self.parts, self.ftof):
-            p.amp = self.params['Amp' + label].value
+            p.amp = self._params['Amp' + label].value
 
     def _set_fwhm(self):
         if self.shape.lower() == 'voigt':
-            fwhm = [[self.params['FWHMG'].value, self.params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self.params['FWHMG' + label].value, self.params['FWHML' + label].value] for label in self.ftof]
+            fwhm = [[self._params['FWHMG'].value, self._params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self._params['FWHMG' + label].value, self._params['FWHML' + label].value] for label in self.ftof]
         else:
-            fwhm = [self.params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self.params['FWHM' + label].value for label in self.ftof]
+            fwhm = [self._params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self._params['FWHM' + label].value for label in self.ftof]
         for p, f in zip(self.parts, fwhm):
             p.fwhm = f
 
@@ -269,7 +282,7 @@ class SingleSpectrum(Spectrum):
     ####################################
 
     def _populate_params(self, ABC, fwhm, scale, background,
-                        n, poisson, offset, centroid):
+                        n, poisson, offset, centroid, saturation):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
@@ -296,8 +309,10 @@ class SingleSpectrum(Spectrum):
                                  '+sqrt(0.2166*FWHML' + label +
                                  '**2+FWHMG' + str(i) + '**2)')
 
-        par.add('scale', value=scale, vary=self.racah_int, min=0)
-        for label, amp in zip(self.ftof, self.amplitudes):
+        par.add('Scale', value=scale, vary=self.racah_int, min=0)
+        par.add('Saturation', value=saturation, vary=self.racah_int, min=0)
+        amps = self._calculate_transitional_intensities(saturation)
+        for label, amp in zip(self.ftof, amps):
             label = 'Amp' + label
             par.add(label, value=amp, vary=not self.racah_int, min=0)
 
@@ -406,9 +421,11 @@ class SingleSpectrum(Spectrum):
         f_f = []
         indices = []
         amps = []
+        sat_amp = []
         for i, F1 in enumerate(self.F[:self.num_lower]):
             for j, F2 in enumerate(self.F[self.num_lower:]):
                 if abs(F2 - F1) <= 1 and not F2 == F1 == 0.0:
+                    sat_amp.append(2*F1+1)
                     j += self.num_lower
                     intensity = self._calculate_racah_intensity(self.J[i],
                                                                self.J[j],
@@ -432,9 +449,23 @@ class SingleSpectrum(Spectrum):
                         f_f.append(s)
         self.ftof = f_f  # Stores the labels of all transitions, in order
         self.transition_indices = indices  # Stores the indices in the F and energy arrays for the transition
-        self.amplitudes = np.array(amps)  # Sets the initial amplitudes to the Racah intensities
-        self.amplitudes = self.amplitudes / self.amplitudes.max()
-        self.parts = tuple(self.__shapes__[self.shape](amp=a) for a in amps)
+
+        self.racah_amplitudes = np.array(amps)  # Sets the initial amplitudes to the Racah intensities
+        self.racah_amplitudes = self.racah_amplitudes / self.racah_amplitudes.max()
+
+        self.saturated_amplitudes = np.array(sat_amp)
+        self.saturated_amplitudes = self.saturated_amplitudes / self.saturated_amplitudes.max()
+
+        self.parts = tuple(self.__shapes__[self.shape](amp=a) for a in self.racah_amplitudes)
+
+    def _calculate_transitional_intensities(self, s):
+        if s <= 0:
+            return self.racah_amplitudes
+        else:
+            sat = self.saturated_amplitudes
+            rac = self.racah_amplitudes
+            transitional = -sat*np.expm1(-rac * s / sat)
+            return transitional / transitional.max()
 
     def _calculate_racah_intensity(self, J1, J2, F1, F2, order=1.0):
         return float((2 * F1 + 1) * (2 * F2 + 1) * \
@@ -503,7 +534,7 @@ class SingleSpectrum(Spectrum):
             self.ratioB = (value, target)
         if parameter.lower() == 'c':
             self.ratioC = (value, target)
-        self.params = self._set_ratios(self.params)
+        self.params = self._set_ratios(self._params)
 
     def set_value(self, value, name):
         """Sets the value of the selected parameter to the given value.
@@ -612,16 +643,16 @@ class SingleSpectrum(Spectrum):
         -------
         float or NumPy array
             Response of the spectrum for each value of *x*."""
-        if self.params['N'].value > 0:
+        if self._params['N'].value > 0:
             s = np.zeros(x.shape)
-            for i in range(self.params['N'].value + 1):
-                s += (self.params['Poisson'].value ** i) * sum([prof(x + i * self.params['Offset'].value)
+            for i in range(self._params['N'].value + 1):
+                s += (self._params['Poisson'].value ** i) * sum([prof(x + i * self._params['Offset'].value)
                                                 for prof in self.parts]) \
                     / np.math.factorial(i)
-            s = s * self.params['scale'].value
+            s = s * self._params['Scale'].value
         else:
-            s = self.params['scale'].value * sum([prof(x) for prof in self.parts])
-        return s + self.params['Background'].value
+            s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
+        return s + self._params['Background'].value
 
     ###############################
     #      PLOTTING ROUTINES      #
@@ -689,8 +720,8 @@ class SingleSpectrum(Spectrum):
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
-        if 'sigma_x' in self.params:
-            xerr = self.params['sigma_x'].value
+        if 'sigma_x' in self._params:
+            xerr = self._params['sigma_x'].value
         else:
             xerr = 0
 
@@ -706,7 +737,7 @@ class SingleSpectrum(Spectrum):
         if bayesian:
             range = (superx.min(), superx.max())
             max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True)[1])
-            min_counts = self.params['Background'].value
+            min_counts = self._params['Background'].value
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
@@ -720,11 +751,15 @@ class SingleSpectrum(Spectrum):
         else:
             line, = ax.plot(superx, self(superx), label=legend)
         if indicate:
+            height = self(superx).min()
             for (p, l) in zip(self.locations, self.ftof):
                 lab = l.split('__')
-                lab = lab[0] + '$\\rightarrow$' + lab[1]
-                ax.annotate(lab, xy=(p, self(p)), rotation=90, color=line.get_color(),
-                            weight='bold', size=14, ha='center')
+                lableft = '/'.join(lab[0].split('_'))
+                labright = '/'.join(lab[1].split('_'))
+                lab = '$' + lableft + '\\rightarrow' + labright + '$'
+                ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
+                            weight='bold', size=14, ha='center', va='bottom')
+                ax.axvline(p, linewidth=0.5, linestyle='--')
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if show:
