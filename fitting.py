@@ -469,14 +469,14 @@ def likelihood_walk(spectrum, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000
     else:
         pbar = 0
 
-    def lnprobList(fvars, spectrum, groupParams, x, y, pbar, func):
+    def lnprobList(fvars, groupParams, spectrum, x, y, xerr, func, pbar):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
         try:
             pbar += 1
         except:
             pass
-        return likelihood_lnprob(groupParams, spectrum, x, y, func)
+        return likelihood_lnprob(groupParams, spectrum, x, y, xerr, func)
 
     groupParams = lm.Parameters()
     for key in params.keys():
@@ -487,7 +487,7 @@ def likelihood_walk(spectrum, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000
                                           priormin=params[key].min,
                                           priormax=params[key].max)
     sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                   args=(spectrum, groupParams, x, y, pbar, func))
+                                   args=(groupParams, spectrum, x, y, xerr, func, pbar))
     burn = int(nsteps * burnin / 100)
     sampler.run_mcmc(pos, burn, storechain=False)
     sampler.reset()
