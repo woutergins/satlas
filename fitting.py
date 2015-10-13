@@ -8,6 +8,7 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import emcee as mcmc
+from scipy.misc import derivative
 import copy
 try:
     import progressbar
@@ -23,7 +24,7 @@ __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
 # CHI SQUARE FITTING ROUTINES #
 ###############################
 
-def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
+def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
     """Model function for chisquare fitting routines as established
     in this module.
 
@@ -31,17 +32,23 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     ----------
     params: lmfit.Parameters
         Instance of lmfit.Parameters object, to be assigned to the spectrum object.
-    spectrum: :class:`.Spectrum`
-        Instance of a :class:`.Spectrum`, to be fitted to the data.
+    f: :class:`.Spectrum`
+        Callable instance with the correct methods for the fitmethods.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis.
     yerr: array_like
         Experimental errorbars on the y-axis.
-    pearson: boolean
-        If True, use the square root of the fitted value as the
-        uncertainty.
+
+    Other parameters
+    ----------------
+    xerr: array_like, optional
+        Given an array with the same size as *x*, the error is taken into
+        account by using the method of estimated variance. Defaults to *None*.
+    func: function, optional
+        Given a function, the errorbars on the y-axis is calculated from
+        the fitvalue using this function. Defaults to *None*.
 
     Returns
     -------
@@ -52,14 +59,23 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     Note
     ----
     If a custom function is to be used for the calculation of the residual,
-    this function should be overwritten."""
-    spectrum.params = params
-    model = spectrum(x)
-    if pearson:
-        yerr = np.sqrt(model)
-    return (y - model) / yerr
+    this function should be overwritten.
 
-def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
+    The method of estimated variance calculates the chisquare in the following way:
+    .. math::
+        \sqrt{\chisquare} = \frac{y-f(x)}{\sqrt{\sigma_x^2+f'(x)^2\sigma_x^2}}"""
+    f.params = params
+    model = f(x)
+    if func is not None:
+        yerr = func(model)
+    if xerr is not None:
+        xerr = derivative(f, x, dx=1E-6) * xerr
+        bottom = np.sqrt(yerr * yerr + xerr * xerr)
+    else:
+        bottom = yerr
+    return (y - model) / bottom
+
+def chisquare_spectroscopic_fit(spectrum, x, y, xerr=None, func=None):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -75,9 +91,9 @@ def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
     x, y, _ = spectrum._sanitize_input(x, y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(spectrum, x, y, yerr, **kwargs)
+    return chisquare_fit(spectrum, x, y, yerr, xerr=xerr, func=func)
 
-def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
+def chisquare_fit(spectrum, x, y, yerr, xerr=None, func=None):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -93,14 +109,14 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
         Experimental data for the y-axis.
     yerr: array_like
         Error bars on *y*.
-    pearson: boolean, optional
-        Selects if the normal or Pearson chi-square statistic is used.
-        The Pearson chi-square uses the model value to estimate the
-        uncertainty. Defaults to *True*.
-    monitor: boolean, optional
-        If True, a plot will be displayed during the fitting which gives the
-        reduced chisquare statistic in function of the iteration
-        number.
+
+    Other parameters
+    ----------------
+    xerr: array_like, optional
+        Error bars on *x*.
+    func: boolean, optional
+        Uses the provided function on the fitvalue to calculate the
+        errorbars.
 
     Return
     ------
@@ -116,35 +132,7 @@ def chisquare_fit(spectrum, x, y, yerr, pearson=True, monitor=False):
     except:
         pass
 
-    if monitor:
-        result = lm.Minimizer(chisquare_model, params, fcn_args=(spectrum, x, y, yerr, pearson))
-        result.prepare_fit(params)
-        try:
-            X = np.concatenate(x)
-            nfree = len(X.flatten()) - result.nvarys
-        except:
-            nfree = len(x.flatten()) - result.nvarys
-        fig, ax = plt.subplots(1, 1)
-        line, = ax.plot([], [])
-        ax.set_xlabel('Iteration')
-        ax.set_ylabel(r'$\chi^2_{red}$')
-        def plot(params, iter, resid, *args, **kwargs):
-            nfree = kwargs['nfree']
-            line = kwargs['line']
-            ax = kwargs['ax']
-            redchi = (resid**2).sum()/nfree
-            xdata = np.append(line.get_xdata(), iter)
-            ydata = np.append(line.get_ydata(), redchi)
-            line.set_xdata(xdata)
-            line.set_ydata(ydata)
-            ax.relim()
-            ax.autoscale_view()
-            plt.draw()
-            plt.show(block=False)
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson), kws={'nfree': nfree, 'line': line, 'ax': ax},
-                             iter_cb=plot)
-    else:
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, pearson))
+    result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, xerr, func))
 
     spectrum.params = copy.deepcopy(result.params)
     spectrum.chisq_res_par = copy.deepcopy(result.params)
@@ -174,7 +162,7 @@ theta_array = np.linspace(-5, 5, 2**10)
 _x_err_calculation_stored = {}
 sqrt2pi = np.sqrt(2*np.pi)
 
-def likelihood_x_err(spectrum, x, y, s, func):
+def likelihood_x_err(spectrum, x, y, xerr, func):
     """Calculates the loglikelihood for a spectrum given
     x and y values. Incorporates a common given error on
     the x-axis.
@@ -187,8 +175,8 @@ def likelihood_x_err(spectrum, x, y, s, func):
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis.
-    s: float
-        Experimental uncertainty on the x-axis
+    xerr: float
+        Experimental uncertainty on *x*.
     func: function
         Function taking (*y_data*, *y_model*) as input,
         and returning the loglikelihood that the data is
@@ -204,20 +192,37 @@ def likelihood_x_err(spectrum, x, y, s, func):
     a convolution integral. If greater accuracy is required,
     change *satlas.fitting.theta_array* to a suitable
     range and length."""
+    # Cache already calculated values:
+    # - x_grid
+    # - y_grid
+    # - FFT of x-uncertainty
+    # Note that this works only if the uncertainty remains the same.
+    # If a parameter approach is desired, this needs to be changed.
     key = hash(x.data.tobytes()) + hash(y.data.tobytes())
     if key in _x_err_calculation_stored:
-        x_grid, y_grid, theta, g_top = _x_err_calculation_stored[key]
+        x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
         x_grid, theta = np.meshgrid(x, theta_array)
         y_grid, _ = np.meshgrid(y, theta_array)
         g_top = (np.exp(-theta*theta * 0.5)).T
-        _x_err_calculation_stored[key] = x_grid, y_grid, theta, g_top
-    p = (np.exp(func(y_grid, spectrum(x_grid + s * theta)))).T
-    g = g_top / (sqrt2pi * s)
-    integral_value = np.fft.irfft(np.fft.rfft(p) * np.fft.rfft(g))[:, -1]
-    return np.log(integral_value)
+        g = (g_top.T / (sqrt2pi * xerr)).T
+        rfft_g = np.fft.rfft(g)
+        _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
+    # Calculate the loglikelihoods for the grid of uncertainty.
+    # Each column is a new datapoint.
+    vals = func(y_grid, spectrum(x_grid + xerr * theta))
+    # To avoid overflows, subtract the maximal values from each column.
+    mod = vals.max(axis=0)
+    vals_mod = vals - mod
+    p = (np.exp(vals_mod)).T
+    # Perform the convolution.
+    integral_value = np.fft.irfft(np.fft.rfft(p) * rfft_g)[:, -1]
+    # After taking the logarithm, add the maximal values again.
+    # The subtraction becomes multiplication (with an exponential) after the exponential,
+    # shifts through the integral, and becomes an addition (due to the logarithm).
+    return np.log(integral_value) + mod
 
-def likelihood_lnprob(params, spectrum, x, y, func):
+def likelihood_lnprob(params, spectrum, x, y, xerr, func):
     """Calculates the logarithm of the probability that the data fits
     the model given the current parameters.
 
@@ -232,6 +237,8 @@ def likelihood_lnprob(params, spectrum, x, y, func):
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis.
+    xerr: array_like
+        Uncertainty values on *x*.
     func: function
         Function calculating the loglikelihood of y_data being drawn from
         a distribution characterized by y_model.
@@ -244,7 +251,7 @@ def likelihood_lnprob(params, spectrum, x, y, func):
     lp = likelihood_lnprior(params)
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(likelihood_loglikelihood(params, spectrum, x, y, func))
+    res = lp + np.sum(likelihood_loglikelihood(params, spectrum, x, y, xerr, func))
     return res
 
 def likelihood_lnprior(params):
@@ -282,7 +289,7 @@ def likelihood_lnprior(params):
             return -np.inf
     return 1.0
 
-def likelihood_loglikelihood(params, spectrum, x, y, func):
+def likelihood_loglikelihood(params, spectrum, x, y, xerr, func):
     """Given a parameters object, a Spectrum object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
@@ -298,6 +305,8 @@ def likelihood_loglikelihood(params, spectrum, x, y, func):
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis.
+    xerr: array_like
+        Experimental data on *x*.
     func: function
         Function calculating the loglikelihood of y_data being drawn from
         a distribution characterized by y_model.
@@ -315,14 +324,13 @@ def likelihood_loglikelihood(params, spectrum, x, y, func):
         return -np.inf
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
-    if params['sigma_x'].value > 0:
-        s = params['sigma_x'].value
-        return_value = likelihood_x_err(spectrum, x, y, s, func)
-    else:
+    if xerr is None or np.allclose(0, xerr):
         return_value = func(y, spectrum(x))
+    else:
+        return_value = likelihood_x_err(spectrum, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_llh, method='L-BFGS-B', method_kws={}, walking=False, walk_kws={}):
+def likelihood_fit(spectrum, x, y, xerr=None, func=llh.poisson_llh, method='L-BFGS-B', method_kws={}, walking=False, walk_kws={}):
     """Fits the given spectrum to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -338,13 +346,9 @@ def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_ll
 
     Other parameters
     ----------------
-    xerr: float, optional
+    xerr: array_like, optional
         Estimated value for the uncertainty on the x-values.
-        Set to 0 to ignore this uncertainty. Defaults to 0.
-    vary_sigma: boolean, optional
-        If True, the uncertainty on the x-values will be
-        treated as a parameter and will be optimized.
-        Defaults to False.
+        Set to *None* to ignore this uncertainty. Defaults to *None*.
     func: function, optional
         Used to calculate the loglikelihood that the data is drawn
         from a distribution given a model value. Should accept
@@ -376,18 +380,18 @@ def likelihood_fit(spectrum, x, y, xerr=0, vary_sigma=False, func=llh.poisson_ll
 
     x, y, _ = spectrum._sanitize_input(x, y)
     params = spectrum.params
-    params.add('sigma_x', value=xerr, vary=vary_sigma, min=0)
-    result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(spectrum, x, y, func))
+    result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(spectrum, x, y, xerr, func))
     success = result.scalar_minimize(method=method, **method_kws)
     spectrum.params = result.params
     spectrum.mle_fit = result.params
     spectrum.mle_result = result.message
+    spectrum.mle_likelihood = negativeloglikelihood(params, spectrum, x, y, xerr, func)
 
     if walking:
-        likelihood_walk(spectrum, x, y, func=func, **walk_kws)
+        likelihood_walk(spectrum, x, y, xerr=xerr, func=func, **walk_kws)
     return success, result.message
 
-def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=20, burnin=10.0,
+def likelihood_walk(spectrum, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20, burnin=10.0,
                     verbose=True, store_walks=False):
     """Calculates the uncertainty on MLE-optimized parameter values
     by performing a random walk through parameter space and comparing
@@ -453,14 +457,14 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
     else:
         pbar = 0
 
-    def lnprobList(fvars, spectrum, groupParams, x, y, pbar, func):
+    def lnprobList(fvars, groupParams, spectrum, x, y, xerr, func, pbar):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
         try:
             pbar += 1
         except:
             pass
-        return likelihood_lnprob(groupParams, spectrum, x, y, func)
+        return likelihood_lnprob(groupParams, spectrum, x, y, xerr, func)
 
     groupParams = lm.Parameters()
     for key in params.keys():
@@ -471,7 +475,7 @@ def likelihood_walk(spectrum, x, y, func=llh.poisson_llh, nsteps=2000, walkers=2
                                           priormin=params[key].min,
                                           priormax=params[key].max)
     sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                   args=(spectrum, groupParams, x, y, pbar, func))
+                                   args=(groupParams, spectrum, x, y, xerr, func, pbar))
     burn = int(nsteps * burnin / 100)
     sampler.run_mcmc(pos, burn, storechain=False)
     sampler.reset()

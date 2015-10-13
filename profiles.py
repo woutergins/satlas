@@ -1,4 +1,5 @@
-"""Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.
+"""
+Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>

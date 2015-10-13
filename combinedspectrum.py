@@ -89,12 +89,9 @@ class CombinedSpectrum(Spectrum):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par.add(new_key,
-                            value=params[key].value,
-                            vary=params[key].vary,
-                            min=params[key].min,
-                            max=params[key].max,
-                            expr=expr)
+                    params[key].expr = expr
+                    par[new_key] = lm.Parameter()
+                    par[new_key].__setstate__(params[key].__getstate__())
             spec.params = par
 
     def seperate_response(self, x):
@@ -182,8 +179,7 @@ class CombinedSpectrum(Spectrum):
             plt.show()
         return toReturn
 
-    def plot_spectroscopic(self, x=None, y=None,
-                           no_of_points=10**4, ax=None, show=True):
+    def plot_spectroscopic(self, x, y, plot_kws={}):
         """Routine that plots the hfs of all the spectra, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -195,26 +191,21 @@ class CombinedSpectrum(Spectrum):
             the peaks is chosen to plot the hfs.
         y: list of arrays
             Experimental y-data.
-        yerr: list of arrays
-            Experimental errors on y.
-        no_of_points: int
-            Number of points to use for the plot of the hfs.
-        ax: matplotlib axes object
-            If provided, plots on this axis
-        show: Boolean
-            if True, the plot will be shown at the end.
+        plot_kws: dictionary
+            Dictionary with keys to be passed on to :meth:`.plot`.
 
         Returns
         -------
-        None"""
+        fig, ax: matplotlib figure and axis
+            Figure and axis used for the plotting."""
 
-        if y is not None and not any([Y is None for Y in y]):
-            yerr = [np.sqrt(Y) for Y in y]
-            for i in range(len(yerr)):
-                yerr[i] = np.where(yerr[i] == 0, 0, yerr[i])
-        else:
-            yerr = [None for i in self.spectra]
-        return self.plot(x=x, y=y, yerr=yerr, no_of_points=no_of_points, ax=ax, show=show)
+        yerr = [np.sqrt(Y) for Y in y]
+        for i in range(len(yerr)):
+            yerr[i] = np.where(yerr[i] == 0, 0, yerr[i])
+        plot_kws['x'] = x
+        plot_kws['y'] = y
+        plot_kws['yerr'] = yerr
+        return self.plot(**plot_kws)
 
     ###########################
     #      MAGIC METHODS      #
