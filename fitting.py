@@ -8,6 +8,7 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import emcee as mcmc
+from scipy.misc import derivative
 import copy
 try:
     import progressbar
@@ -23,7 +24,7 @@ __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
 # CHI SQUARE FITTING ROUTINES #
 ###############################
 
-def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
+def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
     """Model function for chisquare fitting routines as established
     in this module.
 
@@ -31,17 +32,23 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     ----------
     params: lmfit.Parameters
         Instance of lmfit.Parameters object, to be assigned to the spectrum object.
-    spectrum: :class:`.Spectrum`
-        Instance of a :class:`.Spectrum`, to be fitted to the data.
+    f: :class:`.Spectrum`
+        Callable instance with the correct methods for the fitmethods.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
         Experimental data for the y-axis.
     yerr: array_like
         Experimental errorbars on the y-axis.
-    pearson: boolean
-        If True, use the square root of the fitted value as the
-        uncertainty.
+
+    Other parameters
+    ----------------
+    xerr: array_like, optional
+        Given an array with the same size as *x*, the error is taken into
+        account by using the method of estimated variance. Defaults to *None*.
+    func: function, optional
+        Given a function, the errorbars on the y-axis is calculated from
+        the fitvalue using this function. Defaults to *None*.
 
     Returns
     -------
@@ -52,14 +59,23 @@ def chisquare_model(params, spectrum, x, y, yerr, pearson=False):
     Note
     ----
     If a custom function is to be used for the calculation of the residual,
-    this function should be overwritten."""
-    spectrum.params = params
-    model = spectrum(x)
-    if pearson:
-        yerr = np.sqrt(model)
-    return (y - model) / yerr
+    this function should be overwritten.
 
-def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
+    The method of estimated variance calculates the chisquare in the following way:
+    .. math::
+        \sqrt{\chisquare} = \frac{y-f(x)}{\sqrt{\sigma_x^2+f'(x)^2\sigma_x^2}}"""
+    f.params = params
+    model = f(x)
+    if func is not None:
+        yerr = func(model)
+    if xerr is not None:
+        xerr = derivative(f, x, dx=1E-6) * xerr
+        bottom = np.sqrt(yerr * yerr + xerr * xerr)
+    else:
+        bottom = yerr
+    return (y - model) / bottom
+
+def chisquare_spectroscopic_fit(spectrum, x, y, xerr=None, func=None):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -75,9 +91,9 @@ def chisquare_spectroscopic_fit(spectrum, x, y, **kwargs):
     x, y, _ = spectrum._sanitize_input(x, y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(spectrum, x, y, yerr, **kwargs)
+    return chisquare_fit(spectrum, x, y, yerr, xerr=xerr, func=func)
 
-def chisquare_fit(spectrum, x, y, yerr, monitor=False, **kwargs):
+def chisquare_fit(spectrum, x, y, yerr, xerr=None, func=None):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -93,14 +109,14 @@ def chisquare_fit(spectrum, x, y, yerr, monitor=False, **kwargs):
         Experimental data for the y-axis.
     yerr: array_like
         Error bars on *y*.
-    pearson: boolean, optional
-        Selects if the normal or Pearson chi-square statistic is used.
-        The Pearson chi-square uses the model value to estimate the
-        uncertainty. Defaults to *True*.
-    monitor: boolean, optional
-        If True, a plot will be displayed during the fitting which gives the
-        reduced chisquare statistic in function of the iteration
-        number.
+
+    Other parameters
+    ----------------
+    xerr: array_like, optional
+        Error bars on *x*.
+    func: boolean, optional
+        Uses the provided function on the fitvalue to calculate the
+        errorbars.
 
     Return
     ------
@@ -116,35 +132,7 @@ def chisquare_fit(spectrum, x, y, yerr, monitor=False, **kwargs):
     except:
         pass
 
-    if monitor:
-        result = lm.Minimizer(chisquare_model, params, fcn_args=(spectrum, x, y, yerr, kwargs))
-        result.prepare_fit(params)
-        try:
-            X = np.concatenate(x)
-            nfree = len(X.flatten()) - result.nvarys
-        except:
-            nfree = len(x.flatten()) - result.nvarys
-        fig, ax = plt.subplots(1, 1)
-        line, = ax.plot([], [])
-        ax.set_xlabel('Iteration')
-        ax.set_ylabel(r'$\chi^2_{red}$')
-        def plot(params, iter, resid, *args, **kwargs):
-            nfree = kwargs['nfree']
-            line = kwargs['line']
-            ax = kwargs['ax']
-            redchi = (resid**2).sum()/nfree
-            xdata = np.append(line.get_xdata(), iter)
-            ydata = np.append(line.get_ydata(), redchi)
-            line.set_xdata(xdata)
-            line.set_ydata(ydata)
-            ax.relim()
-            ax.autoscale_view()
-            plt.draw()
-            plt.show(block=False)
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, kwargs), kws={'nfree': nfree, 'line': line, 'ax': ax},
-                             iter_cb=plot)
-    else:
-        result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, kwargs))
+    result = lm.minimize(chisquare_model, params, args=(spectrum, x, y, yerr, xerr, func))
 
     spectrum.params = copy.deepcopy(result.params)
     spectrum.chisq_res_par = copy.deepcopy(result.params)

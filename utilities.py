@@ -228,8 +228,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
                 success = True
                 print('Fitting did not converge, carrying on...')
         return_value = getattr(spectrum, attr) - orig_value
-        print(value, return_value)
-        return getattr(spectrum, attr) - orig_value
+        return return_value
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
@@ -278,16 +277,19 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
         stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 0.01 * value
+        stderr = stderr if stderr is not None else 0.1 * value
+        stderr = stderr if stderr != 0 else 0.1 * value
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
         while True:
             search_value += 0.5*stderr
             new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
+                print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
                                                                   args=(spectrum, params, param_names[i], x_data,
                                                                         y_data, orig_value, func))
+                print('Found optimal right value: {:.2f}'.format(ranges[param_names[i]]['right']))
                 break
         search_value = value
         # Do the same for the left
@@ -295,9 +297,11 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             search_value -= 0.5*stderr
             new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
+                print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
                                                                   args=(spectrum, params, param_names[i], x_data,
                                                                         y_data, orig_value, func))
+                print('Found optimal left value: {:.2f}'.format(ranges[param_names[i]]['left']))
                 break
 
         # Keep the parameter fixed, and let it vary (with given number of points)
