@@ -17,8 +17,7 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda update --yes conda
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy nose
-  - pip install pep8 python-coveralls
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy sympy matplotlib pandas emcee lmfit progressbar2
 deploy:
   provider: pypi
   user: ginswouter
