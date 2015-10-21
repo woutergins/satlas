@@ -11,19 +11,19 @@ import pandas as pd
 import satlas.profiles as p
 import scipy.optimize as optimize
 from fractions import Fraction
+from sympy.physics.wigner import wigner_6j, wigner_3j
 
-from .isomerspectrum import IsomerSpectrum
-from .spectrum import Spectrum
-from .wigner import wigner_6j, wigner_3j
+from .multimodel import MultiModel
+from .basemodel import BaseModel
 from .utilities import poisson_interval
 from .loglikelihood import poisson_llh
 W6J = wigner_6j
 W3J = wigner_3j
 
-__all__ = ['SingleSpectrum']
+__all__ = ['HFSModel']
 
 
-class SingleSpectrum(Spectrum):
+class HFSModel(BaseModel):
 
     r"""Constructs a HFS spectrum, consisting of different
     peaks described by a certain profile. The number of peaks is governed by
@@ -64,7 +64,7 @@ class SingleSpectrum(Spectrum):
             Sets the constant background to the supplied value. Defaults to 0.1.
         shape : string, optional
             Sets the transition shape. String is converted to lowercase. For
-            possible values, see *Spectrum__shapes__*.keys()`.
+            possible values, see *HFSModel__shapes__*.keys()`.
             Defaults to Voigt if an incorrect value is supplied.
         racah_int: boolean, optional
             If True, fixes the relative peak intensities to the Racah intensities.
@@ -104,7 +104,7 @@ class SingleSpectrum(Spectrum):
             * *Offset* (only if the attribute *n* is greater than 0)
             * *Amp* (with the correct labeling of the transition)
             * *scale*"""
-        super(SingleSpectrum, self).__init__()
+        super(HFSModel, self).__init__()
         shape = shape.lower()
         if shape not in self.__shapes__:
             print("""Given profile shape not yet supported.
@@ -608,22 +608,22 @@ class SingleSpectrum(Spectrum):
     ###########################
 
     def __add__(self, other):
-        """Add two spectra together to get an :class:`.IsomerSpectrum`.
+        """Add two spectra together to get an :class:`.MultiModel`.
 
         Parameters
         ----------
-        other: Spectrum
+        other: HFSModel
             Other spectrum to add.
 
         Returns
         -------
-        IsomerSpectrum
-            An Isomerspectrum combining both spectra."""
-        if isinstance(other, SingleSpectrum):
+        MultiModel
+            A MultiModel combining both spectra."""
+        if isinstance(other, HFSModel):
             l = [self, other]
-        elif isinstance(other, IsomerSpectrum):
+        elif isinstance(other, MultiModel):
             l = [self] + other.spectra
-        return IsomerSpectrum(l)
+        return MultiModel(l)
 
     def __radd__(self, other):
         if other == 0:
