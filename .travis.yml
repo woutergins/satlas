@@ -12,8 +12,6 @@ python:
 deploy:
   provider: pypi
   user: ginswouter
-  password:
-    secure: IkBen#21van10011991
   on:
     tags: true
     branch: master
