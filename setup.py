@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 setup(
   name='satlas',
   packages=['satlas'], # this must be the same as the name above
@@ -7,6 +7,7 @@ setup(
   author='Wouter Gins',
   author_email='woutergins@gmail.com',
   url='https://woutergins.github.io/satlas/',
+  license='MIT',
   download_url='https://github.com/woutergins/satlas/tarball/0.1.0b4', # I'll explain this in a second
   keywords=['physics', 'hyperfine structure', 'fitting'], # arbitrary keywords
   install_requires=['numpy',
