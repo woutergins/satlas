@@ -8,23 +8,23 @@ import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
-from .spectrum import Spectrum
-__all__ = ['CombinedSpectrum']
+from .basemodel import BaseModel
+__all__ = ['CombinedModel']
 
 
-class CombinedSpectrum(Spectrum):
+class CombinedModel(BaseModel):
 
-    """Combines different spectra for simultaneous fitting."""
+    """Combines different models for simultaneous fitting."""
 
-    def __init__(self, spectra):
-        """Initializes the class for simultaneous fitting of different spectra.
+    def __init__(self, models):
+        """Initializes the class for simultaneous fitting of different models.
 
         Parameters
         ----------
-        spectra: list of :class:`.IsomerSpectrum` or :class:`.SingleSpectrum` objects
-            A list defining the different spectra."""
-        super(CombinedSpectrum, self).__init__()
-        self.spectra = spectra
+        models: list of :class:`.BaseModel` or :class:`.SingleSpectrum` objects
+            A list defining the different models."""
+        super(CombinedModel, self).__init__()
+        self.models = models
         self.shared = ['Al',
                        'Au',
                        'Bl',
@@ -33,21 +33,9 @@ class CombinedSpectrum(Spectrum):
                        'Cu',
                        'Offset']
 
-    def _sanitize_input(self, x, y, yerr=None):
-        # Take the *x*, *y*, and *yerr* inputs, and sanitize
-        # them for the fit, meaning it should convert *y*/*yerr* to
-        # the output format of the class, and *x* to the input format of
-        # the class.
-        if isinstance(y, list):
-            y = np.hstack(y)
-        if yerr is not None:
-            if isinstance(yerr, list):
-                yerr = np.hstack(yerr)
-        return x, y, yerr
-
     @property
     def shared(self):
-        """Contains all parameters which share the same value among all spectra."""
+        """Contains all parameters which share the same value among all models."""
         return self._shared
 
     @shared.setter
@@ -59,7 +47,7 @@ class CombinedSpectrum(Spectrum):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
         params = lm.Parameters()
-        for i, s in enumerate(self.spectra):
+        for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
@@ -79,7 +67,7 @@ class CombinedSpectrum(Spectrum):
 
     @params.setter
     def params(self, params):
-        for i, spec in enumerate(self.spectra):
+        for i, spec in enumerate(self.models):
             par = lm.Parameters()
             for key in params:
                 if key.startswith('s'+str(i)+'_'):
@@ -100,8 +88,8 @@ class CombinedSpectrum(Spectrum):
         Parameters
         ----------
         x: list of arrays
-            A list equal in length to the number of subspectra,
-            contains arrays for which the subspectra have to be
+            A list equal in length to the number of submodels,
+            contains arrays for which the submodels have to be
             evaluated.
 
         Returns
@@ -110,7 +98,7 @@ class CombinedSpectrum(Spectrum):
             The output array, of the same shape as the input
             list of arrays, containing the response values."""
         return np.squeeze([s.seperate_response(X)
-                           for s, X in zip(self.spectra, x)])
+                           for s, X in zip(self.models, x)])
 
     ###############################
     #      PLOTTING ROUTINES      #
@@ -148,28 +136,28 @@ class CombinedSpectrum(Spectrum):
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
         if ax is None:
-            fig, ax = plt.subplots(len(self.spectra), 1, sharex=True)
+            fig, ax = plt.subplots(len(self.models), 1, sharex=True)
             height = fig.get_figheight()
             width = fig.get_figwidth()
-            fig.set_size_inches(width, len(self.spectra) * height, forward=True)
+            fig.set_size_inches(width, len(self.models) * height, forward=True)
         else:
             fig = ax[0].get_figure()
         toReturn = fig, ax
 
         if x is None:
-            x = [None] * len(self.spectra)
+            x = [None] * len(self.models)
         if y is None:
-            y = [None] * len(self.spectra)
+            y = [None] * len(self.models)
         if yerr is None:
-            yerr = [None] * len(self.spectra)
+            yerr = [None] * len(self.models)
 
-        selected = int(np.floor(len(self.spectra)/2 - 1))
+        selected = int(np.floor(len(self.models)/2 - 1))
         for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
-                                                   self.spectra)):
+                                                   self.models)):
             if i == selected:
                 spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
                           data_legend=data_legend, legend=legend, xlabel='')
-            elif i == len(self.spectra) - 1:
+            elif i == len(self.models) - 1:
                 spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
             else:
                 spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
@@ -180,7 +168,7 @@ class CombinedSpectrum(Spectrum):
         return toReturn
 
     def plot_spectroscopic(self, x, y, plot_kws={}):
-        """Routine that plots the hfs of all the spectra, possibly on
+        """Routine that plots the hfs of all the models, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
@@ -212,21 +200,21 @@ class CombinedSpectrum(Spectrum):
     ###########################
 
     def __add__(self, other):
-        """Adding another CombinedSpectrum adds the spectra therein
-        to the list of spectra, adding an IsomerSpectrum or SingleSpectrum
+        """Adding another CombinedModel adds the models therein
+        to the list of models, adding an IsomerSpectrum or SingleSpectrum
         adds that one spectrum to the list.
 
         Returns
         -------
-        CombinedSpectrum"""
-        if isinstance(other, CombinedSpectrum):
-            return_object = CombinedSpectrum(self.spectra.extend(other.spectra))
+        CombinedModel"""
+        if isinstance(other, CombinedModel):
+            return_object = CombinedModel(self.models.extend(other.models))
         elif isinstance(other, Spectrum):
-            return_object = CombinedSpectrum(self.spectra.append(other))
+            return_object = CombinedModel(self.models.append(other))
         return return_object
 
     def __call__(self, x):
-        """Pass the seperate frequency arrays to the subspectra,
+        """Pass the seperate frequency arrays to the submodels,
         and return their response values as a list of arrays.
 
         Parameters
@@ -238,4 +226,4 @@ class CombinedSpectrum(Spectrum):
         -------
         list of floats or NumPy arrays
             Response of each spectrum for each seperate value in *x*."""
-        return np.hstack([s(X) for s, X in zip(self.spectra, x)])
+        return np.array([s(X) for s, X in zip(self.spectra, x)])

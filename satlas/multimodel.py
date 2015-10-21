@@ -6,35 +6,30 @@ Implementation of a class for the analysis of hyperfine structure spectra with i
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from .combinedspectrum import CombinedSpectrum
+from .basemodel import BaseModel
 from .utilities import poisson_interval
 import lmfit
 import copy
 
-__all__ = ['IsomerSpectrum']
+__all__ = ['MultiModel']
 
 
-class IsomerSpectrum(CombinedSpectrum):
+class MultiModel(BaseModel):
 
     """Create a spectrum containing the information of multiple hyperfine
     structures."""
 
     def __init__(self, spectra):
-        """Initializes the HFS by providing a list of :class:`.SingleSpectrum`
+        """Initializes the HFS by providing a list of :class:`.HFSModel`
         objects.
 
         Parameters
         ----------
-        spectra: list of :class:`.SingleSpectrum` instances
+        models: list of :class:`.HFSModel` instances
             A list containing the base spectra."""
-        super(IsomerSpectrum, self).__init__(spectra)
+        super(MultiModel, self).__init__()
+        self.models = models
         self.shared = []
-
-    def _sanitize_input(self, x, y, yerr=None):
-        x, y = np.array(x), np.array(y)
-        if yerr is not None:
-            yerr = np.array(yerr)
-        return x, y, yerr
 
     @property
     def shared(self):
@@ -235,15 +230,15 @@ class IsomerSpectrum(CombinedSpectrum):
         return self.plot(**kwargs)
 
     def __add__(self, other):
-        """Adding an IsomerSpectrum results in a new IsomerSpectrum
+        """Adding an MultiModel results in a new MultiModel
         with the new spectrum added.
 
         Returns
         -------
-        IsomerSpectrum"""
-        if isinstance(other, IsomerSpectrum):
+        MultiModel"""
+        if isinstance(other, MultiModel):
             spectra = self.spectra + other.spectra
-            return IsomerSpectrum(spectra)
+            return MultiModel(spectra)
         else:
             try:
                 return other.__add__(self)
