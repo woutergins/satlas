@@ -9,17 +9,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-__all__ = ['Spectrum']
+__all__ = ['Model']
 
 
-class Spectrum(object):
+class BaseModel(object):
 
-    """Abstract baseclass for all spectra, such as :class:`.SingleSpectrum`,
-    :class:`.CombinedSpectrum` and :class:`.IsomerSpectrum`. For input, see these
+    """Abstract baseclass for all spectra, such as :class:`.HFSModel`,
+    :class:`.CombinedModel` and :class:`.MultiModel`. For input, see these
     classes."""
 
     def __init__(self):
-        super(Spectrum, self).__init__()
+        super(Model, self).__init__()
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
 
     @property
@@ -46,7 +46,7 @@ class Spectrum(object):
                 kwargs['show_correl'] = False
             print(lm.fit_report(self.mle_fit, **kwargs))
         else:
-            print('Spectrum has not yet been fitted with this method!')
+            print('Model has not yet been fitted with this method!')
 
     def display_chisquare_fit(self, **kwargs):
         """Display all relevent info of the least-squares fitting routine,

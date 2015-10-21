@@ -1,19 +1,19 @@
 import matplotlib as mpl
-from . import singlespectrum
-from .singlespectrum import *
-from . import combinedspectrum
-from .combinedspectrum import *
-from . import isomerspectrum
-from .isomerspectrum import *
+from . import hfsmodel
+from .hfsmodel import *
+from . import combinedmodel
+from .combinedmodel import *
+from . import multimodel
+from .multimodel import *
 from . import utilities
 from .utilities import *
 from . import fitting
 from .fitting import *
 __all__ = []
 
-__all__.extend(singlespectrum.__all__)
-__all__.extend(combinedspectrum.__all__)
-__all__.extend(isomerspectrum.__all__)
+__all__.extend(hfsmodel.__all__)
+__all__.extend(combinedmodel.__all__)
+__all__.extend(multimodel.__all__)
 __all__.extend(utilities.__all__)
 __all__.extend(fitting.__all__)
 
