@@ -1,0 +1,8 @@
+numpy
+scipy
+sympy
+matplotlib
+pandas
+emcee
+lmfit
+progressbar2

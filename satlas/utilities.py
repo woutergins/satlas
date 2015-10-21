@@ -170,25 +170,23 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
+def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
     plots, with the intersection with the plots giving the correct confidence interval for the
     parameter. In solid lines, the interval estimated by the fitting routine is drawn.
-    On the offdiagonal, two parameters are fixed and the spectrum is again fitted to the data.
+    On the offdiagonal, two parameters are fixed and the model is again fitted to the data.
     The change in chisquare/loglikelihood is mapped to 1, 2 and 3 sigma contourmaps.
 
     Parameters
     ----------
-    spectrum: :class:`.Spectrum`
-        Instance of the spectrum for which the contour map has to be generated.
+    f: :class:`.BaseModel`
+        Instance of the model for which the contour map has to be generated.
     x_data: array_like or list of array_likes
-        Data on the x-axis for the fit. Must be appropriate input for the *spectrum*
-        instance.
+        Data on the x-axis for the fit. Must be appropriate input for *f*.
     y_data: array_like or list of array_likes
-        Data on the y-axis for the fit. Must be appropriate input for the *spectrum*
-        instance.
+        Data on the y-axis for the fit. Must be appropriate input for *f*.
 
     Other parameters
     ----------------
@@ -206,7 +204,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         Dictionary of keywords to pass on to the fitting routine."""
     from . import fitting
 
-    def fit_new_value(value, spectrum, params, params_name, x, y, orig_value, func):
+    def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
         try:
             if all(value == orig_value):
                 return 0
@@ -218,16 +216,16 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
                 return 0
             params[params_name].value = value
             params[params_name].vary = False
-        spectrum.params = params
+        f.params = params
         success = False
         counter = 0
         while not success:
-            success, message = func(spectrum, x, y, **fit_kws)
+            success, message = func(f, x, y, **fit_kws)
             counter += 1
             if counter > 10:
                 success = True
                 print('Fitting did not converge, carrying on...')
-        return_value = getattr(spectrum, attr) - orig_value
+        return_value = getattr(f, attr) - orig_value
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
@@ -236,10 +234,10 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
     title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
 
-    func(spectrum, x_data, y_data, **fit_kws)
+    func(f, x_data, y_data, **fit_kws)
 
-    orig_value = getattr(spectrum, attr)
-    orig_params = copy.deepcopy(spectrum.params)
+    orig_value = getattr(f, attr)
+    orig_params = copy.deepcopy(f.params)
 
     ranges = {}
 
@@ -250,7 +248,6 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         if orig_params[p].vary and (filter is None or any([f in p for f in filter])):
             no_params += 1
             param_names.append(p)
-
     fig, axes, cbar = _make_axes_grid(no_params, axis_padding=2.0, cbar=no_params > 1)
 
     # Make the plots on the diagonal: plot the chisquare/likelihood
@@ -265,7 +262,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
                    progressbar.Bar(marker=progressbar.RotatingMarker()),
                    ' ',
                    progressbar.AdaptiveETA()]
-        params = spectrum.params
+        params = f.params
         ax = axes[i, i]
         ax.set_title(param_names[i])
         plt.setp(ax.get_yticklabels(), visible=True)
@@ -283,11 +280,12 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         search_value = value
         while True:
             search_value += 0.5*stderr
-            new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
+            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+            print(search_value, new_value)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
-                                                                  args=(spectrum, params, param_names[i], x_data,
+                                                                  args=(f, params, param_names[i], x_data,
                                                                         y_data, orig_value, func))
                 print('Found optimal right value: {:.2f}'.format(ranges[param_names[i]]['right']))
                 break
@@ -295,11 +293,12 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         # Do the same for the left
         while True:
             search_value -= 0.5*stderr
-            new_value = fit_new_value(search_value, spectrum, params, param_names[i], x_data, y_data, orig_value, func)
+            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+            print(search_value, new_value)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
-                                                                  args=(spectrum, params, param_names[i], x_data,
+                                                                  args=(f, params, param_names[i], x_data,
                                                                         y_data, orig_value, func))
                 print('Found optimal left value: {:.2f}'.format(ranges[param_names[i]]['left']))
                 break
@@ -316,7 +315,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
         # Calculate the new value, and store it in the array. Update the progressbar.
         for j, v in enumerate(value_range):
-            chisquare[j] = fit_new_value(v, spectrum, params, param_names[i],
+            chisquare[j] = fit_new_value(v, f, params, param_names[i],
                                          x_data, y_data, orig_value, func)
             pbar += 1
         pbar.finish()
@@ -331,8 +330,8 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         ax.axvline(value - left)
         ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
-        spectrum.params = copy.deepcopy(orig_params)
-        func(spectrum, x_data, y_data, **fit_kws)
+        f.params = copy.deepcopy(orig_params)
+        func(f, x_data, y_data, **fit_kws)
 
     for i, j in zip(*np.tril_indices_from(axes, -1)):
         widgets = [param_names[j]+' ' + param_names[i]+': ', progressbar.Percentage(), ' ',
@@ -366,7 +365,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
         for k, l in zip(i_indices.flatten(), j_indices.flatten()):
             x = X[k, l]
             y = Y[k, l]
-            Z[k, l] = fit_new_value([x, y], spectrum, params, [x_name, y_name],
+            Z[k, l] = fit_new_value([x, y], f, params, [x_name, y_name],
                                     x_data, y_data, orig_value, func)
             pbar += 1
         pbar.finish()
@@ -376,8 +375,8 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
         contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
-        spectrum.params = orig_params
-        func(spectrum, x_data, y_data, **fit_kws)
+        f.params = orig_params
+        func(f, x_data, y_data, **fit_kws)
     try:
         cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
         cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
@@ -387,7 +386,7 @@ def generate_correlation_map(spectrum, x_data, y_data, method='chisquare', filte
 
     return fig, axes, cbar
 
-def generate_correlation_plot(data, filter=None):
+def generate_correlation_plot(filename, filter=None):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
     3 sigma contours on the off-diagonal. The 1-sigma limits based on the
@@ -395,9 +394,8 @@ def generate_correlation_plot(data, filter=None):
 
     Parameters
     ----------
-    data: DataFrame
-        DataFrame collecting all the information on the random walk for each
-        parameter.
+    filename: string
+        Filename for the h5 file containing the data from the walk.
     filter: list of str, optional
         If supplied, only this list of columns is used for the plot.
 
@@ -405,75 +403,77 @@ def generate_correlation_plot(data, filter=None):
     -------
     figure
         Returns the MatPlotLib figure created."""
-    if filter is not None:
-        filter = [c for f in filter for c in data.columns.tolist() if f in c]
-        data = data[filter]
+    with h5py.File(filename, 'r') as store:
+        columns = store['data'].attrs['format']
+        columns = [f.decode('utf-8') for f in columns]
+        if filter is not None:
+            filter = [c for f in filter for c in columns if f in c]
 
-    fig, axes, cbar = _make_axes_grid(len(data.columns), axis_padding=0)
+        fig, axes, cbar = _make_axes_grid(len(columns), axis_padding=0)
 
-    for i, val in enumerate(data.columns):
-        ax = axes[i, i]
-        x = data[val]
-        bins = 50
-        ax.hist(x.values, bins)
-        q = [16.0, 50.0, 84.0]
-        q16, q50, q84 = np.percentile(x.values, q)
+        for i, val in enumerate(columns):
+            ax = axes[i, i]
+            x = store['data'][:, val]
+            bins = 50
+            ax.hist(x.values, bins)
+            q = [16.0, 50.0, 84.0]
+            q16, q50, q84 = np.percentile(x.values, q)
 
-        title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
-        ax.set_title(title.format(q50, q50-q16, q84-q50))
-        qvalues = [q16, q50, q84]
-        for q in qvalues:
-            ax.axvline(q, ls="dashed")
-        ax.set_yticks([])
-        ax.set_yticklabels([])
+            title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+            ax.set_title(title.format(q50, q50-q16, q84-q50))
+            qvalues = [q16, q50, q84]
+            for q in qvalues:
+                ax.axvline(q, ls="dashed")
+            ax.set_yticks([])
+            ax.set_yticklabels([])
 
-    for i, j in zip(*np.tril_indices_from(axes, -1)):
-        ax = axes[i, j]
-        x = data[data.columns[j]].values
-        y = data[data.columns[i]].values
-        if j == 0:
-            ax.set_ylabel(data.columns[i])
-        if i == len(data.columns) - 1:
-            ax.set_xlabel(data.columns[j])
-        X = np.linspace(x.min(), x.max(), bins + 1)
-        Y = np.linspace(y.min(), y.max(), bins + 1)
-        H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
-                                 weights=None)
-        X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
-        X, Y = X[:-1], Y[:-1]
-        H = (H - H.min()) / (H.max() - H.min())
+        for i, j in zip(*np.tril_indices_from(axes, -1)):
+            ax = axes[i, j]
+            x = store['data'][:,j]
+            y = store['data'][:,i]
+            if j == 0:
+                ax.set_ylabel(columns[i])
+            if i == len(columns) - 1:
+                ax.set_xlabel(columns[j])
+            X = np.linspace(x.min(), x.max(), bins + 1)
+            Y = np.linspace(y.min(), y.max(), bins + 1)
+            H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
+                                     weights=None)
+            X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
+            X, Y = X[:-1], Y[:-1]
+            H = (H - H.min()) / (H.max() - H.min())
 
-        Hflat = H.flatten()
-        inds = np.argsort(Hflat)[::-1]
-        Hflat = Hflat[inds]
-        sm = np.cumsum(Hflat)
-        sm /= sm[-1]
-        levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
-        V = np.empty(len(levels))
-        for i, v0 in enumerate(levels):
-            try:
-                V[i] = Hflat[sm <= v0][-1]
-            except:
-                V[i] = Hflat[0]
+            Hflat = H.flatten()
+            inds = np.argsort(Hflat)[::-1]
+            Hflat = Hflat[inds]
+            sm = np.cumsum(Hflat)
+            sm /= sm[-1]
+            levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
+            V = np.empty(len(levels))
+            for i, v0 in enumerate(levels):
+                try:
+                    V[i] = Hflat[sm <= v0][-1]
+                except:
+                    V[i] = Hflat[0]
 
-        bounds = np.concatenate([[H.max()], V])[::-1]
-        norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+            bounds = np.concatenate([[H.max()], V])[::-1]
+            norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
 
-        contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
-    cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
-    cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
-    cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+            contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+        cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
+        cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     return fig, axes, cbar
 
 def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
-    """Generates a spectrum by random sampling from the provided hyperfine
-    spectrum and range. The total number of counts for the generated spectrum
+    """Generates a model by random sampling from the provided :class:`.HFSModel`
+    and range. The total number of counts for the generated spectrum
     is required.
 
     Parameters
     ----------
-    spectrum: SingleSpectrum
-        An instance of SingleSpectrum, which gives the probability distribution
+    spectrum: :class:`.HFSModel`
+        An instance of class:`.HFSModel`, which gives the probability distribution
         from which the random samples are drawn.
     x: NumPy array
         NumPy array representing the bin centers for the spectrum.
