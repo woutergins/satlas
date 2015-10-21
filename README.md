@@ -5,6 +5,7 @@ SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
 ![alt text](https://img.shields.io/badge/Python-3.4-green.svg 'Python version')
 ![alt text](https://img.shields.io/badge/Tested_on-Windows-green.svg 'Supported platform')
 ![alt text](https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg 'Unsupported platform')
+[![Build Status](https://travis-ci.org/woutergins/satlas.svg?branch=master)](https://travis-ci.org/woutergins/satlas)
 
 Purpose
 -------
