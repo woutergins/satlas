@@ -21,7 +21,7 @@ install:
   - pip install matplotlib pandas emcee lmfit progressbar2
 deploy:
   provider: pypi
-  user: ginswouter
+  user: woutergins
   password:
     secure: "QwxMmycKcntlehasQ8qVpJpv+ov4tmqsyjR0iUYw2sSIEfKGu/Ys01C/aY/hD0p460QowB6Z7Yku+X19Eu9sQEA5XcGcN0BdbbeBqj2QAyxmiHlFEdpPdVZyr8arMBy6foSdVUgejEDzEmZYRWJUY8FxuVmA+zACgS8K+ODBi289j7MIjvvZaRz1ylzOJGJET8cD/sw9jzf0zEhobNUEVFYTlpYsFSD0VReHN4tAdySuM34VTq4cy83jM37dtAsLzCJwnu/1rLwwfbxb2cGgyhEsIifuiZ3BnFyxYYtluYSVsVY/MjVmv8oydsxI6Sy7pV5f8a4RHOA7ueZzwIHNrjW1Q5RUPbKHJMoXUXwlIiFFhVp8WvO0FvUyM5W7H5cJeiHsg0zxmn6IM+AmG3VMjT4GIxyXqphPLOs5fBjU4Cu2CABJt4SpHx16Z/xD7Om9u8S3ZoVHyXQ0nyCpMq/j4YTpqEhBUGIox3LPoqE75svnk1DVY9MeeSm6YpxUGgtA9gKBNoCmsAo0+Tn6H8vPrb2RvLP+fch6OKX8SGFdCfBFYqqGT+DTLZhTysohdBjkX+SCeCuxfi2+/KjMnvCwzV+ark7Gz8eFD/WLj48PJppgjDv4aSp0KGjGR0IwsfwSngOY4fvEvLZzsqJrW9GaQIu3vb/ymdSuT4kvi4PiITE="
   on:
