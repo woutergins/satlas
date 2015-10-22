@@ -16,6 +16,7 @@ except:
     pass
 import pandas as pd
 import h5py
+import os
 from . import loglikelihood as llh
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
@@ -601,13 +602,25 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
         filename = '{}.h5'.format(time.time())
     else:
         filename = filename.split('.')[:-1] + '.h5'
-    with h5py.File(filename, 'w') as store:
-        dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip')
-        dset.attrs['format'] = np.array([f.encode('utf-8') for f in var_names])
 
-        for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
-            result = result[0]
-            dset[i * walkers:(i + 1) * walkers, :] = result
+    if os.path.isfile(filename):
+        with h5py.File(filename, 'a') as store:
+            dset = store['data']
+            offset = dset.len()
+            dset.resize(offset + nsteps * walkers)
+            pos = dset[-walkers:, :]
+
+            for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
+                result = result[0]
+                dset[offset + i * walkers:offset + (i + 1) * walkers, :] = result
+    else:
+        with h5py.File(filename, 'w') as store:
+            dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip')
+            dset.attrs['format'] = np.array([f.encode('utf-8') for f in var_names])
+
+            for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
+                result = result[0]
+                dset[i * walkers:(i + 1) * walkers, :] = result
     try:
         pbar.finish()
     except:

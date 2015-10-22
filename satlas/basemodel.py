@@ -19,7 +19,7 @@ class BaseModel(object):
     classes."""
 
     def __init__(self):
-        super(Model, self).__init__()
+        super(BaseModel, self).__init__()
         self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
 
     @property
