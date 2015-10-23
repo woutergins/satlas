@@ -1,10 +1,11 @@
-SATLAS -- Simulation and Analysis Toolbox for Laser Spectroscopy and NMR Experiments
-====================================================================================
+SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
+=============================================================
 ![alt text](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18444-blue.svg 'DOI Identifier')
 ![alt text](https://img.shields.io/badge/License-MIT-blue.svg 'License')
 ![alt text](https://img.shields.io/badge/Python-3.4-green.svg 'Python version')
 ![alt text](https://img.shields.io/badge/Tested_on-Windows-green.svg 'Supported platform')
 ![alt text](https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg 'Unsupported platform')
+[![Build Status](https://travis-ci.org/woutergins/satlas.svg?branch=master)](https://travis-ci.org/woutergins/satlas)
 
 Purpose
 -------

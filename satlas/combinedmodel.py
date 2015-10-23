@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import copy
 from .basemodel import BaseModel
+from .utilities import poisson_interval
 __all__ = ['CombinedModel']
 
 
@@ -155,12 +156,22 @@ class CombinedModel(BaseModel):
         for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
                                                    self.models)):
             if i == selected:
-                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
-                          data_legend=data_legend, legend=legend, xlabel='')
+                try:
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False,
+                              data_legend=data_legend, legend=legend, xlabel='')
+                except:
+                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
+                              data_legend=data_legend, legend=legend, xlabel='')
             elif i == len(self.models) - 1:
-                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                try:
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                except:
+                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
             else:
-                spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                try:
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                except:
+                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
 
         plt.tight_layout()
         if show:
@@ -187,9 +198,10 @@ class CombinedModel(BaseModel):
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
 
-        yerr = [np.sqrt(Y) for Y in y]
-        for i in range(len(yerr)):
-            yerr[i] = np.where(yerr[i] == 0, 0, yerr[i])
+        yerr = []
+        for Y in y:
+            ylow, yhigh = poisson_interval(Y)
+            yerr.append({'low': Y - ylow, 'high': yhigh - Y})
         plot_kws['x'] = x
         plot_kws['y'] = y
         plot_kws['yerr'] = yerr
@@ -226,4 +238,4 @@ class CombinedModel(BaseModel):
         -------
         list of floats or NumPy arrays
             Response of each spectrum for each seperate value in *x*."""
-        return np.array([s(X) for s, X in zip(self.spectra, x)])
+        return np.array([s(X) for s, X in zip(self.models, x)])

@@ -12,6 +12,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import chi2
 from scipy import optimize
+import h5py
 import copy
 import progressbar
 
@@ -23,6 +24,7 @@ cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
 invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
 
 __all__ = ['weighted_average',
+           'generate_correlation_map',
            'generate_correlation_plot',
            'generate_spectrum',
            'concat_results',
@@ -403,38 +405,53 @@ def generate_correlation_plot(filename, filter=None):
     -------
     figure
         Returns the MatPlotLib figure created."""
+    widgets = ['Generating plots: ',
+               progressbar.Percentage(),
+               ' ',
+               progressbar.Bar(marker=progressbar.RotatingMarker()),
+               ' ',
+               progressbar.AdaptiveETA()]
     with h5py.File(filename, 'r') as store:
         columns = store['data'].attrs['format']
         columns = [f.decode('utf-8') for f in columns]
         if filter is not None:
             filter = [c for f in filter for c in columns if f in c]
+        else:
+            filter = columns
+        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(filter)+(len(filter)**2-len(filter))/2).start()
 
-        fig, axes, cbar = _make_axes_grid(len(columns), axis_padding=0)
+        fig, axes, cbar = _make_axes_grid(len(filter), axis_padding=0)
 
-        for i, val in enumerate(columns):
+        for i, val in enumerate(filter):
             ax = axes[i, i]
-            x = store['data'][:, val]
+            i = columns.index(val)
+            x = store['data'][:, i]
             bins = 50
-            ax.hist(x.values, bins)
+            ax.hist(x, bins)
             q = [16.0, 50.0, 84.0]
-            q16, q50, q84 = np.percentile(x.values, q)
+            q16, q50, q84 = np.percentile(x, q)
 
-            title = x.name + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+            title = val + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
             ax.set_title(title.format(q50, q50-q16, q84-q50))
             qvalues = [q16, q50, q84]
             for q in qvalues:
                 ax.axvline(q, ls="dashed")
             ax.set_yticks([])
             ax.set_yticklabels([])
+            pbar += 1
 
         for i, j in zip(*np.tril_indices_from(axes, -1)):
+            x_name = filter[j]
+            y_name = filter[i]
             ax = axes[i, j]
-            x = store['data'][:,j]
-            y = store['data'][:,i]
             if j == 0:
-                ax.set_ylabel(columns[i])
-            if i == len(columns) - 1:
-                ax.set_xlabel(columns[j])
+                ax.set_ylabel(filter[i])
+            if i == len(filter) - 1:
+                ax.set_xlabel(filter[j])
+            j = columns.index(x_name)
+            i = columns.index(y_name)
+            x = store['data'][:, j]
+            y = store['data'][:, i]
             X = np.linspace(x.min(), x.max(), bins + 1)
             Y = np.linspace(y.min(), y.max(), bins + 1)
             H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
@@ -460,9 +477,11 @@ def generate_correlation_plot(filename, filter=None):
             norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
 
             contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+            pbar += 1
         cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
         cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
         cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+        pbar.finish()
     return fig, axes, cbar
 
 def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
