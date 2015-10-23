@@ -27,14 +27,14 @@ __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
 ###############################
 
 def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
-    """Model function for chisquare fitting routines as established
+    r"""Model function for chisquare fitting routines as established
     in this module.
 
     Parameters
     ----------
     params: lmfit.Parameters
         Instance of lmfit.Parameters object, to be assigned to the model object.
-    f: :class:`.Spectrum`
+    f: :class:`.BaseModel`
         Callable instance with the correct methods for the fitmethods.
     x: array_like
         Experimental data for the x-axis.
@@ -64,8 +64,10 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
     this function should be overwritten.
 
     The method of estimated variance calculates the chisquare in the following way:
-    .. math::
-        \sqrt{\chisquare} = \frac{y-f(x)}{\sqrt{\sigma_x^2+f'(x)^2\sigma_x^2}}"""
+
+        .. math::
+
+            \sqrt{\chi^2} = \frac{y-f(x)}{\sqrt{\sigma_x^2+f'(x)^2\sigma_x^2}}"""
     f.params = params
     model = np.hstack(f(x))
     if func is not None:
@@ -169,8 +171,8 @@ def likelihood_x_err(f, x, y, xerr, func):
 
     Parameters
     ----------
-    f: :class:`.Spectrum`
-        Spectrum object set to current parameters.
+    f: :class:`.BaseModel`
+        Model object set to current parameters.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
@@ -230,8 +232,8 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     ----------
     params: lmfit.Parameters object with satlas.PriorParameters
         Group of parameters for which the fit has to be evaluated.
-    f: :class:`.Spectrum`
-        Spectrum object containing all the information about the fit;
+    f: :class:`.BaseModel`
+        Model object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
         Experimental data for the x-axis.
@@ -278,19 +280,20 @@ def likelihood_lnprior(params):
     In case a custom prior distribution is required,
     this function has to be overwritten."""
     for key in params.keys():
-        try:
-            leftbound, rightbound = (params[key].priormin,
-                                     params[key].priormax)
-        except:
-            leftbound, rightbound = params[key].min, params[key].max
-        leftbound = -np.inf if leftbound is None else leftbound
-        rightbound = np.inf if rightbound is None else rightbound
-        if not leftbound <= params[key].value <= rightbound:
-            return -np.inf
+        if params[key].vary:
+            try:
+                leftbound, rightbound = (params[key].priormin,
+                                         params[key].priormax)
+            except:
+                leftbound, rightbound = params[key].min, params[key].max
+            leftbound = -np.inf if leftbound is None else leftbound
+            rightbound = np.inf if rightbound is None else rightbound
+            if not leftbound < params[key].value < rightbound:
+                return -np.inf
     return 1.0
 
 def likelihood_loglikelihood(params, f, x, y, xerr, func):
-    """Given a parameters object, a Spectrum object, experimental data
+    """Given a parameters object, a Model object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
 
@@ -298,8 +301,8 @@ def likelihood_loglikelihood(params, f, x, y, xerr, func):
     ----------
     params: lmfit.Parameters object with satlas.PriorParameters
         Group of parameters for which the fit has to be evaluated.
-    f: :class:`.Spectrum`
-        Spectrum object containing all the information about the fit;
+    f: :class:`.BaseModel`
+        Model object containing all the information about the fit;
         will be fitted to the given data.
     x: array_like
         Experimental data for the x-axis.
@@ -337,8 +340,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='L-BFGS-B', 
 
     Parameters
     ----------
-    f: :class:`.Spectrum`
-        Spectrum to be fitted to the data.
+    f: :class:`.BaseModel`
+        Model to be fitted to the data.
     x: array_like
         Experimental data for the x-axis.
     y: array_like
@@ -601,21 +604,21 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
         import time
         filename = '{}.h5'.format(time.time())
     else:
-        filename = filename.split('.')[:-1] + '.h5'
+        filename = '.'.join(filename.split('.')[:-1]) + '.h5'
 
     if os.path.isfile(filename):
         with h5py.File(filename, 'a') as store:
             dset = store['data']
             offset = dset.len()
-            dset.resize(offset + nsteps * walkers)
             pos = dset[-walkers:, :]
+            dset.resize(offset + nsteps * walkers, axis=0)
 
             for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
                 result = result[0]
                 dset[offset + i * walkers:offset + (i + 1) * walkers, :] = result
     else:
         with h5py.File(filename, 'w') as store:
-            dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip')
+            dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip', maxshape=(None, ndim))
             dset.attrs['format'] = np.array([f.encode('utf-8') for f in var_names])
 
             for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):

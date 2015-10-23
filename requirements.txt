@@ -6,3 +6,4 @@ pandas
 emcee
 lmfit
 progressbar2
+h5py
