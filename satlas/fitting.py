@@ -1,5 +1,5 @@
 """
-Implementation of fitting routines specialised for Spectrum objects.
+Implementation of fitting routines specialised for BaseModel objects. Note that not all functions are loaded into the global satlas namespace.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -19,7 +19,7 @@ import h5py
 import os
 from . import loglikelihood as llh
 
-__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit',
+__all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
            'likelihood_fit', 'likelihood_walk']
 
 ###############################
@@ -152,13 +152,23 @@ class PriorParameter(lm.Parameter):
 
     # Extended the Parameter class from LMFIT to incorporate prior boundaries.
 
-    def __init__(self, name, value=None, vary=True, min=None, max=None,
+    def __init__(self, name=None, value=None, vary=True, min=None, max=None,
                  expr=None, priormin=None, priormax=None):
-        super(PriorParameter, self).__init__(name, value=value,
+        super(PriorParameter, self).__init__(name=name, value=value,
                                              vary=vary, min=min,
                                              max=max, expr=expr)
         self.priormin = priormin
         self.priormax = priormax
+
+    def __getstate__(self):
+        return_value = super(PriorParameter, self).__getstate__()
+        return_value += (self.priormin, self.priormax)
+        return return_value
+
+    def __setstate__(self, state):
+        state_pass = state[:-2]
+        self.priormin, self.priormax = state[-2:]
+        super(PriorParameter, self).__setstate__(state_pass)
 
 theta_array = np.linspace(-5, 5, 2**10)
 _x_err_calculation_stored = {}
@@ -250,57 +260,20 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     The prior is first evaluated for the parameters. If this is
     not finite, the values are rejected from consideration by
     immediately returning -np.inf."""
-    lp = likelihood_lnprior(params)
+    f.params = params
+    lp = f.lnprior()
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(likelihood_loglikelihood(params, f, x, y, xerr, func))
+    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
     return res
 
-def likelihood_lnprior(params):
-    """Calculates the logarithm of the prior given the parameter
-    values. This is independent of the data to be fitted to.
-
-    Parameters
-    ----------
-    params: lmfit.Parameters with satlas.PriorParameters
-        Collection of satlas.PriorParameters, which
-        contain also prior bounds, so the boundary
-        calculations are not triggered before this point.
-        Allows easy interfacing with the emcee package.
-
-    Returns
-    -------
-    1.0 or -np.inf
-        Calculates a flat prior: returns 1.0 if all
-        parameters are inside their boundaries,
-        return -np.inf if one of them is not.
-
-    Note
-    ----
-    In case a custom prior distribution is required,
-    this function has to be overwritten."""
-    for key in params.keys():
-        if params[key].vary:
-            try:
-                leftbound, rightbound = (params[key].priormin,
-                                         params[key].priormax)
-            except:
-                leftbound, rightbound = params[key].min, params[key].max
-            leftbound = -np.inf if leftbound is None else leftbound
-            rightbound = np.inf if rightbound is None else rightbound
-            if not leftbound < params[key].value < rightbound:
-                return -np.inf
-    return 1.0
-
-def likelihood_loglikelihood(params, f, x, y, xerr, func):
+def likelihood_loglikelihood(f, x, y, xerr, func):
     """Given a parameters object, a Model object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
 
     Parameters
     ----------
-    params: lmfit.Parameters object with satlas.PriorParameters
-        Group of parameters for which the fit has to be evaluated.
     f: :class:`.BaseModel`
         Model object containing all the information about the fit;
         will be fitted to the given data.
@@ -318,22 +291,20 @@ def likelihood_loglikelihood(params, f, x, y, xerr, func):
     -------
     array_like
         Array containing the loglikelihood for each seperate datapoint."""
-    f.params = params
+    # f.params = params
     # If any value of the evaluated model is below 0,
     # or the difference between the minimum and maximum is too low,
     # reject the parameter values.
-    response = np.hstack(f(x))
-    if np.isclose(response.min(), response.max(), atol=0.1) or any(response < 0):
-        return -np.inf
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
     if xerr is None or np.allclose(0, xerr):
+        response = np.hstack(f(x))
         return_value = func(y, response)
     else:
         return_value = likelihood_x_err(f, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='L-BFGS-B', method_kws={}, walking=False, walk_kws={}):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -395,7 +366,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='L-BFGS-B', 
     return success, result.message
 
 ############################
-# uncertainty CALCULATIONS #
+# UNCERTAINTY CALCULATIONS #
 ############################
 
 def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, fit_kws={}):
@@ -524,7 +495,8 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     """Calculates the uncertainty on MLE-optimized parameter values
     by performing a random walk through parameter space and comparing
     the resulting loglikelihood values. For more information,
-    see the emcee package.
+    see the emcee package. The data from the random walk is saved in a
+    file, as defined with the *filename*.
 
     Parameters
     ----------
@@ -556,7 +528,12 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
         estimate of the remaining time in the calculation.
     filename: string, optional
         Filename where the random walk has to be saved. If *None*,
-        the current time in seconds since January 1970 is used."""
+        the current time in seconds since January 1970 is used.
+
+    Note
+    ----
+    The parameters associated with the MLE fit are not updated
+    with the uncertainty as estimated by this method."""
 
     params = f.mle_fit
     var_names = []

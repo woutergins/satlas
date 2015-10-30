@@ -15,6 +15,7 @@ from scipy import optimize
 import h5py
 import copy
 import progressbar
+import dask.array as da
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -388,6 +389,15 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
 
     return fig, axes, cbar
 
+def _diaconis_rule(data, min, max):
+    iqr = np.subtract(*da.percentile(data, [75, 25]).compute())
+    # iqr = np.subtract(*np.percentile(data, [75, 25]))
+    bin_size = 2 * iqr * data.shape[0]**(-1/3)
+    if bin_size == 0:
+        return np.sqrt(data)
+    else:
+        return np.ceil((max - min) / bin_size)
+
 def generate_correlation_plot(filename, filter=None):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
@@ -422,12 +432,15 @@ def generate_correlation_plot(filename, filter=None):
 
         fig, axes, cbar = _make_axes_grid(len(filter), axis_padding=0)
 
+        metadata = {}
         for i, val in enumerate(filter):
             ax = axes[i, i]
             i = columns.index(val)
             x = store['data'][:, i]
-            bins = 50
+            bins = _diaconis_rule(x, x.min(), x.max())
+            metadata[val] = {'bins': bins, 'min': min, 'max': max}
             ax.hist(x, bins)
+
             q = [16.0, 50.0, 84.0]
             q16, q50, q84 = np.percentile(x, q)
 
@@ -452,8 +465,10 @@ def generate_correlation_plot(filename, filter=None):
             i = columns.index(y_name)
             x = store['data'][:, j]
             y = store['data'][:, i]
-            X = np.linspace(x.min(), x.max(), bins + 1)
-            Y = np.linspace(y.min(), y.max(), bins + 1)
+            x_min, x_max, x_bins = metadata[x_name]['min'], metadata[x_name]['max'], metadata[x_name]['bins']
+            y_min, y_max, y_bins = metadata[y_name]['min'], metadata[y_name]['max'], metadata[y_name]['bins']
+            X = np.linspace(x_min, x_max, x_bins + 1)
+            Y = np.linspace(y_min, y_max, y_bins + 1)
             H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
                                      weights=None)
             X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])

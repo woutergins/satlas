@@ -1,5 +1,5 @@
 """
-Implementation of base class for the analysis of hyperfine structure spectra.
+Implementation of base class for extension to models describing actual data.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
@@ -14,24 +14,12 @@ __all__ = ['Model']
 
 class BaseModel(object):
 
-    """Abstract baseclass for all spectra, such as :class:`.HFSModel`,
+    """Abstract baseclass for all models, such as :class:`.HFSModel`,
     :class:`.CombinedModel` and :class:`.MultiModel`. For input, see these
     classes."""
 
     def __init__(self):
         super(BaseModel, self).__init__()
-        self.selected = ['Al', 'Au', 'Bl', 'Bu', 'Cl', 'Cu', 'Centroid']
-
-    @property
-    def selected(self):
-        """When a walk is performed and a triangle plot is created from the data,
-        the parameters with one of these strings in their name will be
-        displayed. Defaults to the hyperfine parameters and the centroid."""
-        return self._selected
-
-    @selected.setter
-    def selected(self, value):
-        self._selected = value
 
     def display_mle_fit(self, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.
@@ -111,15 +99,16 @@ class BaseModel(object):
         method: str, optional
             Selects which fitresults have to be loaded. Can be 'chisquare' or
             'mle'. Defaults to 'chisquare'.
-        selected: boolean, optional
-            Selects if only the parameters in :attr:`selected` have to be
-            given or not. Defaults to :attr:`False`.
+        selected: list of strings, optional
+            Selects the parameters that have any string in the list
+            as a substring in their name. Set to *None* to select
+            all parameters. Defaults to *None*.
         bounds: boolean, optional
             Selects if the boundary also has to be given. Defaults to
-            :attr:`False`.
+            *False*.
         vary: boolean, optional
             Selects if only the parameters that have been varied have to
-            be supplied. Defaults to :attr:`False`.
+            be supplied. Defaults to *False*.
 
         Returns
         -------

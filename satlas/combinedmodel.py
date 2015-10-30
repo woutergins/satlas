@@ -34,6 +34,12 @@ class CombinedModel(BaseModel):
                        'Cu',
                        'Offset']
 
+    def lnprior(self, params):
+        return_value = 0
+        for i, spec in enumerate(self.models):
+            return_value += spec.lnprior()
+        return return_value
+
     @property
     def shared(self):
         """Contains all parameters which share the same value among all models."""
@@ -79,7 +85,7 @@ class CombinedModel(BaseModel):
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
                     params[key].expr = expr
-                    par[new_key] = lm.Parameter()
+                    par[new_key] = params[key].__class__()
                     par[new_key].__setstate__(params[key].__getstate__())
             spec.params = par
 

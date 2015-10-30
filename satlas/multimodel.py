@@ -19,21 +19,27 @@ class MultiModel(BaseModel):
     """Create a spectrum containing the information of multiple hyperfine
     structures."""
 
-    def __init__(self, spectra):
+    def __init__(self, models):
         """Initializes the HFS by providing a list of :class:`.HFSModel`
         objects.
 
         Parameters
         ----------
         models: list of :class:`.HFSModel` instances
-            A list containing the base spectra."""
+            A list containing the models."""
         super(MultiModel, self).__init__()
         self.models = models
         self.shared = []
 
+    def lnprior(self, params):
+        return_value = 0
+        for i, spec in enumerate(self.models):
+            return_value += spec.lnprior()
+        return return_value
+
     @property
     def shared(self):
-        """Contains all parameters which share the same value among all spectra."""
+        """Contains all parameters which share the same value among all models."""
         return self._shared
 
     @shared.setter
@@ -45,7 +51,7 @@ class MultiModel(BaseModel):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
         params = lmfit.Parameters()
-        for i, s in enumerate(self.spectra):
+        for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
@@ -67,7 +73,7 @@ class MultiModel(BaseModel):
 
     @params.setter
     def params(self, params):
-        for i, spec in enumerate(self.spectra):
+        for i, spec in enumerate(self.models):
             par = lmfit.Parameters()
             for key in params:
                 if key.startswith('s'+str(i)+'_'):
@@ -77,12 +83,9 @@ class MultiModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par.add(new_key,
-                            value=params[key].value,
-                            vary=params[key].vary,
-                            min=params[key].min,
-                            max=params[key].max,
-                            expr=expr)
+                    par[new_key] = params[key].__class__()
+                    par[new_key].__setstate__(params[key].__getstate__())
+                    par[new_key].expr = expr
             spec.params = par
 
     def seperate_response(self, x, background=False):
@@ -103,9 +106,9 @@ class MultiModel(BaseModel):
         Returns
         -------
         list of floats or NumPy arrays
-            Seperate responses of spectra to the input *x*."""
-        back = self.spectra[0].params['Background'].value if background else 0
-        return [s(x) - s.params['Background'].value + back  for s in self.spectra]
+            Seperate responses of models to the input *x*."""
+        back = self.models[0].params['Background'].value if background else 0
+        return [s(x) - s.params['Background'].value + back  for s in self.models]
 
     ###############################
     #      PLOTTING ROUTINES      #
@@ -116,7 +119,7 @@ class MultiModel(BaseModel):
              show=True, xlabel='Frequency (MHz)',
              ylabel='Counts', data_legend='Data',
              indicate=False):
-        """Routine that plots the hfs of all the spectra,
+        """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 
         Parameters
@@ -156,9 +159,9 @@ class MultiModel(BaseModel):
         if x is None:
             ranges = []
 
-            fwhm = max([p.fwhm for s in self.spectra for p in s.parts])
+            fwhm = max([p.fwhm for s in self.models for p in s.parts])
 
-            for pos in [l for spectrum in self.spectra for l in spectrum.locations]:
+            for pos in [l for spectrum in self.models for l in spectrum.locations]:
                 r = np.linspace(pos - 4 * fwhm,
                                 pos + 4 * fwhm,
                                 2 * 10**2)
@@ -176,12 +179,12 @@ class MultiModel(BaseModel):
         resp = self.seperate_response(superx)
 
         for i, r in enumerate(resp):
-            line, = ax.plot(superx, r, label='I=' + str(self.spectra[i].I))
+            line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
             if indicate:
-                for l, lab in zip(self.spectra[i].locations, self.spectra[i].ftof):
+                for l, lab in zip(self.models[i].locations, self.models[i].ftof):
                     lab = lab.split('__')
                     lab = lab[0] + '$\\rightarrow$' + lab[1]
-                    ax.annotate(lab, xy=(l, self.spectra[i](l)), rotation=90, color=line.get_color(),
+                    ax.annotate(lab, xy=(l, self.models[i](l)), rotation=90, color=line.get_color(),
                                 weight='bold', size=14, ha='center')
         ax.plot(superx, self(superx), label='Total')
 
@@ -196,7 +199,7 @@ class MultiModel(BaseModel):
         return toReturn
 
     def plot_spectroscopic(self, **kwargs):
-        """Routine that plots the hfs of all the spectra, possibly on
+        """Routine that plots the hfs of all the models, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
 
@@ -237,8 +240,8 @@ class MultiModel(BaseModel):
         -------
         MultiModel"""
         if isinstance(other, MultiModel):
-            spectra = self.spectra + other.spectra
-            return MultiModel(spectra)
+            models = self.models + other.models
+            return MultiModel(models)
         else:
             try:
                 return other.__add__(self)
@@ -257,4 +260,4 @@ class MultiModel(BaseModel):
         -------
         float or NumPy array
             Response of the spectrum for each value of *x*."""
-        return np.sum([s(x) for s in self.spectra], axis=0)
+        return np.sum([s(x) for s in self.models], axis=0)

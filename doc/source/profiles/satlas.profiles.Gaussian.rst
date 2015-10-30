@@ -5,21 +5,27 @@ satlas.profiles.Gaussian
 
 .. autoclass:: Gaussian
 
+   
+   .. automethod:: __init__
 
+   
    .. rubric:: Methods
 
    .. autosummary::
-      :toctree:
-
+   
       ~Gaussian.__init__
-      ~Gaussian.__call__
+   
+   
 
+   
+   
    .. rubric:: Attributes
 
    .. autosummary::
-
+   
       ~Gaussian.amp
       ~Gaussian.ampIsArea
       ~Gaussian.fwhm
       ~Gaussian.mu
-
+   
+   

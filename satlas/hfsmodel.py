@@ -34,7 +34,7 @@ class HFSModel(BaseModel):
                   'voigt': p.Voigt}
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
-                 background=0.1, shape='voigt', racah_int=True, saturation=0,
+                 background=0.1, shape='voigt', use_racah=False, use_saturation=True, saturation=0,
                  shared_fwhm=True, n=0, poisson=0.68, offset=0):
         """Builds the HFS with the given atomic and nuclear information.
 
@@ -66,7 +66,7 @@ class HFSModel(BaseModel):
             Sets the transition shape. String is converted to lowercase. For
             possible values, see *HFSModel__shapes__*.keys()`.
             Defaults to Voigt if an incorrect value is supplied.
-        racah_int: boolean, optional
+        use_racah: boolean, optional
             If True, fixes the relative peak intensities to the Racah intensities.
             Otherwise, gives them equal intensities and allows them to vary during
             fitting.
@@ -133,7 +133,8 @@ class HFSModel(BaseModel):
                                     (True, 1), (False, 0))
                               }
         self.shape = shape
-        self._racah_int = racah_int
+        self._use_racah = use_racah
+        self._use_saturation = use_saturation
         self.shared_fwhm = shared_fwhm
         self.I = I
         self.J = J
@@ -147,6 +148,8 @@ class HFSModel(BaseModel):
         self.ratioA = (None, 'lower')
         self.ratioB = (None, 'lower')
         self.ratioC = (None, 'lower')
+
+        self._roi = (-np.inf, np.inf)
 
         self._populate_params(ABC, fwhm, scale, background, n,
                               poisson, offset, centroid, saturation)
@@ -163,18 +166,72 @@ class HFSModel(BaseModel):
             p.mu = l
 
     @property
-    def racah_int(self):
+    def use_racah(self):
         """Boolean to set the behaviour to Racah intensities (True)
         or to individual amplitudes (False)."""
-        return self._racah_int
+        return self._use_racah
 
-    @racah_int.setter
-    def racah_int(self, value):
-        self._racah_int = value
-        self.params['Scale'].vary = self._racah_int
-        self.params['Saturation'].vary = self._racah_int
+    @use_racah.setter
+    def use_racah(self, value):
+        self._use_racah = value
+        self.params['Scale'].vary = self._use_racah or self._use_saturation
         for label in self.ftof:
-            self.params['Amp' + label].vary = not self._racah_int
+            self.params['Amp' + label].vary = not (self._use_racah or self._use_saturation)
+
+    @property
+    def use_saturation(self):
+        """Boolean to set the behaviour to the saturation model (True)
+        or not (False)."""
+        return self._use_saturation
+
+    @use_saturation.setter
+    def use_saturation(self, value):
+        self._use_saturation = value
+        self.params['Scale'].vary = self._use_racah or self._use_saturation
+        for label in self.ftof:
+            self.params['Amp' + label].vary = not (self._use_racah or self._use_saturation)
+
+    @property
+    def roi(self):
+        """Tuple of (left, right)-limits between which at least one of
+        the peaks has to be located. If the peaks are all outside this
+        region, the calculation of the prior returns infinity. Defaults
+        to (-np.inf, np.inf)."""
+        return self._roi
+
+    @roi.setter
+    def roi(self, value):
+        self._roi = (value[0], value[1])
+
+    def lnprior(self):
+        # Implementation uses the 'fail early' paradigm to speed up calculations.
+        # First, the easiest checks to fail are made, followed by slower ones.
+        # If a check is failed, -np.inf is returned immediately.
+        # Check if at least one of the peaks lies within the region of interest
+        if not any((self.roi[0] < self.locations) & (self.locations < self.roi[1])):
+            return -np.inf
+        # Check if the parameter values are within the acceptable range.
+        for key in self._params.keys():
+            par = self._params[key]
+            if par.vary:
+                try:
+                    leftbound, rightbound = (par.priormin,
+                                             par.priormax)
+                except:
+                    leftbound, rightbound = par.min, par.max
+                leftbound = -np.inf if leftbound is None else leftbound
+                rightbound = np.inf if rightbound is None else rightbound
+                if not leftbound < par.value < rightbound:
+                    return -np.inf
+        # If defined, calculate the lnprior for each seperate parameter
+        try:
+            return_value = 1.0
+            for key in params.keys():
+                return_value += self.lnprior_mapping[key](params[key].value)
+            return return_value
+        except:
+            pass
+        return 1.0
 
     @property
     def params(self):
@@ -190,12 +247,14 @@ class HFSModel(BaseModel):
         # the locations have to be recalculated
         self._calculate_energies()
         self._calculate_transition_locations()
-        if not self.racah_int:
+        if not self.use_racah and not self.use_saturation:
             # When not using set amplitudes, they need
             # to be changed after every iteration
             self._set_amplitudes()
-        else:
+        elif self.use_saturation:
             self._set_transitional_amplitudes()
+        else:
+            pass
         # Finally, the fwhm of each peak needs to be set
         self._set_fwhm()
 
@@ -251,19 +310,18 @@ class HFSModel(BaseModel):
         -------
         energy: float
             Energy in MHz."""
-        A = np.append(np.ones(self.num_lower) * self.params['Al'].value,
-                      np.ones(self.num_upper) * self.params['Au'].value)
-        B = np.append(np.ones(self.num_lower) * self.params['Bl'].value,
-                      np.ones(self.num_upper) * self.params['Bu'].value)
-        C = np.append(np.ones(self.num_lower) * self.params['Cl'].value,
-                      np.ones(self.num_upper) * self.params['Cu'].value)
+        A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
+                      np.ones(self.num_upper) * self._params['Au'].value)
+        B = np.append(np.ones(self.num_lower) * self._params['Bl'].value,
+                      np.ones(self.num_upper) * self._params['Bu'].value)
+        C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
+                      np.ones(self.num_upper) * self._params['Cu'].value)
         centr = np.append(np.zeros(self.num_lower),
-                          np.ones(self.num_upper) * self.params['Centroid'].value)
+                          np.ones(self.num_upper) * self._params['Centroid'].value)
         self.energies = centr + self.C * A + self.D * B + self.E * C
 
     def _calculate_transition_locations(self):
-        self.locations = [self.energies[ind_high] - self.energies[ind_low]
-                          for (ind_low, ind_high) in self.transition_indices]
+        self.locations = [self.energies[ind_high] - self.energies[ind_low] for (ind_low, ind_high) in self.transition_indices]
 
     def _set_amplitudes(self):
         for p, label in zip(self.parts, self.ftof):
@@ -289,6 +347,9 @@ class HFSModel(BaseModel):
             if self.shared_fwhm:
                 par.add('FWHM', value=fwhm, vary=True, min=0)
             else:
+                if not len(fwhm) == len(self.ftof):
+                    fwhm = fwhm[0]
+                    fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHM' + label, value=val, vary=True, min=0)
         else:
@@ -299,6 +360,9 @@ class HFSModel(BaseModel):
                 par.add('TotalFWHM', value=val, vary=False,
                         expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
             else:
+                fwhm = np.array(fwhm)
+                if not fwhm.shape[0] == len(self.ftof):
+                    fwhm = np.array([[fwhm[0], fwhm[1]] for _ in range(len(self.ftof))])
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHMG' + label, value=val[0], vary=True, min=0)
                     par.add('FWHML' + label, value=val[1], vary=True, min=0)
@@ -307,14 +371,14 @@ class HFSModel(BaseModel):
                     par.add('TotalFWHM' + label, value=val, vary=False,
                             expr='0.5346*FWHML' + label +
                                  '+sqrt(0.2166*FWHML' + label +
-                                 '**2+FWHMG' + str(i) + '**2)')
+                                 '**2+FWHMG' + label + '**2)')
 
-        par.add('Scale', value=scale, vary=self.racah_int, min=0)
-        par.add('Saturation', value=saturation, vary=self.racah_int, min=0)
+        par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
+        par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
         amps = self._calculate_transitional_intensities(saturation)
         for label, amp in zip(self.ftof, amps):
             label = 'Amp' + label
-            par.add(label, value=amp, vary=not self.racah_int, min=0)
+            par.add(label, value=amp, vary=not (self.use_racah or self.use_saturation), min=0)
 
         par.add('Al', value=ABC[0], vary=True)
         par.add('Au', value=ABC[1], vary=True)
@@ -536,49 +600,31 @@ class HFSModel(BaseModel):
             self.ratioC = (value, target)
         self.params = self._set_ratios(self._params)
 
-    def set_value(self, value, name):
+    def set_value(self, valueDict):
         """Sets the value of the selected parameter to the given value.
 
         Parameters
         ----------
-        value: float
-            Value for the parameter.
-        name: string
-            Parameter name.
-
-        Note
-        ----
-        If an iterable is supplied for both *value* and *name*,
-        all parameters in *name* are set to the corresponding *value*."""
+        valueDict: dictionary
+            Dictionary containing the values for the parameters, with the
+            name as the key."""
         par = self._params
-        try:
-            for v, n in zip(value, name):
-                par[n].value = v
-        except:
-            par[name].value = value
+        for key in valueDict:
+            par[key].value = valueDict[key]
         self.params = par
 
-    def set_expr(self, expr, name):
+    def set_expr(self, exprDict, name):
         """Sets the expression of the selected parameter
         to the given expression.
 
         Parameters
         ----------
-        expr: str
-            Expression for the parameter evaluation.
-        name: str
-            Parameter name.
-
-        Note
-        ----
-        If an iterable is supplied for both *expr* and *name*,
-        all parameters in *name* are set to the corresponding *expr*."""
+        exprDict: dictionary
+            Dictionary containing the expressions for the parameters,
+            with the paremeter name as the key."""
         par = self.params
-        if isinstance(name, list):
-            for n, e in zip(name, expr):
-                par[n].expr = e
-        else:
-            par[name].expr = expr
+        for key in exprDict:
+            par[n].expr = exprDict[key]
         self.params = par
 
     #######################################
