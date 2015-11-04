@@ -24,3 +24,7 @@ def test_voigt():
     amp = 1
     prof = satlas.profiles.Voigt(mu=mu, fwhm=fwhm, amp=amp, ampIsArea=False)
     return np.isclose(prof(mu), amp)
+
+print(test_gaussian())
+print(test_lorentzian())
+print(test_voigt())

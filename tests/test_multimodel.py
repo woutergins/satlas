@@ -11,7 +11,7 @@ def test_combinedmodel():
         testmodels = [satlas.hfsmodel.HFSModel(I, J, ABC, centroid) for _ in range(3)]
         testobject = sum(testmodels)
         if isinstance(testobject, satlas.multimodel.MultiModel):
-            testobject = testmodels[0] + testmodels[1] + testmodels[3]
+            testobject = testmodels[0] + testmodels[1] + testmodels[2]
             if isinstance(testobject, satlas.multimodel.MultiModel):
                 return True
             else:
@@ -20,3 +20,5 @@ def test_combinedmodel():
             return False
     except:
         return False
+
+print(test_combinedmodel())

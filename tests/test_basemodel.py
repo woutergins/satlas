@@ -9,3 +9,5 @@ def test_basemodel():
             return False
     except:
         return False
+
+print(test_basemodel())

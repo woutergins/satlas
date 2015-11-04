@@ -668,7 +668,7 @@ class HFSModel(BaseModel):
         if isinstance(other, HFSModel):
             l = [self, other]
         elif isinstance(other, MultiModel):
-            l = [self] + other.spectra
+            l = [self] + other.models
         return MultiModel(l)
 
     def __radd__(self, other):
