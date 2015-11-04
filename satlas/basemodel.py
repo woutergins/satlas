@@ -21,6 +21,57 @@ class BaseModel(object):
     def __init__(self):
         super(BaseModel, self).__init__()
 
+    def set_value(self, valueDict):
+        """Sets the value of the selected parameter to the given value.
+
+        Parameters
+        ----------
+        valueDict: dictionary
+            Dictionary containing the values for the parameters, with the
+            name as the key."""
+        par = self.params
+        for key in valueDict:
+            par[key].value = valueDict[key]
+        self.params = par
+
+    def set_expr(self, exprDict, name):
+        """Sets the expression of the selected parameter
+        to the given expression.
+
+        Parameters
+        ----------
+        exprDict: dictionary
+            Dictionary containing the expressions for the parameters,
+            with the paremeter name as the key."""
+        par = self.params
+        for key in exprDict:
+            par[n].expr = exprDict[key]
+        self.params = par
+
+    def set_variation(self, varyDict):
+        """Sets the variation of the fitparameters as supplied in the
+        dictionary.
+
+        Parameters
+        ----------
+        varyDict: dictionary
+            A dictionary containing 'key: True/False' mappings"""
+        for k in varyDict.keys():
+            self._vary[k] = varyDict[k]
+
+    def set_boundaries(self, boundaryDict):
+        """Sets the boundaries of the fitparameters as supplied in the
+        dictionary.
+
+        Parameters
+        ----------
+        boundaryDict: dictionary
+            A dictionary containing "key: {'min': value, 'max': value}" mappings.
+            A value of *None* or a missing key gives no boundary
+            in that direction."""
+        for k in boundaryDict.keys():
+            self._constraints[k] = boundaryDict[k]
+
     def display_mle_fit(self, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.
 

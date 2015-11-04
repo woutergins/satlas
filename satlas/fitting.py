@@ -91,7 +91,21 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None):
     x: array_like
         Experimental data for the x-axis.
     y: array_like
-        Experimental data for the y-axis."""
+        Experimental data for the y-axis.
+
+    Other parameters
+    ----------------
+    xerr: array_like, optional
+        Error bars on *x*.
+    func: function, optional
+        Uses the provided function on the fitvalue to calculate the
+        errorbars.
+
+    Return
+    ------
+    success, message: bool and string
+        Boolean indicating the success of the convergence, and the message
+        from the optimizer."""
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
@@ -118,7 +132,7 @@ def chisquare_fit(f, x, y, yerr, xerr=None, func=None):
     ----------------
     xerr: array_like, optional
         Error bars on *x*.
-    func: boolean, optional
+    func: function, optional
         Uses the provided function on the fitvalue to calculate the
         errorbars.
 
@@ -331,7 +345,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     method: str, optional
         Selects the algorithm to be used by the minimizer used by LMFIT.
         For an overview, see the LMFIT and SciPy documentation.
-        Defaults to 'L-BFGS-B'.
+        Defaults to 'powell'.
     method_kws: dict, optional
         Dictionary containing the keywords to be passed to the
         minimizer.

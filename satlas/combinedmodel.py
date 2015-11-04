@@ -34,7 +34,7 @@ class CombinedModel(BaseModel):
                        'Cu',
                        'Offset']
 
-    def lnprior(self, params):
+    def lnprior(self):
         return_value = 0
         for i, spec in enumerate(self.models):
             return_value += spec.lnprior()

@@ -390,9 +390,11 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
     return fig, axes, cbar
 
 def _diaconis_rule(data, min, max):
-    iqr = np.subtract(*da.percentile(data, [75, 25]).compute())
+    iqr = np.subtract(*np.percentile(data, [75, 25]))
+    print('iqr', iqr)
     # iqr = np.subtract(*np.percentile(data, [75, 25]))
     bin_size = 2 * iqr * data.shape[0]**(-1/3)
+    print('binsize', bin_size)
     if bin_size == 0:
         return np.sqrt(data)
     else:
@@ -438,8 +440,12 @@ def generate_correlation_plot(filename, filter=None):
             i = columns.index(val)
             x = store['data'][:, i]
             bins = _diaconis_rule(x, x.min(), x.max())
-            metadata[val] = {'bins': bins, 'min': min, 'max': max}
-            ax.hist(x, bins)
+            try:
+                ax.hist(x, bins)
+            except ValueError:
+                bins = 50
+                ax.hist(x, bins)
+            metadata[val] = {'bins': bins, 'min': x.min(), 'max': x.max()}
 
             q = [16.0, 50.0, 84.0]
             q16, q50, q84 = np.percentile(x, q)
