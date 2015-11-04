@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>SATLAS – Statistical Analysis Toolbox for Laser Spectroscopy &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>SATLAS – Statistical Analysis Toolbox for Laser Spectroscopy &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="#" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="#" >
     <link rel="next" title="API reference" href="api.html" > 
   </head>
   <body>
@@ -80,6 +80,7 @@
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Python-3.4-green.svg"><img alt="Python version" src="https://img.shields.io/badge/Python-3.4-green.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Tested_on-Windows-green.svg"><img alt="Supported Platform" src="https://img.shields.io/badge/Tested_on-Windows-green.svg" /></a>
 <a class="reference internal image-reference" href="https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg"><img alt="Unsupported platform" src="https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg" /></a>
+<a class="reference internal image-reference" href="https://travis-ci.org/woutergins/satlas.svg?branch=master"><img alt="Build status" src="https://travis-ci.org/woutergins/satlas.svg?branch=master" /></a>
 <div class="section" id="purpose">
 <h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
 <div class="sidebar">
@@ -94,20 +95,20 @@
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
-<dl class="docutils">
-<dt>This package makes heavy use of the following packages:</dt>
-<dd><ul class="first last simple">
+<p>This package makes use of the following packages:</p>
+<blockquote>
+<div><ul class="simple">
 <li><a class="reference external" href="http://www.numpy.org/">NumPy</a></li>
 <li><a class="reference external" href="http://www.scipy.org/">SciPy</a></li>
 <li><a class="reference external" href="http://lmfit.github.io/lmfit-py/index.html">LMFIT</a></li>
-<li><a class="reference external" href="http://www.pyqtgraph.org/">PyQtGraph</a></li>
+<li><a class="reference external" href="http://matplotlib.org/">Matplotlib</a></li>
 <li><a class="reference external" href="http://dan.iel.fm/emcee/current/">emcee</a></li>
 <li><a class="reference external" href="http://www.sympy.org/">sympy</a></li>
-<li><a class="reference external" href="http://stanford.edu/~mwaskom/software/seaborn/">seaborn</a></li>
+<li><a class="reference external" href="http://docs.h5py.org/en/latest/index.html">h5py</a></li>
+<li><a class="reference external" href="http://progressbar-2.readthedocs.org/en/latest/">progressbar2</a></li>
 </ul>
-</dd>
-</dl>
-<p>Code can be downloaded <a class="reference external" href="https://github.com/woutergins/satlas">here</a>. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Also included in the package are a temporary bugfix for the <code class="xref py py-mod docutils literal"><span class="pre">sympy.physics.wigner</span></code> module, in order to calculate the Wigner symbols. inspiration has been drawn from the <cite>triangle.py</cite> script, written by Dan Foreman-Mackey et al. <a class="reference internal" href="references.html#foreman-mackey2014" id="id1">[FMPWR+14]</a>.</p>
+</div></blockquote>
+<p>Code can be downloaded <a class="reference external" href="https://github.com/woutergins/satlas">here</a>. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the <cite>triangle.py</cite> script, written by Dan Foreman-Mackey et al. <a class="reference internal" href="references.html#foreman-mackey2014" id="id1">[FMPWR+14]</a>, for the correlation plot code.</p>
 </div>
 <div class="section" id="contents">
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>

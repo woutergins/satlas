@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.fitting.likelihood_fit &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.fitting.likelihood_fit &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../../index.html" >
     <link rel="up" title="satlas.fitting" href="../satlas.fitting.html" >
     <link rel="next" title="satlas.fitting.likelihood_lnprior" href="satlas.fitting.likelihood_lnprior.html" >
     <link rel="prev" title="satlas.fitting.chisquare_spectroscopic_fit" href="satlas.fitting.chisquare_spectroscopic_fit.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.fitting.html" accesskey="U">satlas.fitting</a></li> 
@@ -87,8 +87,8 @@
 <h1>satlas.fitting.likelihood_fit<a class="headerlink" href="#satlas-fitting-likelihood-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.fitting.likelihood_fit">
-<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_fit</code><span class="sig-paren">(</span><em>spectrum</em>, <em>x</em>, <em>y</em>, <em>xerr=0</em>, <em>vary_sigma=False</em>, <em>func=&lt;function poisson_llh at 0x124FDED0&gt;</em>, <em>method='L-BFGS-B'</em>, <em>method_kws={}</em>, <em>walking=False</em>, <em>walk_kws={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fits the given spectrum to the given data using the Maximum Likelihood Estimation technique.
+<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>func=&lt;function poisson_llh at 0x0ED11A98&gt;</em>, <em>method='L-BFGS-B'</em>, <em>method_kws={}</em>, <em>walking=False</em>, <em>walk_kws={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fits the given model to the given data using the Maximum Likelihood Estimation technique.
 The given function is used to calculate the loglikelihood. After the fit, the message
 from the optimizer is printed and returned.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -96,7 +96,7 @@ from the optimizer is printed and returned.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-class docutils literal"><span class="pre">Spectrum</span></code></a>) &#8211; Spectrum to be fitted to the data.</li>
+<li><strong>f</strong> (<a class="reference internal" href="../satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">BaseModel</span></code></a>) &#8211; Model to be fitted to the data.</li>
 <li><strong>x</strong> (<em>array_like</em>) &#8211; Experimental data for the x-axis.</li>
 <li><strong>y</strong> (<em>array_like</em>) &#8211; Experimental data for the y-axis.</li>
 </ul>
@@ -104,13 +104,9 @@ from the optimizer is printed and returned.</p>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
-<li><strong>xerr</strong> (<em>float, optional</em>) &#8211;
+<li><strong>xerr</strong> (<em>array_like, optional</em>) &#8211;
 Estimated value for the uncertainty on the x-values.
-Set to 0 to ignore this uncertainty. Defaults to 0.</li>
-<li><strong>vary_sigma</strong> (<em>boolean, optional</em>) &#8211;
-If True, the uncertainty on the x-values will be
-treated as a parameter and will be optimized.
-Defaults to False.</li>
+Set to <em>None</em> to ignore this uncertainty. Defaults to <em>None</em>.</li>
 <li><strong>func</strong> (<em>function, optional</em>) &#8211;
 Used to calculate the loglikelihood that the data is drawn
 from a distribution given a model value. Should accept

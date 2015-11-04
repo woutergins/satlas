@@ -1,6 +1,0 @@
-satlas.spectrum.Spectrum.display_chisquare_fit
-==============================================
-
-.. currentmodule:: satlas.spectrum
-
-.. automethod:: Spectrum.display_chisquare_fit

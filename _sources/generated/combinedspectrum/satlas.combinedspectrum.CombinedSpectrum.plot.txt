@@ -1,6 +1,0 @@
-satlas.combinedspectrum.CombinedSpectrum.plot
-=============================================
-
-.. currentmodule:: satlas.combinedspectrum
-
-.. automethod:: CombinedSpectrum.plot

@@ -1,6 +1,0 @@
-satlas.spectrum.Spectrum.vars
-=============================
-
-.. currentmodule:: satlas.spectrum
-
-.. automethod:: Spectrum.vars

@@ -11,13 +11,13 @@ When fitting with the chisquare method, the costfunction to be minimized is
 .. math::
     \chi^2 = \left(\frac{y_i-HFS(x_i)}{\sigma_i}\right)^2
 
-with the subscript *i* referring to the datapoint, and *HFS* to the response of the :class:`.SingleSpectrum` class. The algorithm used is the Levenberg-Marquardt algorithm, which gives quick results in a reliable fashion. The :func:`.fitting.chisquare_model` function creates the costfunction used for counting data. The function :func:`.fitting.chisquare_fit` performs the actual fit, while :func:`.fitting.chisquare_spectroscopic_fit` calculates the uncertainty on the data by taking the square root of the number of counts.
+with the subscript *i* referring to the datapoint, and *HFS* to the response of the :class:`.HFSModel` class. The algorithm used is the Levenberg-Marquardt algorithm, which gives quick results in a reliable fashion. The :func:`.fitting.chisquare_model` function creates the costfunction used for counting data. The function :func:`.fitting.chisquare_fit` performs the actual fit, while :func:`.fitting.chisquare_spectroscopic_fit` calculates the uncertainty on the data by taking the square root of the number of counts.
 
 .. note::
 
     One of the options for :func:`.fitting.chisquare_model` is the boolean *pearson*. If this boolean is *True*, the uncertainty is calculated by taking the square root of the *fitvalue*, not the datapoint. This approach mimics the use of the Poisson distribution instead of the Gaussian distribution for the uncertainty calculation.
 
-In order to demonstrate the fit functions, toy data is needed. This is created by assuming some parameters for the spectrum, calculating the response, and then adding random noise.
+In order to demonstrate the fit functions, toy data is needed. This is created by assuming some parameters for the basemodel, calculating the response, and then adding random noise.
 
 .. code-block:: python
 
@@ -33,17 +33,17 @@ In order to demonstrate the fit functions, toy data is needed. This is created b
     centroid = 500
     scale = 100
 
-    spectrum = s.SingleSpectrum(I, J, ABC, centroid, fwhm=fwhm, scale=scale, background=10)
+    basemodel = s.HFSModel(I, J, ABC, centroid, fwhm=fwhm, scale=scale, background=10)
 
-    frequency_range = (min(spectrum.locations) - 100, max(spectrum.locations) + 100)
+    frequency_range = (min(basemodel.locations) - 100, max(basemodel.locations) + 100)
     frequency_range = np.linspace(frequency_range[0], frequency_range[1], 200)
 
-    data = spectrum(frequency_range) + spectrum(frequency_range)**0.5 * np.random.randn(len(frequency_range))
+    data = basemodel(frequency_range) + basemodel(frequency_range)**0.5 * np.random.randn(len(frequency_range))
 
-    success, message = s.chisquare_spectroscopic_fit(spectrum, frequency_range, data)
+    success, message = s.chisquare_spectroscopic_fit(basemodel, frequency_range, data)
     print(success)
     print(message)
-    spectrum.display_chisquare_fit(show_correl=False)
+    basemodel.display_chisquare_fit(show_correl=False)
 
 This gives as output::
 
@@ -117,10 +117,10 @@ To use this method, the fitting routine code has to be changed to
 
 .. code:: python
 
-    success, message = s.likelihood_fit(spectrum, frequency_range, data)
+    success, message = s.likelihood_fit(basemodel, frequency_range, data)
     print(success)
     print(message)
-    spectrum.display_mle_fit(show_correl=False)
+    basemodel.display_mle_fit(show_correl=False)
 
 which results in::
 
@@ -152,9 +152,9 @@ The uncertainties on the parameters has to be estimated using a random walk thro
 
 .. code:: python
 
-    success, message = s.likelihood_fit(spectrum, frequency_range, data)
-    s.likelihood_walk(spectrum, frequency_range, data)
-    spectrum.display_mle_fit(show_correl=False)
+    success, message = s.likelihood_fit(basemodel, frequency_range, data)
+    s.likelihood_walk(basemodel, frequency_range, data)
+    basemodel.display_mle_fit(show_correl=False)
 
 As output, this gives::
 
@@ -206,8 +206,8 @@ To use a certain value for the uncertainty, pass it along to the fitroutine usin
 
 .. code:: python
 
-    s.likelihood_fit(spectrum, frequency_range, data, xerr=0)
-    success, message = s.likelihood_fit(spectrum, frequency_range, data, xerr=1)
+    s.likelihood_fit(basemodel, frequency_range, data, xerr=0)
+    success, message = s.likelihood_fit(basemodel, frequency_range, data, xerr=1)
 
 calculates the fit for a uncertainty of 1 MHz on the frequency after first fitting without uncertainty. This gives a result of::
 
@@ -244,10 +244,10 @@ For ease-of-use, the result of the fit can also be extracted in the form of a pa
 
 .. code:: python
 
-    success, message = s.chisquare_spectroscopic_fit(spectrum, frequency_range, data, pearson=False)
-    success, message = s.likelihood_fit(spectrum, frequency_range, data, walking=True)
-    frame_chi = spectrum.get_result_frame(method='chisquare')  #Convert the results of the chisquare fit
-    frame_mle = spectrum.get_result_frame(method='mle')  #Same for the MLE results
+    success, message = s.chisquare_spectroscopic_fit(basemodel, frequency_range, data, pearson=False)
+    success, message = s.likelihood_fit(basemodel, frequency_range, data, walking=True)
+    frame_chi = basemodel.get_result_frame(method='chisquare')  #Convert the results of the chisquare fit
+    frame_mle = basemodel.get_result_frame(method='mle')  #Same for the MLE results
     frame = s.concat_results([frame_chi, frame_mle], index=['chisquare', 'poisson'])
     print(frame)
 

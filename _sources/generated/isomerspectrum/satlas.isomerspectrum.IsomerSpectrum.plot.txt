@@ -1,6 +1,0 @@
-satlas.isomerspectrum.IsomerSpectrum.plot
-=========================================
-
-.. currentmodule:: satlas.isomerspectrum
-
-.. automethod:: IsomerSpectrum.plot

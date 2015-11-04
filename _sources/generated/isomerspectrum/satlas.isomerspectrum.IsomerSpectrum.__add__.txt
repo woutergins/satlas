@@ -1,6 +1,0 @@
-satlas.isomerspectrum.IsomerSpectrum.__add__
-============================================
-
-.. currentmodule:: satlas.isomerspectrum
-
-.. automethod:: IsomerSpectrum.__add__

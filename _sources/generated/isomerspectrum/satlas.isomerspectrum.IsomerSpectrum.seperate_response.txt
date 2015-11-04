@@ -1,6 +1,0 @@
-satlas.isomerspectrum.IsomerSpectrum.seperate_response
-======================================================
-
-.. currentmodule:: satlas.isomerspectrum
-
-.. automethod:: IsomerSpectrum.seperate_response

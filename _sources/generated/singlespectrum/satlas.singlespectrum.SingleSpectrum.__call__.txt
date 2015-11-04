@@ -1,6 +1,0 @@
-satlas.singlespectrum.SingleSpectrum.__call__
-=============================================
-
-.. currentmodule:: satlas.singlespectrum
-
-.. automethod:: SingleSpectrum.__call__

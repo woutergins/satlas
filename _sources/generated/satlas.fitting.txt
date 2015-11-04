@@ -15,6 +15,5 @@ satlas.fitting
       likelihood_lnprior
       likelihood_lnprob
       likelihood_loglikelihood
-      likelihood_plot
       likelihood_walk
       likelihood_x_err

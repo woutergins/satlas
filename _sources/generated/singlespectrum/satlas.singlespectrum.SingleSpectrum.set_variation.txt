@@ -1,6 +1,0 @@
-satlas.singlespectrum.SingleSpectrum.set_variation
-==================================================
-
-.. currentmodule:: satlas.singlespectrum
-
-.. automethod:: SingleSpectrum.set_variation

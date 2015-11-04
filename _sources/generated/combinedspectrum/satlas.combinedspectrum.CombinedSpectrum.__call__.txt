@@ -1,6 +1,0 @@
-satlas.combinedspectrum.CombinedSpectrum.__call__
-=================================================
-
-.. currentmodule:: satlas.combinedspectrum
-
-.. automethod:: CombinedSpectrum.__call__

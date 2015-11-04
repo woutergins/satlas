@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.utilities.generate_spectrum &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.utilities.generate_spectrum &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +24,10 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../../index.html" >
     <link rel="up" title="satlas.utilities" href="../satlas.utilities.html" >
     <link rel="next" title="satlas.utilities.poisson_interval" href="satlas.utilities.poisson_interval.html" >
-    <link rel="prev" title="satlas.utilities.generate_correlation_plot" href="satlas.utilities.generate_correlation_plot.html" > 
+    <link rel="prev" title="satlas.utilities.generate_correlation_map" href="satlas.utilities.generate_correlation_map.html" > 
   </head>
   <body>
 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.utilities.html" accesskey="U">satlas.utilities</a></li> 
@@ -67,7 +67,7 @@
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="satlas.utilities.generate_correlation_plot.html" title="satlas.utilities.generate_correlation_plot"
+        <a href="satlas.utilities.generate_correlation_map.html" title="satlas.utilities.generate_correlation_map"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -88,15 +88,15 @@
 <dl class="function">
 <dt id="satlas.utilities.generate_spectrum">
 <code class="descclassname">satlas.utilities.</code><code class="descname">generate_spectrum</code><span class="sig-paren">(</span><em>spectrum</em>, <em>x</em>, <em>number_of_counts</em>, <em>nwalkers=100</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/utilities.html#generate_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.generate_spectrum" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a spectrum by random sampling from the provided hyperfine
-spectrum and range. The total number of counts for the generated spectrum
+<dd><p>Generates a model by random sampling from the provided <a class="reference internal" href="../satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a>
+and range. The total number of counts for the generated spectrum
 is required.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.singlespectrum.SingleSpectrum.html#satlas.singlespectrum.SingleSpectrum" title="satlas.singlespectrum.SingleSpectrum"><em>SingleSpectrum</em></a>) &#8211; An instance of SingleSpectrum, which gives the probability distribution
+<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a>) &#8211; An instance of class:<cite>.HFSModel</cite>, which gives the probability distribution
 from which the random samples are drawn.</li>
 <li><strong>x</strong> (<em>NumPy array</em>) &#8211; NumPy array representing the bin centers for the spectrum.</li>
 <li><strong>number_of_counts</strong> (<em>int</em>) &#8211; Parameter controlling the total number of counts in the spectrum.</li>
@@ -125,8 +125,8 @@ in x.</p>
       <div class="spc-rightsidebar span3">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="satlas.utilities.generate_correlation_plot.html"
-                        title="previous chapter">satlas.utilities.generate_correlation_plot</a></p>
+  <p class="topless"><a href="satlas.utilities.generate_correlation_map.html"
+                        title="previous chapter">satlas.utilities.generate_correlation_map</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="satlas.utilities.poisson_interval.html"
                         title="next chapter">satlas.utilities.poisson_interval</a></p>

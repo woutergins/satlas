@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.fitting.chisquare_spectroscopic_fit &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.fitting.chisquare_spectroscopic_fit &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../../index.html" >
     <link rel="up" title="satlas.fitting" href="../satlas.fitting.html" >
     <link rel="next" title="satlas.fitting.likelihood_fit" href="satlas.fitting.likelihood_fit.html" >
     <link rel="prev" title="satlas.fitting.chisquare_model" href="satlas.fitting.chisquare_model.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.fitting.html" accesskey="U">satlas.fitting</a></li> 
@@ -87,7 +87,7 @@
 <h1>satlas.fitting.chisquare_spectroscopic_fit<a class="headerlink" href="#satlas-fitting-chisquare-spectroscopic-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.fitting.chisquare_spectroscopic_fit">
-<code class="descclassname">satlas.fitting.</code><code class="descname">chisquare_spectroscopic_fit</code><span class="sig-paren">(</span><em>spectrum</em>, <em>x</em>, <em>y</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#chisquare_spectroscopic_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.chisquare_spectroscopic_fit" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">satlas.fitting.</code><code class="descname">chisquare_spectroscopic_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>func=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#chisquare_spectroscopic_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.chisquare_spectroscopic_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use the <a class="reference internal" href="satlas.fitting.chisquare_fit.html#satlas.fitting.chisquare_fit" title="satlas.fitting.chisquare_fit"><code class="xref py py-func docutils literal"><span class="pre">chisquare_fit</span></code></a> function, automatically estimating the errors
 on the counts by the square root.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -95,7 +95,7 @@ on the counts by the square root.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-class docutils literal"><span class="pre">Spectrum</span></code></a>) &#8211; Spectrum object containing all the information about the fit;
+<li><strong>f</strong> (<a class="reference internal" href="../satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">BaseModel</span></code></a>) &#8211; Model object containing all the information about the fit;
 will be fitted to the given data.</li>
 <li><strong>x</strong> (<em>array_like</em>) &#8211; Experimental data for the x-axis.</li>
 <li><strong>y</strong> (<em>array_like</em>) &#8211; Experimental data for the y-axis.</li>

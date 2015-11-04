@@ -1,6 +1,0 @@
-satlas.singlespectrum.SingleSpectrum.set_value
-==============================================
-
-.. currentmodule:: satlas.singlespectrum
-
-.. automethod:: SingleSpectrum.set_value

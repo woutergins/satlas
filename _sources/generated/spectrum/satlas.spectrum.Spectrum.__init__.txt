@@ -1,6 +1,0 @@
-satlas.spectrum.Spectrum.__init__
-=================================
-
-.. currentmodule:: satlas.spectrum
-
-.. automethod:: Spectrum.__init__

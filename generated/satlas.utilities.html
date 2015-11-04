@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.utilities &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.utilities &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.utilities.concat_results" href="utilities/satlas.utilities.concat_results.html" >
     <link rel="prev" title="satlas.profiles.Voigt.__call__" href="profiles/satlas.profiles.Voigt.__call__.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -95,16 +95,19 @@
 <tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.concat_results.html#satlas.utilities.concat_results" title="satlas.utilities.concat_results"><code class="xref py py-obj docutils literal"><span class="pre">concat_results</span></code></a>(list_of_results[,&nbsp;index])</td>
 <td>Given a list of DataFrames, use the supplied index to concatenate the DataFrames.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.generate_correlation_plot.html#satlas.utilities.generate_correlation_plot" title="satlas.utilities.generate_correlation_plot"><code class="xref py py-obj docutils literal"><span class="pre">generate_correlation_plot</span></code></a>(data[,&nbsp;filter])</td>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.generate_correlation_plot.html#satlas.utilities.generate_correlation_plot" title="satlas.utilities.generate_correlation_plot"><code class="xref py py-obj docutils literal"><span class="pre">generate_correlation_plot</span></code></a>(filename[,&nbsp;filter])</td>
 <td>Given the random walk data, creates a triangle plot: distribution of a single parameter on the diagonal axes, 2D contour plots with 1, 2 and 3 sigma contours on the off-diagonal.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.generate_spectrum.html#satlas.utilities.generate_spectrum" title="satlas.utilities.generate_spectrum"><code class="xref py py-obj docutils literal"><span class="pre">generate_spectrum</span></code></a>(spectrum,&nbsp;x,&nbsp;number_of_counts)</td>
-<td>Generates a spectrum by random sampling from the provided hyperfine spectrum and range.</td>
+<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.generate_correlation_map.html#satlas.utilities.generate_correlation_map" title="satlas.utilities.generate_correlation_map"><code class="xref py py-obj docutils literal"><span class="pre">generate_correlation_map</span></code></a>(f,&nbsp;x_data,&nbsp;y_data)</td>
+<td>Generates a correlation map for either the chisquare or the MLE method.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.poisson_interval.html#satlas.utilities.poisson_interval" title="satlas.utilities.poisson_interval"><code class="xref py py-obj docutils literal"><span class="pre">poisson_interval</span></code></a>(data[,&nbsp;alpha])</td>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.generate_spectrum.html#satlas.utilities.generate_spectrum" title="satlas.utilities.generate_spectrum"><code class="xref py py-obj docutils literal"><span class="pre">generate_spectrum</span></code></a>(spectrum,&nbsp;x,&nbsp;number_of_counts)</td>
+<td>Generates a model by random sampling from the provided <a class="reference internal" href="satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a> and range.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.poisson_interval.html#satlas.utilities.poisson_interval" title="satlas.utilities.poisson_interval"><code class="xref py py-obj docutils literal"><span class="pre">poisson_interval</span></code></a>(data[,&nbsp;alpha])</td>
 <td>Calculates the confidence interval for the mean of a Poisson distribution.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.weighted_average.html#satlas.utilities.weighted_average" title="satlas.utilities.weighted_average"><code class="xref py py-obj docutils literal"><span class="pre">weighted_average</span></code></a>(x,&nbsp;sigma[,&nbsp;axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.weighted_average.html#satlas.utilities.weighted_average" title="satlas.utilities.weighted_average"><code class="xref py py-obj docutils literal"><span class="pre">weighted_average</span></code></a>(x,&nbsp;sigma[,&nbsp;axis])</td>
 <td>Takes the weighted average of an array of values and the associated errors.</td>
 </tr>
 </tbody>

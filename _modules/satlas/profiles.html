@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.profiles &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.profiles &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../../index.html" >
     <link rel="up" title="Module code" href="../index.html" > 
   </head>
   <body>
@@ -44,7 +44,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../index.html" accesskey="U">Module code</a></li> 
     </ul>
@@ -73,7 +73,8 @@
           <div class="body" id="spc-section-body">
             
   <h1>Source code for satlas.profiles</h1><div class="highlight"><pre>
-<span class="sd">&quot;&quot;&quot;Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.</span>
 
 <span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@fys.kuleuven.be&gt;</span>
 <span class="sd">.. moduleauthor:: Ruben de Groote &lt;ruben.degroote@fys.kuleuven.be&gt;</span>
@@ -161,11 +162,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">*</span> <span class="n">vals</span>
 
 
-<div class="viewcode-block" id="Gaussian"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Gaussian.html#satlas.profiles.Gaussian">[docs]</a><span class="k">class</span> <span class="nc">Gaussian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+<div class="viewcode-block" id="Gaussian"><a class="viewcode-back" href="../../profiles/satlas.profiles.Gaussian.html#satlas.profiles.Gaussian">[docs]</a><span class="k">class</span> <span class="nc">Gaussian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
 
     <span class="sd">r&quot;&quot;&quot;A callable normalized Gaussian profile.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Gaussian.__init__"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Gaussian.__init__.html#satlas.profiles.Gaussian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Gaussian.__init__"><a class="viewcode-back" href="../../profiles/satlas.profiles.Gaussian.html#satlas.profiles.Gaussian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates a callable object storing the fwhm, amplitude and location</span>
 <span class="sd">        of a Gaussian lineshape.</span>
 
@@ -230,11 +231,11 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Gaussian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">expPart</span> <span class="o">/</span> <span class="n">normPart</span><span class="p">)</span>
 
 </div></div>
-<div class="viewcode-block" id="Lorentzian"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Lorentzian.html#satlas.profiles.Lorentzian">[docs]</a><span class="k">class</span> <span class="nc">Lorentzian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+<div class="viewcode-block" id="Lorentzian"><a class="viewcode-back" href="../../profiles/satlas.profiles.Lorentzian.html#satlas.profiles.Lorentzian">[docs]</a><span class="k">class</span> <span class="nc">Lorentzian</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;A callable normalized Lorentzian profile.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Lorentzian.__init__"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Lorentzian.__init__.html#satlas.profiles.Lorentzian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Lorentzian.__init__"><a class="viewcode-back" href="../../profiles/satlas.profiles.Lorentzian.html#satlas.profiles.Lorentzian.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates a callable object storing the fwhm, amplitude and location</span>
 <span class="sd">        of a Lorentzian lineshape.</span>
 
@@ -299,11 +300,11 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Lorentzian</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="n">topPart</span> <span class="o">/</span> <span class="n">bottomPart</span><span class="p">)</span>
 
 </div></div>
-<div class="viewcode-block" id="Voigt"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Voigt.html#satlas.profiles.Voigt">[docs]</a><span class="k">class</span> <span class="nc">Voigt</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
+<div class="viewcode-block" id="Voigt"><a class="viewcode-back" href="../../profiles/satlas.profiles.Voigt.html#satlas.profiles.Voigt">[docs]</a><span class="k">class</span> <span class="nc">Voigt</span><span class="p">(</span><span class="n">Profile</span><span class="p">):</span>
 
     <span class="sd">r&quot;&quot;&quot;A callable normalized Voigt profile.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="Voigt.__init__"><a class="viewcode-back" href="../../generated/profiles/satlas.profiles.Voigt.__init__.html#satlas.profiles.Voigt.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Voigt.__init__"><a class="viewcode-back" href="../../profiles/satlas.profiles.Voigt.html#satlas.profiles.Voigt.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ampIsArea</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates a callable object storing the fwhm, amplitude and location</span>
 <span class="sd">        of a Voigt lineshape.</span>
 

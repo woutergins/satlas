@@ -1,6 +1,0 @@
-satlas.combinedspectrum.CombinedSpectrum.seperate_response
-==========================================================
-
-.. currentmodule:: satlas.combinedspectrum
-
-.. automethod:: CombinedSpectrum.seperate_response

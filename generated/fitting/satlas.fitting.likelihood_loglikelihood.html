@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.fitting.likelihood_loglikelihood &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>satlas.fitting.likelihood_loglikelihood &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="../../index.html" >
     <link rel="up" title="satlas.fitting" href="../satlas.fitting.html" >
-    <link rel="next" title="satlas.fitting.likelihood_plot" href="satlas.fitting.likelihood_plot.html" >
+    <link rel="next" title="satlas.fitting.likelihood_walk" href="satlas.fitting.likelihood_walk.html" >
     <link rel="prev" title="satlas.fitting.likelihood_lnprob" href="satlas.fitting.likelihood_lnprob.html" > 
   </head>
   <body>
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.0.1b4 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.fitting.html" accesskey="U">satlas.fitting</a></li> 
@@ -63,7 +63,7 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="satlas.fitting.likelihood_plot.html" title="satlas.fitting.likelihood_plot"
+        <a href="satlas.fitting.likelihood_walk.html" title="satlas.fitting.likelihood_walk"
            accesskey="N">next</a>
       </li>
       <li class="active">
@@ -87,8 +87,8 @@
 <h1>satlas.fitting.likelihood_loglikelihood<a class="headerlink" href="#satlas-fitting-likelihood-loglikelihood" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.fitting.likelihood_loglikelihood">
-<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_loglikelihood</code><span class="sig-paren">(</span><em>params</em>, <em>spectrum</em>, <em>x</em>, <em>y</em>, <em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_loglikelihood" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a parameters object, a Spectrum object, experimental data
+<code class="descclassname">satlas.fitting.</code><code class="descname">likelihood_loglikelihood</code><span class="sig-paren">(</span><em>params</em>, <em>f</em>, <em>x</em>, <em>y</em>, <em>xerr</em>, <em>func</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/fitting.html#likelihood_loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.likelihood_loglikelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a parameters object, a Model object, experimental data
 and a loglikelihood function, calculates the loglikelihood for
 all data points.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -97,10 +97,11 @@ all data points.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>params</strong> (<em>lmfit.Parameters object with satlas.PriorParameters</em>) &#8211; Group of parameters for which the fit has to be evaluated.</li>
-<li><strong>spectrum</strong> (<a class="reference internal" href="../satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-class docutils literal"><span class="pre">Spectrum</span></code></a>) &#8211; Spectrum object containing all the information about the fit;
+<li><strong>f</strong> (<a class="reference internal" href="../satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">BaseModel</span></code></a>) &#8211; Model object containing all the information about the fit;
 will be fitted to the given data.</li>
 <li><strong>x</strong> (<em>array_like</em>) &#8211; Experimental data for the x-axis.</li>
 <li><strong>y</strong> (<em>array_like</em>) &#8211; Experimental data for the y-axis.</li>
+<li><strong>xerr</strong> (<em>array_like</em>) &#8211; Experimental data on <em>x</em>.</li>
 <li><strong>func</strong> (<em>function</em>) &#8211; Function calculating the loglikelihood of y_data being drawn from
 a distribution characterized by y_model.</li>
 </ul>
@@ -128,8 +129,8 @@ a distribution characterized by y_model.</li>
   <p class="topless"><a href="satlas.fitting.likelihood_lnprob.html"
                         title="previous chapter">satlas.fitting.likelihood_lnprob</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="satlas.fitting.likelihood_plot.html"
-                        title="next chapter">satlas.fitting.likelihood_plot</a></p>
+  <p class="topless"><a href="satlas.fitting.likelihood_walk.html"
+                        title="next chapter">satlas.fitting.likelihood_walk</a></p>
   <h3>This Page</h3>
   <div>
     <a href="../../_sources/generated/fitting/satlas.fitting.likelihood_loglikelihood.txt"

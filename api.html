@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>API reference &mdash; SATLAS 0.0.1b2 documentation</title>
+    <title>API reference &mdash; SATLAS 0.0.1b4 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1b2',
+        VERSION:     '0.0.1b4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.0.1b2 documentation" href="index.html" >
-    <link rel="next" title="satlas.spectrum.Spectrum" href="generated/satlas.spectrum.Spectrum.html" >
+    <link rel="top" title="SATLAS 0.0.1b4 documentation" href="index.html" >
+    <link rel="next" title="satlas.basemodel.BaseModel" href="generated/satlas.basemodel.BaseModel.html" >
     <link rel="prev" title="SATLAS – Statistical Analysis Toolbox for Laser Spectroscopy" href="index.html" > 
   </head>
   <body>
@@ -45,7 +45,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="index.html">SATLAS 0.0.1b2 documentation</a></li>
+        <li class="active"><a href="index.html">SATLAS 0.0.1b4 documentation</a></li>
 	 
     </ul>
               
@@ -60,7 +60,7 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="generated/satlas.spectrum.Spectrum.html" title="satlas.spectrum.Spectrum"
+        <a href="generated/satlas.basemodel.BaseModel.html" title="satlas.basemodel.BaseModel"
            accesskey="N">next</a>
       </li>
       <li class="active">
@@ -82,11 +82,11 @@
             
   <div class="section" id="api-reference">
 <span id="api-ref"></span><h1>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="spectrum-creation">
-<h2>Spectrum creation<a class="headerlink" href="#spectrum-creation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basemodel-creation">
+<h2>BaseModel creation<a class="headerlink" href="#basemodel-creation" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The abstract baseclass <a class="reference internal" href="generated/satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-class docutils literal"><span class="pre">Spectrum</span></code></a> defines a few methods for retrieving information about the current state of the fit. These methods are not documented in the child classes, but will be regularly used.</p>
+<p class="last">The abstract baseclass <a class="reference internal" href="generated/satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">BaseModel</span></code></a> defines a few methods for retrieving information about the current state of the fit. These methods are not documented in the child classes, but will be regularly used.</p>
 </div>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -94,17 +94,17 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.spectrum.Spectrum.html#satlas.spectrum.Spectrum" title="satlas.spectrum.Spectrum"><code class="xref py py-obj docutils literal"><span class="pre">satlas.spectrum.Spectrum</span></code></a>()</td>
-<td>Abstract baseclass for all spectra, such as <a class="reference internal" href="generated/satlas.singlespectrum.SingleSpectrum.html#satlas.singlespectrum.SingleSpectrum" title="satlas.singlespectrum.SingleSpectrum"><code class="xref py py-class docutils literal"><span class="pre">SingleSpectrum</span></code></a>, <a class="reference internal" href="generated/satlas.combinedspectrum.CombinedSpectrum.html#satlas.combinedspectrum.CombinedSpectrum" title="satlas.combinedspectrum.CombinedSpectrum"><code class="xref py py-class docutils literal"><span class="pre">CombinedSpectrum</span></code></a> and <a class="reference internal" href="generated/satlas.isomerspectrum.IsomerSpectrum.html#satlas.isomerspectrum.IsomerSpectrum" title="satlas.isomerspectrum.IsomerSpectrum"><code class="xref py py-class docutils literal"><span class="pre">IsomerSpectrum</span></code></a>.</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-obj docutils literal"><span class="pre">satlas.basemodel.BaseModel</span></code></a>()</td>
+<td>Abstract baseclass for all spectra, such as <a class="reference internal" href="generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a>, <a class="reference internal" href="generated/satlas.combinedmodel.CombinedModel.html#satlas.combinedmodel.CombinedModel" title="satlas.combinedmodel.CombinedModel"><code class="xref py py-class docutils literal"><span class="pre">CombinedModel</span></code></a> and <a class="reference internal" href="generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/satlas.singlespectrum.SingleSpectrum.html#satlas.singlespectrum.SingleSpectrum" title="satlas.singlespectrum.SingleSpectrum"><code class="xref py py-obj docutils literal"><span class="pre">satlas.singlespectrum.SingleSpectrum</span></code></a>(I,&nbsp;J,&nbsp;...)</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-obj docutils literal"><span class="pre">satlas.hfsmodel.HFSModel</span></code></a>(I,&nbsp;J,&nbsp;ABC,&nbsp;centroid)</td>
 <td>Constructs a HFS spectrum, consisting of different peaks described by a certain profile.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.isomerspectrum.IsomerSpectrum.html#satlas.isomerspectrum.IsomerSpectrum" title="satlas.isomerspectrum.IsomerSpectrum"><code class="xref py py-obj docutils literal"><span class="pre">satlas.isomerspectrum.IsomerSpectrum</span></code></a>(spectra)</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-obj docutils literal"><span class="pre">satlas.multimodel.MultiModel</span></code></a>(models)</td>
 <td>Create a spectrum containing the information of multiple hyperfine structures.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/satlas.combinedspectrum.CombinedSpectrum.html#satlas.combinedspectrum.CombinedSpectrum" title="satlas.combinedspectrum.CombinedSpectrum"><code class="xref py py-obj docutils literal"><span class="pre">satlas.combinedspectrum.CombinedSpectrum</span></code></a>(spectra)</td>
-<td>Combines different spectra for simultaneous fitting.</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/satlas.combinedmodel.CombinedModel.html#satlas.combinedmodel.CombinedModel" title="satlas.combinedmodel.CombinedModel"><code class="xref py py-obj docutils literal"><span class="pre">satlas.combinedmodel.CombinedModel</span></code></a>(models)</td>
+<td>Combines different models for simultaneous fitting.</td>
 </tr>
 </tbody>
 </table>
@@ -117,36 +117,80 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.fitting.html#module-satlas.fitting" title="satlas.fitting"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting</span></code></a></td>
-<td>Implementation of fitting routines specialised for Spectrum objects.</td>
+<tr class="row-odd"><td><a class="reference internal" href="fitting/satlas.fitting.chisquare_fit.html#satlas.fitting.chisquare_fit" title="satlas.fitting.chisquare_fit"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.chisquare_fit</span></code></a>(f,&nbsp;x,&nbsp;y,&nbsp;yerr)</td>
+<td>Use a non-linear least squares minimization (Levenberg-Marquardt) algorithm to minimize the chi-square of the fit to data <em>x</em> and <em>y</em> with errorbars <em>yerr</em>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="fitting/satlas.fitting.chisquare_model.html#satlas.fitting.chisquare_model" title="satlas.fitting.chisquare_model"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.chisquare_model</span></code></a>(params,&nbsp;f,&nbsp;x,&nbsp;...)</td>
+<td>Model function for chisquare fitting routines as established in this module.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="fitting/satlas.fitting.chisquare_spectroscopic_fit.html#satlas.fitting.chisquare_spectroscopic_fit" title="satlas.fitting.chisquare_spectroscopic_fit"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.chisquare_spectroscopic_fit</span></code></a>(f,&nbsp;x,&nbsp;y)</td>
+<td>Use the <code class="xref py py-func docutils literal"><span class="pre">chisquare_fit</span></code> function, automatically estimating the errors on the counts by the square root.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="fitting/satlas.fitting.likelihood_fit.html#satlas.fitting.likelihood_fit" title="satlas.fitting.likelihood_fit"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.likelihood_fit</span></code></a>(f,&nbsp;x,&nbsp;y[,&nbsp;...])</td>
+<td>Fits the given model to the given data using the Maximum Likelihood Estimation technique.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="fitting/satlas.fitting.likelihood_walk.html#satlas.fitting.likelihood_walk" title="satlas.fitting.likelihood_walk"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.likelihood_walk</span></code></a>(f,&nbsp;x,&nbsp;y[,&nbsp;...])</td>
+<td>Calculates the uncertainty on MLE-optimized parameter values by performing a random walk through parameter space and comparing the resulting loglikelihood values.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="fitting/satlas.fitting.likelihood_x_err.html#satlas.fitting.likelihood_x_err" title="satlas.fitting.likelihood_x_err"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.likelihood_x_err</span></code></a>(f,&nbsp;x,&nbsp;y,&nbsp;...)</td>
+<td>Calculates the loglikelihood for a model given x and y values.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="fitting/satlas.fitting.likelihood_lnprob.html#satlas.fitting.likelihood_lnprob" title="satlas.fitting.likelihood_lnprob"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.likelihood_lnprob</span></code></a>(params,&nbsp;f,&nbsp;...)</td>
+<td>Calculates the logarithm of the probability that the data fits the model given the current parameters.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="fitting/satlas.fitting.likelihood_loglikelihood.html#satlas.fitting.likelihood_loglikelihood" title="satlas.fitting.likelihood_loglikelihood"><code class="xref py py-obj docutils literal"><span class="pre">satlas.fitting.likelihood_loglikelihood</span></code></a>(f,&nbsp;...)</td>
+<td>Given a parameters object, a Model object, experimental data and a loglikelihood function, calculates the loglikelihood for all data points.</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section" id="lineshapes">
-<h2>Lineshapes<a class="headerlink" href="#lineshapes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-satlas.profiles">
+<span id="lineshapes"></span><h2>Lineshapes<a class="headerlink" href="#module-satlas.profiles" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.</p>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.profiles.html#module-satlas.profiles" title="satlas.profiles"><code class="xref py py-obj docutils literal"><span class="pre">satlas.profiles</span></code></a></td>
-<td>Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.</td>
+<tr class="row-odd"><td><a class="reference internal" href="profiles/satlas.profiles.Gaussian.html#satlas.profiles.Gaussian" title="satlas.profiles.Gaussian"><code class="xref py py-obj docutils literal"><span class="pre">satlas.profiles.Gaussian</span></code></a>([fwhm,&nbsp;mu,&nbsp;amp,&nbsp;...])</td>
+<td>A callable normalized Gaussian profile.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="profiles/satlas.profiles.Lorentzian.html#satlas.profiles.Lorentzian" title="satlas.profiles.Lorentzian"><code class="xref py py-obj docutils literal"><span class="pre">satlas.profiles.Lorentzian</span></code></a>([fwhm,&nbsp;mu,&nbsp;amp,&nbsp;...])</td>
+<td>A callable normalized Lorentzian profile.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="profiles/satlas.profiles.Voigt.html#satlas.profiles.Voigt" title="satlas.profiles.Voigt"><code class="xref py py-obj docutils literal"><span class="pre">satlas.profiles.Voigt</span></code></a>([fwhm,&nbsp;mu,&nbsp;amp,&nbsp;ampIsArea])</td>
+<td>A callable normalized Voigt profile.</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section" id="utilities">
-<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-satlas.utilities">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-satlas.utilities" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of various functions that ease the work, but do not belong in one of the other modules.</p>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/satlas.utilities.html#module-satlas.utilities" title="satlas.utilities"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities</span></code></a></td>
-<td>Implementation of various functions that ease the work, but do not belong in one of the other modules.</td>
+<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.concat_results.html#satlas.utilities.concat_results" title="satlas.utilities.concat_results"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.concat_results</span></code></a>(list_of_results)</td>
+<td>Given a list of DataFrames, use the supplied index to concatenate the DataFrames.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.generate_correlation_plot.html#satlas.utilities.generate_correlation_plot" title="satlas.utilities.generate_correlation_plot"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.generate_correlation_plot</span></code></a>(...)</td>
+<td>Given the random walk data, creates a triangle plot: distribution of a single parameter on the diagonal axes, 2D contour plots with 1, 2 and 3 sigma contours on the off-diagonal.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.generate_correlation_map.html#satlas.utilities.generate_correlation_map" title="satlas.utilities.generate_correlation_map"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.generate_correlation_map</span></code></a>(f,&nbsp;...)</td>
+<td>Generates a correlation map for either the chisquare or the MLE method.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.generate_spectrum.html#satlas.utilities.generate_spectrum" title="satlas.utilities.generate_spectrum"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.generate_spectrum</span></code></a>(spectrum,&nbsp;...)</td>
+<td>Generates a model by random sampling from the provided <a class="reference internal" href="generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a> and range.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="utilities/satlas.utilities.poisson_interval.html#satlas.utilities.poisson_interval" title="satlas.utilities.poisson_interval"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.poisson_interval</span></code></a>(data[,&nbsp;alpha])</td>
+<td>Calculates the confidence interval for the mean of a Poisson distribution.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="utilities/satlas.utilities.weighted_average.html#satlas.utilities.weighted_average" title="satlas.utilities.weighted_average"><code class="xref py py-obj docutils literal"><span class="pre">satlas.utilities.weighted_average</span></code></a>(x,&nbsp;sigma)</td>
+<td>Takes the weighted average of an array of values and the associated errors.</td>
 </tr>
 </tbody>
 </table>
@@ -162,10 +206,10 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">API reference</a><ul>
-<li><a class="reference internal" href="#spectrum-creation">Spectrum creation</a></li>
+<li><a class="reference internal" href="#basemodel-creation">BaseModel creation</a></li>
 <li><a class="reference internal" href="#fitting-routines">Fitting routines</a></li>
-<li><a class="reference internal" href="#lineshapes">Lineshapes</a></li>
-<li><a class="reference internal" href="#utilities">Utilities</a></li>
+<li><a class="reference internal" href="#module-satlas.profiles">Lineshapes</a></li>
+<li><a class="reference internal" href="#module-satlas.utilities">Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -174,8 +218,8 @@
   <p class="topless"><a href="index.html"
                         title="previous chapter">SATLAS &#8211; Statistical Analysis Toolbox for Laser Spectroscopy</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="generated/satlas.spectrum.Spectrum.html"
-                        title="next chapter">satlas.spectrum.Spectrum</a></p>
+  <p class="topless"><a href="generated/satlas.basemodel.BaseModel.html"
+                        title="next chapter">satlas.basemodel.BaseModel</a></p>
   <h3>This Page</h3>
   <div>
     <a href="_sources/api.txt"
