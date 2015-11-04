@@ -16,14 +16,3 @@ satlas.basemodel.BaseModel
       ~BaseModel.display_mle_fit
       ~BaseModel.get_result_frame
       ~BaseModel.vars
-
-
-
-
-
-   .. rubric:: Attributes
-
-   .. autosummary::
-
-      ~BaseModel.selected
-

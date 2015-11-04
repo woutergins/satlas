@@ -23,6 +23,5 @@ satlas.multimodel.MultiModel
    .. autosummary::
 
       ~MultiModel.params
-      ~MultiModel.selected
       ~MultiModel.shared
 
