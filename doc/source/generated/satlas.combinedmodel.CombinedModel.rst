@@ -23,5 +23,3 @@ satlas.combinedmodel.CombinedModel
    .. autosummary::
 
       ~CombinedModel.params
-      ~CombinedModel.shared
-

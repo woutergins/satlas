@@ -305,14 +305,13 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
     -------
     array_like
         Array containing the loglikelihood for each seperate datapoint."""
-    # f.params = params
-    # If any value of the evaluated model is below 0,
-    # or the difference between the minimum and maximum is too low,
-    # reject the parameter values.
+    f.params = params
+    # If a value is given to the uncertainty on the x-values, use the adapted
+    # function.
+    response = np.hstack(f(x))
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
     if xerr is None or np.allclose(0, xerr):
-        response = np.hstack(f(x))
         return_value = func(y, response)
     else:
         return_value = likelihood_x_err(f, x, y, xerr, func)

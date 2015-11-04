@@ -391,10 +391,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
 
 def _diaconis_rule(data, min, max):
     iqr = np.subtract(*np.percentile(data, [75, 25]))
-    print('iqr', iqr)
-    # iqr = np.subtract(*np.percentile(data, [75, 25]))
     bin_size = 2 * iqr * data.shape[0]**(-1/3)
-    print('binsize', bin_size)
     if bin_size == 0:
         return np.sqrt(data)
     else:

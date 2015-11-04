@@ -30,4 +30,3 @@ satlas.hfsmodel.HFSModel
       ~HFSModel.ftof
       ~HFSModel.params
       ~HFSModel.racah_int
-
