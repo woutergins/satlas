@@ -305,7 +305,6 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
     -------
     array_like
         Array containing the loglikelihood for each seperate datapoint."""
-    f.params = params
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
     response = np.hstack(f(x))
