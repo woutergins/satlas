@@ -70,6 +70,9 @@ class CombinedModel(BaseModel):
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
+                    
             params += p
         return params
 
@@ -85,9 +88,11 @@ class CombinedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = params[key].__class__()
-                    par[new_key].__setstate__(params[key].__getstate__())
-                    par[new_key].expr = expr
+                    par[new_key] = lm.Parameter(new_key,value=params[key].value,
+                                             min=params[key].min,
+                                             max=params[key].max)
+                    par[new_key].stderr = params[key].stderr
+
             spec.params = par
 
     def seperate_response(self, x):

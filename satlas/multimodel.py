@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import lmfit
+import lmfit as lm
 import copy
 
 __all__ = ['MultiModel']
@@ -50,17 +50,18 @@ class MultiModel(BaseModel):
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        params = lmfit.Parameters()
+        params = lm.Parameters()
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
                 p[new_key] = p.pop(old_key)
-                for o_key in keys:
-                    if p[new_key].expr is not None:
-                        n_key = 's' + str(i) + '_' + o_key
-                        p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if p[new_key].expr is not None:
+                    for o_key in keys:
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
@@ -68,13 +69,15 @@ class MultiModel(BaseModel):
                     p[new_key].value = 0
                     p[new_key].vary = False
                     p[new_key].expr = None
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
             params += p
         return params
 
     @params.setter
     def params(self, params):
         for i, spec in enumerate(self.models):
-            par = lmfit.Parameters()
+            par = lm.Parameters()
             for key in params:
                 if key.startswith('s'+str(i)+'_'):
                     new_key = key[len('s'+str(i)+'_'):]
@@ -83,9 +86,10 @@ class MultiModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = params[key].__class__()
-                    par[new_key].__setstate__(params[key].__getstate__())
-                    par[new_key].expr = expr
+                    par[new_key] = lm.Parameter(new_key,value=params[key].value,
+                                             min=params[key].min,
+                                             max=params[key].max)
+                    par[new_key].stderr = params[key].stderr
             spec.params = par
 
     def seperate_response(self, x, background=False):
@@ -119,7 +123,8 @@ class MultiModel(BaseModel):
              no_of_points=10**4, ax=None,
              show=True, xlabel='Frequency (MHz)',
              ylabel='Counts', data_legend='Data',
-             indicate=False):
+             indicate=False,plot_seperate=True,
+             normalized=False):
         """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 
@@ -147,6 +152,12 @@ class MultiModel(BaseModel):
         indicate: boolean
             If True, the peaks will be marked with
             the transition.
+        plot_seperate: boolean
+            If True, the seperate response of each of the models will be 
+            plotted on the figure as well as their sum
+        normalized: Boolean
+            If True, the data and fit are plotted normalized such that the highest
+            data point is one.
 
         Returns
         -------
@@ -172,6 +183,13 @@ class MultiModel(BaseModel):
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
+
+        if normalized:
+            norm = np.max(y)
+            y,yerr = y/norm,yerr/norm
+        else:
+            norm = 1
+
         if x is not None and y is not None:
             try:
                 ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
@@ -179,15 +197,16 @@ class MultiModel(BaseModel):
                 ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
         resp = self.seperate_response(superx)
 
-        for i, r in enumerate(resp):
-            line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
-            if indicate:
-                for l, lab in zip(self.models[i].locations, self.models[i].ftof):
-                    lab = lab.split('__')
-                    lab = lab[0] + '$\\rightarrow$' + lab[1]
-                    ax.annotate(lab, xy=(l, self.models[i](l)), rotation=90, color=line.get_color(),
-                                weight='bold', size=14, ha='center')
-        ax.plot(superx, self(superx), label='Total')
+        if plot_seperate:
+            for i, r in enumerate(resp):
+                line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
+                if indicate:
+                    for l, lab in zip(self.models[i].locations, self.models[i].ftof):
+                        lab = lab.split('__')
+                        lab = lab[0] + '$\\rightarrow$' + lab[1]
+                        ax.annotate(lab, xy=(l, self.models[i](l)/norm), rotation=90, color=line.get_color(),
+                                    weight='bold', size=14, ha='center')
+        ax.plot(superx, self(superx)/norm, label='Total')
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
