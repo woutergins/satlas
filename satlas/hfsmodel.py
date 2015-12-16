@@ -628,22 +628,20 @@ class HFSModel(BaseModel):
         Parameters
         ----------
         valueDict: dictionary
-            Dictionary containing the values for the parameters, with the
-            name as the key."""
+            Dictionary containing the values for the parameters"""
         par = self.params
         for key in valueDict:
             par[key].value = valueDict[key]
         self.params = par
 
-    def set_expr(self, exprDict, name):
+    def set_expr(self, exprDict):
         """Sets the expression of the selected parameter
         to the given expression.
 
         Parameters
         ----------
         exprDict: dictionary
-            Dictionary containing the expressions for the parameters,
-            with the paremeter name as the key."""
+            Dictionary containing the expressions for the parameters"""
         par = self.params
         for key in exprDict:
             par[n].expr = exprDict[key]
