@@ -37,7 +37,7 @@ class HFSModel(BaseModel):
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  shape='voigt', use_racah=False, use_saturation=True, saturation=0,
                  shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=0, tailloc=0,
-                 background_params=[0]):
+                 tailshape = 'gaussian', background_params=[0]):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -91,6 +91,10 @@ class HFSModel(BaseModel):
             Sets the relative amplitude of the tail for the Crystalball shape function.
         tailloc: float, optional
             Sets the location of the tail for the Crystalball shape function.
+        tailshape: float, optional
+            Sets the shape of the tail. String is converted to lowercase. For
+            possible values, see *HFSModel__shapes__*.keys()`.
+            Defaults to Voigt if an incorrect value is supplied.
 
         Note
         ----
