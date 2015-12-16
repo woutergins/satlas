@@ -333,9 +333,8 @@ class Crystalball(Profile):
 
         Returns
         -------
-        Voigt
+        Crystalball
             Callable instance, evaluates the Crystalball profile in the arguments supplied."""
-        self.profile = profile
         super(Crystalball, self).__init__(fwhm=fwhm, mu=mu,
                                           amp=amp, ampIsArea=ampIsArea)
 
