@@ -20,6 +20,10 @@ class BaseModel(object):
 
     def __init__(self):
         super(BaseModel, self).__init__()
+        self._expr = {}
+        self._vary = {}
+        self._constraints = {}
+        self._params = None
 
     def set_value(self, valueDict):
         """Sets the value of the selected parameter to the given value.
@@ -41,10 +45,7 @@ class BaseModel(object):
         ----------
         exprDict: dictionary
             Dictionary containing the expressions for the parameters"""
-        par = self.params
-        for key in exprDict:
-            par[key].expr = exprDict[key]
-        self.params = par
+        self._expr = exprDict
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
@@ -54,8 +55,7 @@ class BaseModel(object):
         ----------
         varyDict: dictionary
             A dictionary containing 'key: True/False' mappings"""
-        for k in varyDict.keys():
-            self._vary[k] = varyDict[k]
+        self._vary = varyDict
 
     def set_boundaries(self, boundaryDict):
         """Sets the boundaries of the fitparameters as supplied in the

@@ -69,6 +69,8 @@ class MultiModel(BaseModel):
                     p[new_key].value = 0
                     p[new_key].vary = False
                     p[new_key].expr = None
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
             params += p
         return params
 
