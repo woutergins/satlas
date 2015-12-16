@@ -70,6 +70,9 @@ class CombinedModel(BaseModel):
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
+                    
             params += p
         return params
 
