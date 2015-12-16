@@ -335,7 +335,6 @@ class Crystalball(Profile):
         -------
         Voigt
             Callable instance, evaluates the Crystalball profile in the arguments supplied."""
-        self.profile = profile
         super(Crystalball, self).__init__(fwhm=fwhm, mu=mu,
                                           amp=amp, ampIsArea=ampIsArea)
 
@@ -377,7 +376,7 @@ class Crystalball(Profile):
         self._n = value
 
     def _bigger(self, x):
-        ret = np.exp(-0.5 * x * x / (self.sigma * self.sigma))
+        ret = np.exp(-0.5 * x * x)
         return ret
 
     def _smaller(self, x):
@@ -385,7 +384,6 @@ class Crystalball(Profile):
         n = self.n
         b = n / a - a
         a = ((n / a)**n) * np.exp(-0.5*a*a)
-        x = x / self.sigma
         return a / (b - x) ** n
 
     def __call__(self, x):
@@ -400,6 +398,6 @@ class Crystalball(Profile):
         -------
         array_like
             Array of seperate response values of the lineshape."""
-        x = (x - self.mu) * np.sign(self.alpha)
+        x = (x - self.mu) * np.sign(self.alpha) / self.sigma
         y = np.piecewise(x, x >= -np.abs(self.alpha), [self._bigger, self._smaller])
         return super(Crystalball, self).__call__(y)

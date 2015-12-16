@@ -159,7 +159,7 @@ class HFSModel(BaseModel):
 
         self._populate_params(ABC, fwhm, scale, n,
                               poisson, offset, centroid, saturation,
-                              tailamp, tailloc, tailshape, background_params)
+                              tailamp, tailloc, background_params)
 
     @property
     def locations(self):
@@ -354,7 +354,7 @@ class HFSModel(BaseModel):
 
     def _populate_params(self, ABC, fwhm, scale,
                          n, poisson, offset, centroid, saturation,
-                         tailamp, tailloc, tailshape, background_params):
+                         tailamp, tailloc, background_params):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
@@ -392,8 +392,6 @@ class HFSModel(BaseModel):
             for part in self.parts:
                 part.alpha = tailloc
                 part.n = tailamp
-                part.profile = tailshape
-
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)

@@ -27,7 +27,6 @@ __all__ = ['weighted_average',
            'generate_correlation_map',
            'generate_correlation_plot',
            'generate_spectrum',
-           'concat_results',
            'poisson_interval']
 
 def weighted_average(x, sigma, axis=None):
