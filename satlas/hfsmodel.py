@@ -36,8 +36,8 @@ class HFSModel(BaseModel):
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  shape='voigt', use_racah=False, use_saturation=True, saturation=0,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=0, tailloc=0,
-                 tailshape = 'gaussian', background_params=[0]):
+                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=0, 
+                 background_params=[0]):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -91,10 +91,6 @@ class HFSModel(BaseModel):
             Sets the relative amplitude of the tail for the Crystalball shape function.
         tailloc: float, optional
             Sets the location of the tail for the Crystalball shape function.
-        tailshape: float, optional
-            Sets the shape of the tail. String is converted to lowercase. For
-            possible values, see *HFSModel__shapes__*.keys()`.
-            Defaults to Voigt if an incorrect value is supplied.
 
         Note
         ----
@@ -163,7 +159,7 @@ class HFSModel(BaseModel):
 
         self._populate_params(ABC, fwhm, scale, n,
                               poisson, offset, centroid, saturation,
-                              tailamp, tailloc, tailshape, background_params)
+                              tailamp, tailloc, background_params)
 
     @property
     def locations(self):
@@ -358,7 +354,7 @@ class HFSModel(BaseModel):
 
     def _populate_params(self, ABC, fwhm, scale,
                          n, poisson, offset, centroid, saturation,
-                         tailamp, tailloc, tailshape, background_params):
+                         tailamp, tailloc, background_params):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
@@ -396,8 +392,6 @@ class HFSModel(BaseModel):
             for part in self.parts:
                 part.alpha = tailloc
                 part.n = tailamp
-                part.profile = tailshape
-
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
