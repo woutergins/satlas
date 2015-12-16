@@ -107,8 +107,9 @@ class MultiModel(BaseModel):
         -------
         list of floats or NumPy arrays
             Seperate responses of models to the input *x*."""
+        background_vals = [np.polyval([s.params[par_name].value for par_name in s.params if par_name.startswith('Background')], x) for s in self.models]
         back = self.models[0].params['Background'].value if background else 0
-        return [s(x) - s.params['Background'].value + back  for s in self.models]
+        return [s(x) - b + back for s, b in zip(self.models, background_vals)]
 
     ###############################
     #      PLOTTING ROUTINES      #

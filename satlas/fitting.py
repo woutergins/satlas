@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import emcee as mcmc
 from scipy.misc import derivative
+from scipy import optimize
 import copy
 try:
     import progressbar
@@ -20,7 +21,7 @@ import os
 from . import loglikelihood as llh
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk']
+           'likelihood_fit', 'likelihood_walk', 'calculate_analytical_uncertainty']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
@@ -439,11 +440,11 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr', 'chisqr_res_par'),
-               'mle': (fitting.likelihood_fit, 'mle_likelihood', 'mle_fit')}
-    func, attr, save_attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
+    mapping = {'chisquare': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
+               'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
+    func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
 
-    func(f, x_data, y_data, **fit_kws)
+    func(f, x, y, **fit_kws)
 
     orig_value = getattr(f, attr)
     orig_params = copy.deepcopy(f.params)
@@ -472,21 +473,22 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         search_value = value
         while True:
             search_value += 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
+                                                                  args=(f, params, param_names[i], x,
+                                                                        y, orig_value, func))
                 break
         search_value = value
+        f.params = copy.deepcopy(orig_params)
         # Do the same for the left
         while True:
             search_value -= 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
+                                                                  args=(f, params, param_names[i], x,
+                                                                        y, orig_value, func))
                 break
 
         right = np.abs(ranges[param_names[i]]['right'] - value)
@@ -494,7 +496,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         ranges[param_names[i]]['uncertainty'] = max(right, left)
 
         f.params = copy.deepcopy(orig_params)
-        func(f, x_data, y_data, **fit_kws)
+        func(f, x, y, **fit_kws)
     # First, clear all uncertainty estimates
     for p in getattr(f, save_attr):
         getattr(f, save_attr)[p].stderr = None

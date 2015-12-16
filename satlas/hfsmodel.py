@@ -31,11 +31,13 @@ class HFSModel(BaseModel):
 
     __shapes__ = {'gaussian': p.Gaussian,
                   'lorentzian': p.Lorentzian,
+                  'crystalball': p.Crystalball,
                   'voigt': p.Voigt}
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
-                 background=0.1, shape='voigt', use_racah=False, use_saturation=True, saturation=0,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0):
+                 shape='voigt', use_racah=False, use_saturation=True, saturation=0,
+                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=0, tailloc=0,
+                 background_params=[0]):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -85,6 +87,10 @@ class HFSModel(BaseModel):
             other sidepeaks is calculated from the Poisson-factor.
         offset: float, optional
             Sets the distance (in MHz) of each sidepeak in the spectrum.
+        tailamp: float, optional
+            Sets the relative amplitude of the tail for the Crystalball shape function.
+        tailloc: float, optional
+            Sets the location of the tail for the Crystalball shape function.
 
         Note
         ----
@@ -151,8 +157,9 @@ class HFSModel(BaseModel):
 
         self._roi = (-np.inf, np.inf)
 
-        self._populate_params(ABC, fwhm, scale, background, n,
-                              poisson, offset, centroid, saturation)
+        self._populate_params(ABC, fwhm, scale, n,
+                              poisson, offset, centroid, saturation,
+                              tailamp, tailloc, tailshape, background_params)
 
     @property
     def locations(self):
@@ -161,7 +168,7 @@ class HFSModel(BaseModel):
 
     @locations.setter
     def locations(self, locations):
-        self._locations = locations
+        self._locations = np.array(locations)
         for p, l in zip(self.parts, locations):
             p.mu = l
 
@@ -257,6 +264,11 @@ class HFSModel(BaseModel):
             pass
         # Finally, the fwhm of each peak needs to be set
         self._set_fwhm()
+        if self.shape.lower() == 'crystalball':
+            for part in self.parts:
+                part.alpha = params['Taillocation'].value
+                part.n = params['Tailamplitude'].value
+
 
     def _set_transitional_amplitudes(self):
         values = self._calculate_transitional_intensities(self._params['Saturation'].value)
@@ -339,8 +351,9 @@ class HFSModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, ABC, fwhm, scale, background,
-                        n, poisson, offset, centroid, saturation):
+    def _populate_params(self, ABC, fwhm, scale,
+                         n, poisson, offset, centroid, saturation,
+                         tailamp, tailloc, tailshape, background_params):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
@@ -372,6 +385,14 @@ class HFSModel(BaseModel):
                             expr='0.5346*FWHML' + label +
                                  '+sqrt(0.2166*FWHML' + label +
                                  '**2+FWHMG' + label + '**2)')
+        if self.shape.lower() == 'crystalball':
+            par.add('Taillocation', value=tailloc, vary=True)
+            par.add('Tailamplitude', value=tailamp, vary=True)
+            for part in self.parts:
+                part.alpha = tailloc
+                part.n = tailamp
+                part.profile = tailshape
+
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
@@ -400,7 +421,9 @@ class HFSModel(BaseModel):
 
         par.add('Centroid', value=centroid, vary=True)
 
-        par.add('Background', value=background, vary=True, min=0)
+        for i, val in enumerate(background_params):
+            par.add('Background' + str(i), value=background_params[i], vary=True)
+        # par.add('Background', value=background, vary=True, min=0)
         par.add('N', value=n, vary=False)
         if n > 0:
             par.add('Poisson', value=poisson, vary=False, min=0)
@@ -698,7 +721,8 @@ class HFSModel(BaseModel):
             s = s * self._params['Scale'].value
         else:
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
-        return s + self._params['Background'].value
+        background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+        return s + np.polyval(background_params, x)
 
     ###############################
     #      PLOTTING ROUTINES      #

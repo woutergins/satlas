@@ -63,8 +63,9 @@ class CombinedModel(BaseModel):
                 # If an expression is defined, replace the old names with the new ones
                 if p[new_key].expr is not None:
                     for o_key in keys:
-                        n_key = 's' + str(i) + '_' + o_key
-                        p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key

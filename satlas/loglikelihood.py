@@ -47,5 +47,5 @@ def gaussian_llh(x, l):
     array_like
         Array with the loglikelihoods for the data"""
     s = l ** 0.5
-    deviation = (x-l)/(2*s)
-    return -(deviation * deviation + np.log(sqrt2pi*s))
+    deviation = (x-l)/s
+    return -(0.5 * deviation * deviation + np.log(sqrt2pi*s))

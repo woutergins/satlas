@@ -15,7 +15,6 @@ from scipy import optimize
 import h5py
 import copy
 import progressbar
-import dask.array as da
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -281,10 +280,11 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         stderr = stderr if stderr != 0 else 0.1 * value
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
+        print(param_names[i])
+        print('-' * len(param_names[i]))
         while True:
             search_value += 0.5*stderr
             new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-            print(search_value, new_value)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
@@ -297,7 +297,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         while True:
             search_value -= 0.5*stderr
             new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-            print(search_value, new_value)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
                 ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
@@ -373,7 +372,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             pbar += 1
         pbar.finish()
         Z = -Z
-        bounds = [-9, -6, -2, 0]
+        bounds = [-3, -2, -1, 0]
         if method.lower() == 'mle':
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
@@ -549,26 +548,6 @@ def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
     bins = np.append(bins, bins[-1] + binsize)
     y, _ = np.histogram(samples, bins)
     return y
-
-def concat_results(list_of_results, index=None):
-    """Given a list of DataFrames, use the supplied index
-    to concatenate the DataFrames.
-
-    Parameters
-    ----------
-    list_of_results: list of pandas Dataframes
-        List of DataFrames to be concatenated.
-    index: list
-        List of keys to use as row-indices.
-
-    Returns
-    -------
-    concatenated_frames: DataFrame
-        Concatenated DataFrame"""
-    if index is None:
-        index = range(1, len(list_of_results) + 1)
-    concatenated_frames = pd.concat(list_of_results, keys=index)
-    return concatenated_frames
 
 def poisson_interval(data, alpha=0.32):
     """Calculates the confidence interval
