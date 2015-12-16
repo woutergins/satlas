@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import lmfit
+import lmfit as lm
 import copy
 
 __all__ = ['MultiModel']
@@ -50,17 +50,18 @@ class MultiModel(BaseModel):
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        params = lmfit.Parameters()
+        params = lm.Parameters()
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
                 p[new_key] = p.pop(old_key)
-                for o_key in keys:
-                    if p[new_key].expr is not None:
-                        n_key = 's' + str(i) + '_' + o_key
-                        p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if p[new_key].expr is not None:
+                    for o_key in keys:
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
@@ -74,7 +75,7 @@ class MultiModel(BaseModel):
     @params.setter
     def params(self, params):
         for i, spec in enumerate(self.models):
-            par = lmfit.Parameters()
+            par = lm.Parameters()
             for key in params:
                 if key.startswith('s'+str(i)+'_'):
                     new_key = key[len('s'+str(i)+'_'):]
@@ -85,6 +86,7 @@ class MultiModel(BaseModel):
                             expr = expr.replace(k, nk)
                     par[new_key] = params[key].__class__()
                     par[new_key].__setstate__(params[key].__getstate__())
+                    par[new_key].name = new_key
                     par[new_key].expr = expr
             spec.params = par
 

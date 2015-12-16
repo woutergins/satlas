@@ -87,6 +87,7 @@ class CombinedModel(BaseModel):
                             expr = expr.replace(k, nk)
                     par[new_key] = params[key].__class__()
                     par[new_key].__setstate__(params[key].__getstate__())
+                    par[new_key].name = new_key
                     par[new_key].expr = expr
             spec.params = par
 

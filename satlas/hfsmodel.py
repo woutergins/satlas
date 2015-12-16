@@ -36,7 +36,7 @@ class HFSModel(BaseModel):
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
                  shape='voigt', use_racah=False, use_saturation=True, saturation=0,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=0, 
+                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1,
                  background_params=[0]):
         """Builds the HFS with the given atomic and nuclear information.
 
@@ -392,6 +392,7 @@ class HFSModel(BaseModel):
             for part in self.parts:
                 part.alpha = tailloc
                 part.n = tailamp
+
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
