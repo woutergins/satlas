@@ -85,9 +85,9 @@ class CombinedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    params[key].expr = expr
                     par[new_key] = params[key].__class__()
                     par[new_key].__setstate__(params[key].__getstate__())
+                    par[new_key].expr = expr
             spec.params = par
 
     def seperate_response(self, x):

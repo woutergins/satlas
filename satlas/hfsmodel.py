@@ -194,6 +194,7 @@ class HFSModel(BaseModel):
     @use_saturation.setter
     def use_saturation(self, value):
         self._use_saturation = value
+        self.params['Saturation'].vary = value
         self.params['Scale'].vary = self._use_racah or self._use_saturation
         for label in self.ftof:
             self.params['Amp' + label].vary = not (self._use_racah or self._use_saturation)
@@ -371,7 +372,7 @@ class HFSModel(BaseModel):
                 par.add('FWHML', value=fwhm[1], vary=True, min=0)
                 val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
-                        expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
+                        expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
             else:
                 fwhm = np.array(fwhm)
                 if not fwhm.shape[0] == len(self.ftof):
@@ -383,8 +384,8 @@ class HFSModel(BaseModel):
                                                     + val[0] ** 2)
                     par.add('TotalFWHM' + label, value=val, vary=False,
                             expr='0.5346*FWHML' + label +
-                                 '+sqrt(0.2166*FWHML' + label +
-                                 '**2+FWHMG' + label + '**2)')
+                                 '+(0.2166*FWHML' + label +
+                                 '**2+FWHMG' + label + '**2)**0.5')
         if self.shape.lower() == 'crystalball':
             par.add('Taillocation', value=tailloc, vary=True)
             par.add('Tailamplitude', value=tailamp, vary=True)
@@ -423,7 +424,6 @@ class HFSModel(BaseModel):
 
         for i, val in enumerate(background_params):
             par.add('Background' + str(i), value=background_params[i], vary=True)
-        # par.add('Background', value=background, vary=True, min=0)
         par.add('N', value=n, vary=False)
         if n > 0:
             par.add('Poisson', value=poisson, vary=False, min=0)
@@ -574,29 +574,29 @@ class HFSModel(BaseModel):
     #      USER METHODS      #
     ##########################
 
-    # def set_variation(self, varyDict):
-    #     """Sets the variation of the fitparameters as supplied in the
-    #     dictionary.
+    def set_variation(self, varyDict):
+        """Sets the variation of the fitparameters as supplied in the
+        dictionary.
 
-    #     Parameters
-    #     ----------
-    #     varyDict: dictionary
-    #         A dictionary containing 'key: True/False' mappings"""
-    #     for k in varyDict.keys():
-    #         self._vary[k] = varyDict[k]
+        Parameters
+        ----------
+        varyDict: dictionary
+            A dictionary containing 'key: True/False' mappings"""
+        for k in varyDict.keys():
+            self._vary[k] = varyDict[k]
 
-    # def set_boundaries(self, boundaryDict):
-    #     """Sets the boundaries of the fitparameters as supplied in the
-    #     dictionary.
+    def set_boundaries(self, boundaryDict):
+        """Sets the boundaries of the fitparameters as supplied in the
+        dictionary.
 
-    #     Parameters
-    #     ----------
-    #     boundaryDict: dictionary
-    #         A dictionary containing "key: {'min': value, 'max': value}" mappings.
-    #         A value of *None* or a missing key gives no boundary
-    #         in that direction."""
-    #     for k in boundaryDict.keys():
-    #         self._constraints[k] = boundaryDict[k]
+        Parameters
+        ----------
+        boundaryDict: dictionary
+            A dictionary containing "key: {'min': value, 'max': value}" mappings.
+            A value of *None* or a missing key gives no boundary
+            in that direction."""
+        for k in boundaryDict.keys():
+            self._constraints[k] = boundaryDict[k]
 
     def fix_ratio(self, value, target='upper', parameter='A'):
         """Fixes the ratio for a given hyperfine parameter to the given value.
@@ -623,32 +623,32 @@ class HFSModel(BaseModel):
             self.ratioC = (value, target)
         self.params = self._set_ratios(self._params)
 
-    # def set_value(self, valueDict):
-    #     """Sets the value of the selected parameter to the given value.
+    def set_value(self, valueDict):
+        """Sets the value of the selected parameter to the given value.
 
-    #     Parameters
-    #     ----------
-    #     valueDict: dictionary
-    #         Dictionary containing the values for the parameters, with the
-    #         name as the key."""
-    #     par = self.params
-    #     for key in valueDict:
-    #         par[key].value = valueDict[key]
-    #     self.params = par
+        Parameters
+        ----------
+        valueDict: dictionary
+            Dictionary containing the values for the parameters, with the
+            name as the key."""
+        par = self.params
+        for key in valueDict:
+            par[key].value = valueDict[key]
+        self.params = par
 
-    # def set_expr(self, exprDict, name):
-    #     """Sets the expression of the selected parameter
-    #     to the given expression.
+    def set_expr(self, exprDict, name):
+        """Sets the expression of the selected parameter
+        to the given expression.
 
-    #     Parameters
-    #     ----------
-    #     exprDict: dictionary
-    #         Dictionary containing the expressions for the parameters,
-    #         with the paremeter name as the key."""
-    #     par = self.params
-    #     for key in exprDict:
-    #         par[n].expr = exprDict[key]
-    #     self.params = par
+        Parameters
+        ----------
+        exprDict: dictionary
+            Dictionary containing the expressions for the parameters,
+            with the paremeter name as the key."""
+        par = self.params
+        for key in exprDict:
+            par[n].expr = exprDict[key]
+        self.params = par
 
     #######################################
     #      METHODS CALLED BY FITTING      #
