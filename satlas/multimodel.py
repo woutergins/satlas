@@ -87,6 +87,7 @@ class MultiModel(BaseModel):
                     par[new_key] = lm.Parameter(new_key,value=params[key].value,
                                              min=params[key].min,
                                              max=params[key].max)
+                    par[new_key].stderr = params[key].stderr
             spec.params = par
 
     def seperate_response(self, x, background=False):

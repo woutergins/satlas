@@ -86,8 +86,10 @@ class CombinedModel(BaseModel):
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
                     par[new_key] = lm.Parameter(new_key,value=params[key].value,
-                                             min =params[key].min,
-                                             max =params[key].max)
+                                             min=params[key].min,
+                                             max=params[key].max)
+                    par[new_key].stderr = params[key].stderr
+
             spec.params = par
 
     def seperate_response(self, x):
