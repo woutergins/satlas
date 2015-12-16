@@ -27,7 +27,8 @@ __all__ = ['weighted_average',
            'generate_correlation_map',
            'generate_correlation_plot',
            'generate_spectrum',
-           'poisson_interval']
+           'poisson_interval',
+           'load_model']
 
 def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated
@@ -569,3 +570,8 @@ def poisson_interval(data, alpha=0.32):
                  chi2.ppf(1 - a / 2, 2 * data + 2) / 2)
     low = np.nan_to_num(low)
     return low, high
+
+def load_model(path):
+    import pickle
+    with open(path,'rb') as f:
+        return pickle.load(f)

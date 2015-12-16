@@ -190,3 +190,8 @@ class BaseModel(object):
         columns = pd.MultiIndex.from_tuples(list(zip(*columns)))
         result = pd.DataFrame(data, index=columns).T
         return result
+
+    def save(self,path):
+        import pickle
+        with open(path,'wb') as f:
+            pickle.dump(self,f)
