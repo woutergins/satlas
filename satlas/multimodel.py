@@ -120,7 +120,8 @@ class MultiModel(BaseModel):
              no_of_points=10**4, ax=None,
              show=True, xlabel='Frequency (MHz)',
              ylabel='Counts', data_legend='Data',
-             indicate=False):
+             indicate=False,plot_seperate=True,
+             normalized=False):
         """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 
@@ -148,6 +149,12 @@ class MultiModel(BaseModel):
         indicate: boolean
             If True, the peaks will be marked with
             the transition.
+        plot_seperate: boolean
+            If True, the seperate response of each of the models will be 
+            plotted on the figure as well as their sum
+        normalized: Boolean
+            If True, the data and fit are plotted normalized such that the highest
+            data point is one.
 
         Returns
         -------
@@ -173,6 +180,13 @@ class MultiModel(BaseModel):
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
+
+        if normalized:
+            norm = np.max(y)
+            y,yerr = y/norm,yerr/norm
+        else:
+            norm = 1
+
         if x is not None and y is not None:
             try:
                 ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
@@ -180,15 +194,16 @@ class MultiModel(BaseModel):
                 ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
         resp = self.seperate_response(superx)
 
-        for i, r in enumerate(resp):
-            line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
-            if indicate:
-                for l, lab in zip(self.models[i].locations, self.models[i].ftof):
-                    lab = lab.split('__')
-                    lab = lab[0] + '$\\rightarrow$' + lab[1]
-                    ax.annotate(lab, xy=(l, self.models[i](l)), rotation=90, color=line.get_color(),
-                                weight='bold', size=14, ha='center')
-        ax.plot(superx, self(superx), label='Total')
+        if plot_seperate:
+            for i, r in enumerate(resp):
+                line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
+                if indicate:
+                    for l, lab in zip(self.models[i].locations, self.models[i].ftof):
+                        lab = lab.split('__')
+                        lab = lab[0] + '$\\rightarrow$' + lab[1]
+                        ax.annotate(lab, xy=(l, self.models[i](l)/norm), rotation=90, color=line.get_color(),
+                                    weight='bold', size=14, ha='center')
+        ax.plot(superx, self(superx)/norm, label='Total')
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

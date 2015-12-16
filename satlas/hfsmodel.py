@@ -730,7 +730,8 @@ class HFSModel(BaseModel):
     def plot(self, x=None, y=None, yerr=None,
              no_of_points=10**3, ax=None, show=True, legend=None,
              data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             indicate=False, bayesian=False, colormap='bone_r'):
+             indicate=False, bayesian=False, colormap='bone_r',
+             normalized=False):
         """Plot the hfs, possibly on top of experimental data.
 
         Parameters
@@ -763,6 +764,9 @@ class HFSModel(BaseModel):
             the luminosity indicating the pmf of the Poisson
             distribution characterized by the value of the fit. Note that
             the argument *yerr* is ignored if *bayesian* is True.
+        normalized: Boolean
+            If True, the data and fit are plotted normalized such that the highest
+            data point is one.
 
         Returns
         -------
@@ -794,6 +798,12 @@ class HFSModel(BaseModel):
         else:
             xerr = 0
 
+        if normalized:
+            norm = np.max(y)
+            y,yerr = y/norm,yerr/norm
+        else:
+            norm = 1
+
         if x is not None and y is not None:
             if not bayesian:
                 try:
@@ -810,17 +820,17 @@ class HFSModel(BaseModel):
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
-            z = poisson_llh(self(x), y)
+            z = poisson_llh(self(x)/norm, y)
             z = np.exp(z - z.max(axis=0))
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
         if bayesian:
-            line, = ax.plot(superx, self(superx), label=legend, lw=0.5)
+            line, = ax.plot(superx, self(superx)/norm, label=legend, lw=0.5)
         else:
-            line, = ax.plot(superx, self(superx), label=legend)
+            line, = ax.plot(superx, self(superx)/norm, label=legend)
         if indicate:
-            height = self(superx).min()
+            height = self(superx)/norm.min()
             for (p, l) in zip(self.locations, self.ftof):
                 lab = l.split('__')
                 lableft = '/'.join(lab[0].split('_'))
