@@ -1,5 +1,5 @@
 satlas.combinedmodel.CombinedModel.__init__
-=================================================
+===========================================
 
 .. currentmodule:: satlas.combinedmodel
 

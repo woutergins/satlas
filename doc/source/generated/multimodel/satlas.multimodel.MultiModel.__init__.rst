@@ -1,5 +1,5 @@
 satlas.multimodel.MultiModel.__init__
-=============================================
+=====================================
 
 .. currentmodule:: satlas.multimodel
 

@@ -18,9 +18,6 @@ satlas.hfsmodel.HFSModel
       ~HFSModel.plot
       ~HFSModel.plot_spectroscopic
       ~HFSModel.seperate_response
-      ~HFSModel.set_boundaries
-      ~HFSModel.set_value
-      ~HFSModel.set_variation
 
    .. rubric:: Attributes
 
@@ -29,4 +26,6 @@ satlas.hfsmodel.HFSModel
       ~HFSModel.locations
       ~HFSModel.ftof
       ~HFSModel.params
-      ~HFSModel.racah_int
+      ~HFSModel.use_racah
+      ~HFSModel.use_saturation
+      ~HFSModel.roi

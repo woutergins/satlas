@@ -21,7 +21,7 @@ import os
 from . import loglikelihood as llh
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk', 'calculate_analytical_uncertainty']
+           'likelihood_fit', 'likelihood_walk']
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #

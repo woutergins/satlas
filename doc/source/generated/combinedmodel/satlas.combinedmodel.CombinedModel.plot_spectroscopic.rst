@@ -1,5 +1,5 @@
 satlas.combinedmodel.CombinedModel.plot_spectroscopic
-===========================================================
+=====================================================
 
 .. currentmodule:: satlas.combinedmodel
 

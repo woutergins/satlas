@@ -1,5 +1,5 @@
 satlas.multimodel.MultiModel.seperate_response
-======================================================
+==============================================
 
 .. currentmodule:: satlas.multimodel
 

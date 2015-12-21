@@ -9,7 +9,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.stats import chi2
 from scipy import optimize
 import h5py
@@ -572,6 +571,17 @@ def poisson_interval(data, alpha=0.32):
     return low, high
 
 def load_model(path):
+    """Loads the saved BaseModel and returns the reconstructed object.
+
+    Parameters
+    ----------
+    path: string
+        Location of the saved model.
+
+    Returns
+    -------
+    model: BaseModel
+        Saved BaseModel/child class instance."""
     import pickle
-    with open(path,'rb') as f:
+    with open(path, 'rb') as f:
         return pickle.load(f)

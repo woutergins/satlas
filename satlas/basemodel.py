@@ -189,7 +189,14 @@ class BaseModel(object):
         result = pd.DataFrame(data, index=columns).T
         return result
 
-    def save(self,path):
+    def save(self, path):
+        """Saves the current spectrum, including the results of the fitting
+        and the parameters, to the specified file.
+
+        Parameters
+        ----------
+        path: string
+            Name of the file to be created."""
         import pickle
-        with open(path,'wb') as f:
-            pickle.dump(self,f)
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)

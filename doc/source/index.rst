@@ -15,7 +15,7 @@ SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
     :alt: License
     :scale: 100%
 
-.. image:: https://img.shields.io/badge/Python-3.4-green.svg
+.. image:: https://img.shields.io/badge/Python-3.5-green.svg
     :alt: Python version
     :scale: 100%
 
@@ -38,7 +38,7 @@ Purpose
 
     * Wouter Gins (wouter.gins@fys.kuleuven.be)
     * Ruben de Groote (ruben.degroote@fys.kuleuven.be)
-    * Hanne Heylen (hanne.heylen@fys.kuleuven.be)
+    * Kara Marie Lynch (kara.marie.lynch@cern.ch)
 
 This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both :math:`\chi^2`-fitting and Maximum Likelihood Estimation routines, are present.
 

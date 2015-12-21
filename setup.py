@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name='satlas',
   packages=['satlas'],
-  version='0.1.0b7',
+  version='0.1.0b8',
   description='This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both chi2-fitting and Maximum Likelihood Estimation routines, are present.',
   author='Wouter Gins',
   author_email='woutergins@gmail.com',

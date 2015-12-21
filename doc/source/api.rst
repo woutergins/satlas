@@ -26,6 +26,7 @@ Fitting routines
 .. autosummary::
       :toctree: fitting/
 
+      satlas.fitting.calculate_analytical_uncertainty
       satlas.fitting.chisquare_fit
       satlas.fitting.chisquare_model
       satlas.fitting.chisquare_spectroscopic_fit
@@ -43,6 +44,7 @@ Lineshapes
    .. autosummary::
       :toctree: profiles/
 
+      satlas.profiles.Crystalball
       satlas.profiles.Gaussian
       satlas.profiles.Lorentzian
       satlas.profiles.Voigt
@@ -56,9 +58,9 @@ Utilities
    .. autosummary::
       :toctree: utilities/
 
-      satlas.utilities.concat_results
       satlas.utilities.generate_correlation_plot
       satlas.utilities.generate_correlation_map
       satlas.utilities.generate_spectrum
+      satlas.utilities.load_model
       satlas.utilities.poisson_interval
       satlas.utilities.weighted_average

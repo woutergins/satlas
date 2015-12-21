@@ -1,5 +1,5 @@
 satlas.multimodel.MultiModel.__call__
-=============================================
+=====================================
 
 .. currentmodule:: satlas.multimodel
 

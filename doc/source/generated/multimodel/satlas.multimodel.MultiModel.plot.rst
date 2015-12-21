@@ -1,5 +1,5 @@
 satlas.multimodel.MultiModel.plot
-=========================================
+=================================
 
 .. currentmodule:: satlas.multimodel
 
