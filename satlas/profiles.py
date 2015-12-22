@@ -9,7 +9,7 @@ import numpy as np
 from scipy.special import wofz
 
 
-__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt', 'Crystalball']
+__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'Crystalball']
 sqrt2 = 2 ** 0.5
 sqrt2pi = (2 * np.pi) ** 0.5
 sqrt2log2t2 = 2 * np.sqrt(2 * np.log(2))
@@ -341,7 +341,7 @@ class Crystalball(Profile):
     @property
     def mu(self):
         return self._mu
-    
+
     @mu.setter
     def mu(self, value):
         self._mu = value

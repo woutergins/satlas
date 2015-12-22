@@ -278,17 +278,18 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         stderr = stderr if stderr is not None else 0.1 * value
         stderr = stderr if stderr != 0 else 0.1 * value
         # Search for a value to the right which gives an increase greater than 1.
-        search_value = value
         print(param_names[i])
         print('-' * len(param_names[i]))
+        search_value = value
         while True:
             search_value += 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-            if new_value > 1 - 0.5*(method.lower() == 'mle'):
+            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
+            if new_value > 0:
                 print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
+                result = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                         search_value,
+                                         args=(f, params, param_names[i], x_data, y_data, orig_value, func))
+                ranges[param_names[i]]['right'] = result.x[0]
                 print('Found optimal right value: {:.2f}'.format(ranges[param_names[i]]['right']))
                 break
         search_value = value
@@ -298,9 +299,10 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
                 print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
+                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                       search_value,
+                                       args=(f, params, param_names[i], x_data, y_data, orig_value, func))
+                ranges[param_names[i]]['left'] = result.x[0]
                 print('Found optimal left value: {:.2f}'.format(ranges[param_names[i]]['left']))
                 break
 

@@ -150,13 +150,22 @@ def chisquare_fit(f, x, y, yerr, xerr=None, func=None):
         pass
 
     result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func))
-
     f.params = copy.deepcopy(result.params)
+    f.chisqr = copy.deepcopy(result.chisqr)
+
+    success = False
+    counter = 0
+    while not success:
+        result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func))
+        f.params = copy.deepcopy(result.params)
+        success = np.isclose(result.chisqr, f.chisqr)
+        f.chisqr = copy.deepcopy(result.chisqr)
+        if counter > 10 and not success:
+            break
     f.chisq_res_par = copy.deepcopy(result.params)
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
-    f.chisqr = copy.deepcopy(result.chisqr)
-    return result.success, result.message
+    return success, result.message
 
 ##########################################
 # MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #
@@ -368,11 +377,24 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     y = np.hstack(y)
     params = f.params
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func))
-    success = result.scalar_minimize(method=method, **method_kws)
+    result.scalar_minimize(method=method, **method_kws)
     f.params = result.params
+    val = negativeloglikelihood(f.params, f, x, y, xerr, func)
+    success = False
+    counter = 0
+    while not success:
+        result = lm.Minimizer(negativeloglikelihood, f.params, fcn_args=(f, x, y, xerr, func))
+        result.scalar_minimize(method=method, **method_kws)
+        counter += 1
+        f.params = result.params
+        new_val = negativeloglikelihood(f.params, f, x, y, xerr, func)
+        success = np.isclose(val, new_val)
+        val = new_val
+        if not success and counter > 10:
+            break
     f.mle_fit = result.params
     f.mle_result = result.message
-    f.mle_likelihood = negativeloglikelihood(params, f, x, y, xerr, func)
+    f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
@@ -467,17 +489,21 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
         stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 0.1 * value
-        stderr = stderr if stderr != 0 else 0.1 * value
+        stderr = stderr if stderr is not None else 0.01 * value
+        stderr = stderr if stderr != 0 else 0.01 * value
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
+        success = False
         while True:
             search_value += 0.5*stderr
             new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
-                                                                  args=(f, params, param_names[i], x,
-                                                                        y, orig_value, func))
+                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                       search_value,
+                                       args=(f, copy.deepcopy(params), param_names[i], x,
+                                             y, orig_value, func))
+                ranges[param_names[i]]['right'] = result.x[0]
+                success = result.success
                 break
         search_value = value
         f.params = copy.deepcopy(orig_params)
@@ -486,14 +512,19 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
             search_value -= 0.5*stderr
             new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
-                                                                  args=(f, params, param_names[i], x,
+                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value,
+                                                                  args=(f, copy.deepcopy(params), param_names[i], x,
                                                                         y, orig_value, func))
+                ranges[param_names[i]]['left'] = result.x[0]
+                success = success * result.x
                 break
 
+        if not success:
+            print("Warning: boundary calculation did not fully succeed for " + param_names[i])
         right = np.abs(ranges[param_names[i]]['right'] - value)
         left = np.abs(ranges[param_names[i]]['left'] - value)
         ranges[param_names[i]]['uncertainty'] = max(right, left)
+        ranges[param_names[i]]['value'] = orig_params[param_names[i]].value
 
         f.params = copy.deepcopy(orig_params)
         func(f, x, y, **fit_kws)
@@ -503,6 +534,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
     # Save all MINOS estimates
     for param_name in ranges.keys():
         getattr(f, save_attr)[param_name].stderr = ranges[param_name]['uncertainty']
+        getattr(f, save_attr)[param_name].value = ranges[param_name]['value']
 
 def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20,
                     verbose=True, filename=None):

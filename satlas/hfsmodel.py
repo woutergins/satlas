@@ -35,9 +35,9 @@ class HFSModel(BaseModel):
                   'voigt': p.Voigt}
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
-                 shape='voigt', use_racah=False, use_saturation=True, saturation=0,
+                 shape='voigt', use_racah=False, use_saturation=False, saturation=0.001,
                  shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1,
-                 background_params=[0]):
+                 background_params=[0.001]):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -669,6 +669,7 @@ class HFSModel(BaseModel):
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
         background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
         return s + np.polyval(background_params, x)
+        # return s + self._params['Background'].value
 
     ###############################
     #      PLOTTING ROUTINES      #
@@ -677,7 +678,7 @@ class HFSModel(BaseModel):
     def plot(self, x=None, y=None, yerr=None,
              no_of_points=10**3, ax=None, show=True, legend=None,
              data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             indicate=False, bayesian=False, colormap='bone_r',
+             indicate=False, model=False, colormap='bone_r',
              normalized=False):
         """Plot the hfs, possibly on top of experimental data.
 
@@ -706,11 +707,11 @@ class HFSModel(BaseModel):
             If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
         ylabel: string, optional
             If given, sets the ylabel to this string. Defaults to 'Counts'.
-        bayesian: boolean, optional
+        model: boolean, optional
             If given, the region around the fitted line will be shaded, with
             the luminosity indicating the pmf of the Poisson
             distribution characterized by the value of the fit. Note that
-            the argument *yerr* is ignored if *bayesian* is True.
+            the argument *yerr* is ignored if *model* is True.
         normalized: Boolean
             If True, the data and fit are plotted normalized such that the highest
             data point is one.
@@ -752,7 +753,7 @@ class HFSModel(BaseModel):
             norm = 1
 
         if x is not None and y is not None:
-            if not bayesian:
+            if not model:
                 try:
                     ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']],
                                 xerr=xerr, fmt='o', label=data_legend)
@@ -760,20 +761,19 @@ class HFSModel(BaseModel):
                     ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
             else:
                 ax.plot(x, y, 'o')
-        if bayesian:
-            range = (superx.min(), superx.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True)[1])
-            min_counts = self._params['Background'].value
+        if model:
+            range = (self.locations.min(), self.locations.max())
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000)[1])
+            min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
-            z = poisson_llh(self(x)/norm, y)
-            z = np.exp(z - z.max(axis=0))
+            from scipy import stats
+            z = stats.poisson(self(x) / norm).pmf(y)
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
-        if bayesian:
-            line, = ax.plot(superx, self(superx)/norm, label=legend, lw=0.5)
+            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5)
         else:
             line, = ax.plot(superx, self(superx)/norm, label=legend)
         if indicate:
@@ -786,6 +786,7 @@ class HFSModel(BaseModel):
                 ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
                             weight='bold', size=14, ha='center', va='bottom')
                 ax.axvline(p, linewidth=0.5, linestyle='--')
+        ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if show:
