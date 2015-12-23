@@ -34,10 +34,9 @@ class HFSModel(BaseModel):
                   'crystalball': p.Crystalball,
                   'voigt': p.Voigt}
 
-    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001],
                  shape='voigt', use_racah=False, use_saturation=False, saturation=0.001,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1,
-                 background_params=[0.001]):
+                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -62,8 +61,10 @@ class HFSModel(BaseModel):
         scale: float, optional
             Sets the strength of the spectrum, defaults to 1.0. Comparable to the
             amplitude of the spectrum.
-        background: float, optional
-            Sets the constant background to the supplied value. Defaults to 0.1.
+        background_params: list of float, optional
+            Sets the coefficients of the polynomial background to the given values.
+            Order of polynomial is equal to the number of parameters given minus one.
+            Highest order coefficient is the first element, etc.
         shape : string, optional
             Sets the transition shape. String is converted to lowercase. For
             possible values, see *HFSModel__shapes__*.keys()`.
@@ -72,6 +73,8 @@ class HFSModel(BaseModel):
             If True, fixes the relative peak intensities to the Racah intensities.
             Otherwise, gives them equal intensities and allows them to vary during
             fitting.
+        use_saturation: boolean, optional
+            If True, uses the saturation parameter to calculate relative intensities.
         saturation: float, optional
             If different than 0, calculate the saturation effect on the intensity of
             transition intensity. This is done by an exponential transition between
