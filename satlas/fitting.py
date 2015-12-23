@@ -438,6 +438,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
     the instance. This does not do a full exploration, so the results might be
     from a local minimum!"""
     def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
+        params = copy.deepcopy(params)
         try:
             if all(value == orig_value):
                 return 0
@@ -481,10 +482,10 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
             no_params += 1
             param_names.append(p)
 
+    params = copy.deepcopy(f.params)
     for i in range(no_params):
         ranges[param_names[i]] = {}
         # Initialize the progressbar and set the y-ticklabels.
-        params = f.params
 
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
@@ -496,27 +497,36 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         success = False
         while True:
             search_value += 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
-            if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                       search_value,
-                                       args=(f, copy.deepcopy(params), param_names[i], x,
-                                             y, orig_value, func))
-                ranges[param_names[i]]['right'] = result.x[0]
-                success = result.success
+            if search_value > orig_params[param_names[i]].max:
+                search_value = orig_params[param_names[i]].max
+                ranges[param_names[i]]['right'] = search_value
+                break
+            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
+            if new_value > 0:
+                result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                                 value, search_value,
+                                                 args=(f, params, param_names[i], x, y, orig_value, func),
+                                                 full_output=True)
+                ranges[param_names[i]]['right'] = result
+                success = output.converged
                 break
         search_value = value
-        f.params = copy.deepcopy(orig_params)
         # Do the same for the left
         while True:
             search_value -= 0.5*stderr
+            if search_value < orig_params[param_names[i]].min:
+                search_value = orig_params[param_names[i]].min
+                ranges[param_names[i]]['left'] = search_value
+                success = False
+                break
             new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value,
-                                                                  args=(f, copy.deepcopy(params), param_names[i], x,
-                                                                        y, orig_value, func))
-                ranges[param_names[i]]['left'] = result.x[0]
-                success = success * result.x
+                result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                                 value, search_value,
+                                                 args=(f, params, param_names[i], x, y, orig_value, func),
+                                                 full_output=True)
+                ranges[param_names[i]]['left'] = result
+                success = success * output.converged
                 break
 
         if not success:

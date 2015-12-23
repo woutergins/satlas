@@ -9,6 +9,8 @@ from . import utilities
 from .utilities import *
 from . import fitting
 from .fitting import *
+from .version import __version__
+
 __all__ = []
 
 __all__.extend(hfsmodel.__all__)

@@ -20,7 +20,11 @@ h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
 
 cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
+cmap.set_over('#A6CEE3')
+cmap.set_under('#B2DF8A')
 invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
+invcmap.set_under('#A6CEE3')
+invcmap.set_over('#B2DF8A')
 
 __all__ = ['weighted_average',
            'generate_correlation_map',
@@ -206,6 +210,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
     from . import fitting
 
     def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
+        params = copy.deepcopy(params)
         try:
             if all(value == orig_value):
                 return 0
@@ -254,8 +259,15 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
     # Make the plots on the diagonal: plot the chisquare/likelihood
     # for the best fitting values while setting one parameter to
     # a fixed value.
+    saved_params = copy.deepcopy(f.params)
     for i in range(no_params):
+        params = copy.deepcopy(saved_params)
         ranges[param_names[i]] = {}
+
+        # orig_value = getattr(f, attr)
+        # orig_params = copy.deepcopy(f.params)
+        # res = fit_new_value(f.params[param_names[i]].value, f, f.params, param_names[i], x_data, y_data, orig_value, func)
+        # orig_value += res
         # Initialize the progressbar and set the y-ticklabels.
         widgets = [param_names[i]+': ',
                    progressbar.Percentage(),
@@ -263,7 +275,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
                    progressbar.Bar(marker=progressbar.RotatingMarker()),
                    ' ',
                    progressbar.AdaptiveETA()]
-        params = f.params
         ax = axes[i, i]
         ax.set_title(param_names[i])
         plt.setp(ax.get_yticklabels(), visible=True)
@@ -278,32 +289,34 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         stderr = stderr if stderr is not None else 0.1 * value
         stderr = stderr if stderr != 0 else 0.1 * value
         # Search for a value to the right which gives an increase greater than 1.
-        print(param_names[i])
-        print('-' * len(param_names[i]))
         search_value = value
         while True:
             search_value += 0.5*stderr
+            if search_value > orig_params[param_names[i]].max:
+                search_value = orig_params[param_names[i]].max
+                ranges[param_names[i]]['right'] = search_value
+                break
             new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
             if new_value > 0:
-                print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                result = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                         search_value,
+                result = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                         value, search_value,
                                          args=(f, params, param_names[i], x_data, y_data, orig_value, func))
-                ranges[param_names[i]]['right'] = result.x[0]
-                print('Found optimal right value: {:.2f}'.format(ranges[param_names[i]]['right']))
+                ranges[param_names[i]]['right'] = result
                 break
         search_value = value
         # Do the same for the left
         while True:
             search_value -= 0.5*stderr
+            if search_value < orig_params[param_names[i]].min:
+                search_value = orig_params[param_names[i]].min
+                ranges[param_names[i]]['left'] = search_value
+                break
             new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
             if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                result = optimize.root(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                       search_value,
+                result = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                       value, search_value,
                                        args=(f, params, param_names[i], x_data, y_data, orig_value, func))
-                ranges[param_names[i]]['left'] = result.x[0]
-                print('Found optimal left value: {:.2f}'.format(ranges[param_names[i]]['left']))
+                ranges[param_names[i]]['left'] = result
                 break
 
         # Keep the parameter fixed, and let it vary (with given number of points)
@@ -313,7 +326,10 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         left = np.abs(ranges[param_names[i]]['left'] - value)
         params[param_names[i]].vary = False
 
-        value_range = np.linspace(value - 4 * left, value + 4 * right, resolution_diag)
+        left_val, right_val = max(value - 3 * left, orig_params[param_names[i]].min), min(value + 3 * right, orig_params[param_names[i]].max)
+        ranges[param_names[i]]['right_val'] = right_val
+        ranges[param_names[i]]['left_val'] = left_val
+        value_range = np.linspace(left_val, right_val, resolution_diag)
         chisquare = np.zeros(len(value_range))
         pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
         # Calculate the new value, and store it in the array. Update the progressbar.
@@ -348,18 +364,15 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             ax.set_ylabel(y_name)
         if i == no_params - 1:
             ax.set_xlabel(x_name)
-        # middle = (ranges[x_name]['left'] + ranges[x_name]['right']) * 0.5
-        value = params[x_name].value
-        right = np.abs(ranges[x_name]['right'] - value)
-        left = np.abs(ranges[x_name]['left'] - value)
+        right = ranges[x_name]['right_val']
+        left = ranges[x_name]['left_val']
         params[x_name].vary = False
-        x_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+        x_range = np.linspace(left, right, resolution_map)
 
-        value = params[y_name].value
-        right = np.abs(ranges[y_name]['right'] - value)
-        left = np.abs(ranges[y_name]['left'] - value)
+        right = ranges[y_name]['right_val']
+        left = ranges[y_name]['left_val']
         params[y_name].vary = False
-        y_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+        y_range = np.linspace(left, right, resolution_map)
 
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
@@ -373,7 +386,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             pbar += 1
         pbar.finish()
         Z = -Z
-        bounds = [-3, -2, -1, 0]
+        bounds = [-3, -2, -1, 1]
         if method.lower() == 'mle':
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
@@ -389,15 +402,16 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
 
     return fig, axes, cbar
 
-def _diaconis_rule(data, min, max):
+def _diaconis_rule(data, minimum, maximum):
     iqr = np.subtract(*np.percentile(data, [75, 25]))
     bin_size = 2 * iqr * data.shape[0]**(-1/3)
-    if bin_size == 0:
-        return np.sqrt(data)
+    bin_size = 0.01 * (maximum - minimum)
+    if bin_size == 0 or bin_size < 0.01 * (maximum - minimum):
+        return np.ceil(np.sqrt(maximum - minimum))
     else:
-        return np.ceil((max - min) / bin_size)
+        return np.ceil((maximum - minimum) / bin_size)
 
-def generate_correlation_plot(filename, filter=None):
+def generate_correlation_plot(filename, filter=None, bins=None):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
     3 sigma contours on the off-diagonal. The 1-sigma limits based on the
@@ -409,6 +423,8 @@ def generate_correlation_plot(filename, filter=None):
         Filename for the h5 file containing the data from the walk.
     filter: list of str, optional
         If supplied, only this list of columns is used for the plot.
+    bins: int or list of int, optional
+        If supplied, use this number of bins for the plotting.
 
     Returns
     -------
@@ -432,17 +448,20 @@ def generate_correlation_plot(filename, filter=None):
         fig, axes, cbar = _make_axes_grid(len(filter), axis_padding=0)
 
         metadata = {}
+        if not isinstance(bins, list):
+            bins = [bins for _ in filter]
         for i, val in enumerate(filter):
             ax = axes[i, i]
             i = columns.index(val)
             x = store['data'][:, i]
-            bins = _diaconis_rule(x, x.min(), x.max())
+            if bins[i] is None:
+                bins[i] = _diaconis_rule(x, x.min(), x.max())
             try:
-                ax.hist(x, bins)
+                ax.hist(x, int(bins[i]))
             except ValueError:
                 bins = 50
                 ax.hist(x, bins)
-            metadata[val] = {'bins': bins, 'min': x.min(), 'max': x.max()}
+            metadata[val] = {'bins': bins[i], 'min': x.min(), 'max': x.max()}
 
             q = [16.0, 50.0, 84.0]
             q16, q50, q84 = np.percentile(x, q)

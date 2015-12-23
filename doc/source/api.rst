@@ -5,8 +5,8 @@ API reference
 
 .. currentmodule:: satlas
 
-BaseModel creation
-------------------
+Models
+------
 
 .. note::
 

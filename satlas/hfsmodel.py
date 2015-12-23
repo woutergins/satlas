@@ -359,17 +359,17 @@ class HFSModel(BaseModel):
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
             if self.shared_fwhm:
-                par.add('FWHM', value=fwhm, vary=True, min=0)
+                par.add('FWHM', value=fwhm, vary=True, min=0.0001)
             else:
                 if not len(fwhm) == len(self.ftof):
                     fwhm = fwhm[0]
                     fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHM' + label, value=val, vary=True, min=0)
+                    par.add('FWHM' + label, value=val, vary=True, min=0.0001)
         else:
             if self.shared_fwhm:
-                par.add('FWHMG', value=fwhm[0], vary=True, min=0)
-                par.add('FWHML', value=fwhm[1], vary=True, min=0)
+                par.add('FWHMG', value=fwhm[0], vary=True, min=0.0001)
+                par.add('FWHML', value=fwhm[1], vary=True, min=0.0001)
                 val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
                         expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
@@ -378,8 +378,8 @@ class HFSModel(BaseModel):
                 if not fwhm.shape[0] == len(self.ftof):
                     fwhm = np.array([[fwhm[0], fwhm[1]] for _ in range(len(self.ftof))])
                 for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHMG' + label, value=val[0], vary=True, min=0)
-                    par.add('FWHML' + label, value=val[1], vary=True, min=0)
+                    par.add('FWHMG' + label, value=val[0], vary=True, min=0.0001)
+                    par.add('FWHML' + label, value=val[1], vary=True, min=0.0001)
                     val = 0.5346 * val[1] + np.sqrt(0.2166 * val[1] ** 2
                                                     + val[0] ** 2)
                     par.add('TotalFWHM' + label, value=val, vary=False,
