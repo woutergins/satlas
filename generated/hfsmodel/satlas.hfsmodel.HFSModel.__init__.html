@@ -87,7 +87,7 @@
 <h1>satlas.hfsmodel.HFSModel.__init__<a class="headerlink" href="#satlas-hfsmodel-hfsmodel-init" title="Permalink to this headline">¶</a></h1>
 <dl class="method">
 <dt id="satlas.hfsmodel.HFSModel.__init__">
-<code class="descclassname">HFSModel.</code><code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1, background_params=[0.001]</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">HFSModel.</code><code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds the HFS with the given atomic and nuclear information.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -112,8 +112,10 @@ Defaults to [50.0, 50.0]</li>
 <li><strong>scale</strong> (<em>float, optional</em>) &#8211;
 Sets the strength of the spectrum, defaults to 1.0. Comparable to the
 amplitude of the spectrum.</li>
-<li><strong>background</strong> (<em>float, optional</em>) &#8211;
-Sets the constant background to the supplied value. Defaults to 0.1.</li>
+<li><strong>background_params</strong> (<em>list of float, optional</em>) &#8211;
+Sets the coefficients of the polynomial background to the given values.
+Order of polynomial is equal to the number of parameters given minus one.
+Highest order coefficient is the first element, etc.</li>
 <li><strong>shape</strong> (<em>string, optional</em>) &#8211;
 Sets the transition shape. String is converted to lowercase. For
 possible values, see <em>HFSModel__shapes__</em>.keys()`.
@@ -122,6 +124,8 @@ Defaults to Voigt if an incorrect value is supplied.</li>
 If True, fixes the relative peak intensities to the Racah intensities.
 Otherwise, gives them equal intensities and allows them to vary during
 fitting.</li>
+<li><strong>use_saturation</strong> (<em>boolean, optional</em>) &#8211;
+If True, uses the saturation parameter to calculate relative intensities.</li>
 <li><strong>saturation</strong> (<em>float, optional</em>) &#8211;
 If different than 0, calculate the saturation effect on the intensity of
 transition intensity. This is done by an exponential transition between

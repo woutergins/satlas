@@ -109,10 +109,9 @@
                   <span class="s">&#39;crystalball&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">Crystalball</span><span class="p">,</span>
                   <span class="s">&#39;voigt&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">Voigt</span><span class="p">}</span>
 
-<div class="viewcode-block" id="HFSModel.__init__"><a class="viewcode-back" href="../../generated/hfsmodel/satlas.hfsmodel.HFSModel.__init__.html#satlas.hfsmodel.HFSModel.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="p">[</span><span class="mf">50.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<div class="viewcode-block" id="HFSModel.__init__"><a class="viewcode-back" href="../../generated/hfsmodel/satlas.hfsmodel.HFSModel.__init__.html#satlas.hfsmodel.HFSModel.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="p">[</span><span class="mf">50.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mf">0.001</span><span class="p">],</span>
                  <span class="n">shape</span><span class="o">=</span><span class="s">&#39;voigt&#39;</span><span class="p">,</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">use_saturation</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
-                 <span class="n">shared_fwhm</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">poisson</span><span class="o">=</span><span class="mf">0.68</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tailamp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tailloc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mf">0.001</span><span class="p">]):</span>
+                 <span class="n">shared_fwhm</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">poisson</span><span class="o">=</span><span class="mf">0.68</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tailamp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tailloc</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Builds the HFS with the given atomic and nuclear information.</span>
 
 <span class="sd">        Parameters</span>
@@ -137,8 +136,10 @@
 <span class="sd">        scale: float, optional</span>
 <span class="sd">            Sets the strength of the spectrum, defaults to 1.0. Comparable to the</span>
 <span class="sd">            amplitude of the spectrum.</span>
-<span class="sd">        background: float, optional</span>
-<span class="sd">            Sets the constant background to the supplied value. Defaults to 0.1.</span>
+<span class="sd">        background_params: list of float, optional</span>
+<span class="sd">            Sets the coefficients of the polynomial background to the given values.</span>
+<span class="sd">            Order of polynomial is equal to the number of parameters given minus one.</span>
+<span class="sd">            Highest order coefficient is the first element, etc.</span>
 <span class="sd">        shape : string, optional</span>
 <span class="sd">            Sets the transition shape. String is converted to lowercase. For</span>
 <span class="sd">            possible values, see *HFSModel__shapes__*.keys()`.</span>
@@ -147,6 +148,8 @@
 <span class="sd">            If True, fixes the relative peak intensities to the Racah intensities.</span>
 <span class="sd">            Otherwise, gives them equal intensities and allows them to vary during</span>
 <span class="sd">            fitting.</span>
+<span class="sd">        use_saturation: boolean, optional</span>
+<span class="sd">            If True, uses the saturation parameter to calculate relative intensities.</span>
 <span class="sd">        saturation: float, optional</span>
 <span class="sd">            If different than 0, calculate the saturation effect on the intensity of</span>
 <span class="sd">            transition intensity. This is done by an exponential transition between</span>
