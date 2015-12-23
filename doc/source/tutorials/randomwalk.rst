@@ -24,8 +24,6 @@ For the example dataset:
 
 .. code:: python
 
-    %matplotlib inline
-
     import satlas as s
     import numpy as np
     np.random.seed(0)
@@ -67,24 +65,24 @@ command is
 .. code:: python
 
     s.likelihood_fit(base, frequency, response)
-    s.generate_correlation_map(base, frequency, response, method='mle', resolution_diag=100, resolution_map=20)
+    s.generate_correlation_map(base, frequency, response, method='mle', resolution_diag=20, resolution_map=20)
 
 
 .. parsed-literal::
 
     FWHMG: 100% ||                                                   | ETA:  0:00:00
 
-    FWHML: 100% ||                                                   | ETA:  0:00:04
+    FWHML: 100% ||                                                   | ETA:  0:00:00
 
-    Amp1__2: 100% ||                                                 | ETA:  0:00:01
+    Amp1__2: 100% ||                                                 | ETA:  0:00:00
 
     Centroid: 100% ||                                                | ETA:  0:00:00
 
-    Background0: 100% ||                                             | ETA:  0:00:14
+    Background0: 100% ||                                             | ETA:  0:00:01
 
-    FWHMG FWHML: 100% ||                                             | ETA:  0:00:09
+    FWHMG FWHML: 100% ||                                             | ETA:  0:00:10
 
-    FWHMG Amp1__2: 100% ||                                  | ETA:  -1 day, 23:59:59
+    FWHMG Amp1__2: 100% ||                                           | ETA:  0:00:00
 
     FWHML Amp1__2: 100% ||                                           | ETA:  0:00:02
 
@@ -94,13 +92,14 @@ command is
 
     Amp1__2 Centroid: 100% ||                                        | ETA:  0:00:00
 
-    FWHMG Background0: 100% ||                                       | ETA:  0:00:01
+    FWHMG Background0: 100% ||                                       | ETA:  0:00:00
 
     FWHML Background0: 100% ||                                       | ETA:  0:00:01
 
-    Amp1__2 Background0: 100% ||                                     | ETA:  0:00:18
+    Amp1__2 Background0: 100% ||                                     | ETA:  0:00:15
 
-    Centroid Background0: 100% ||                                    | ETA:  0:00:40
+    Centroid Background0: 100% ||                                    | ETA:  0:00:37
+
 
 
 
@@ -140,7 +139,7 @@ on arguments for the walk algorithm can be found there.
 .. parsed-literal::
 
     Walk:100% ||                                                     | ETA:  0:00:00
-    Generating plots: 100% |\                                        | ETA:  0:00:00
+    Generating plots: 100% ||                                        | ETA:  0:00:00
 
 
 
@@ -160,8 +159,8 @@ method works by continuously fitting and refitting the data, while the
 random walk judges the quality of each random step. This results in an
 important distinction, namely that **the analytical method might not
 converge**, while the random walk might get into a region where there is
-no difference between random steps, and will there explore the entire
-region, instead of being confined to the best fitting area. Both options
-have their pros, cons and gotchas, and care needs to be taken in
-selecting which method is to be used.
+no difference between random steps, and **will therefore explore the
+entire region**, instead of being confined to the best fitting area.
+Both options have their pros, cons and gotchas, and care needs to be
+taken in selecting which method is to be used.
 
