@@ -9,7 +9,7 @@ from . import utilities
 from .utilities import *
 from . import fitting
 from .fitting import *
-from .version import __version__
+from .version import *
 
 __all__ = []
 
