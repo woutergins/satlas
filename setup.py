@@ -9,7 +9,7 @@ setup(
   author_email='woutergins@fys.kuleuven.be',
   url='https://woutergins.github.io/satlas/',
   license='MIT',
-  download_url='https://github.com/woutergins/satlas/tarball/' + __version__,
+  download_url='https://github.com/woutergins/satlas/tarball/' + __release__,
   keywords=['physics', 'hyperfine structure', 'fitting'],
   install_requires=['numpy',
                     'scipy',
