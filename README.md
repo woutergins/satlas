@@ -19,15 +19,14 @@ This Python package has been created with the goal of creating an easier interfa
 Dependencies
 ------------
 This package makes use of the following packages:
-
-    * [NumPy](http://www.numpy.org/)
-    * [SciPy](http://www.scipy.org/)
-    * [LMFIT](http://lmfit.github.io/lmfit-py/index.html)
-    * [Matplotlib](http://matplotlib.org/)
-    * [emcee](http://dan.iel.fm/emcee/current/)
-    * [sympy](http://www.sympy.org/)
-    * [h5py](http://docs.h5py.org/en/latest/index.html)
-    * [progressbar2](http://progressbar-2.readthedocs.org/en/latest/)
+* [NumPy](http://www.numpy.org/)
+* [SciPy](http://www.scipy.org/)
+* [LMFIT](http://lmfit.github.io/lmfit-py/index.html)
+* [Matplotlib](http://matplotlib.org/)
+* [emcee](http://dan.iel.fm/emcee/current/)
+* [sympy](http://www.sympy.org/)
+* [h5py](http://docs.h5py.org/en/latest/index.html)
+* [progressbar2](http://progressbar-2.readthedocs.org/en/latest/)
 
 Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al., for the correlation plot code.
 
