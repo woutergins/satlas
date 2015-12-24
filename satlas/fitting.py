@@ -11,10 +11,7 @@ import emcee as mcmc
 from scipy.misc import derivative
 from scipy import optimize
 import copy
-try:
-    import progressbar
-except:
-    pass
+import tqdm
 import pandas as pd
 import h5py
 import os
@@ -376,6 +373,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
 
     y = np.hstack(y)
     params = f.params
+    # Eliminate the estimated uncertainties
+    for p in params:
+        params[p].stderr = None
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func))
     result.scalar_minimize(method=method, **method_kws)
     f.params = result.params
@@ -485,8 +485,6 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
     params = copy.deepcopy(f.params)
     for i in range(no_params):
         ranges[param_names[i]] = {}
-        # Initialize the progressbar and set the y-ticklabels.
-
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
         stderr = orig_params[param_names[i]].stderr
@@ -547,7 +545,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         getattr(f, save_attr)[param_name].value = ranges[param_name]['value']
 
 def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20,
-                    verbose=True, filename=None):
+                    filename=None):
     """Calculates the uncertainty on MLE-optimized parameter values
     by performing a random walk through parameter space and comparing
     the resulting loglikelihood values. For more information,
@@ -578,10 +576,6 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     nsteps: integer, optional
         Determines how many steps each walker should take.
         Defaults to 2000 steps.
-    verbose: boolean, optional
-        If True, a progressbar is printed and updated every second.
-        This progressbar displays the progress of the walk, with a primitive
-        estimate of the remaining time in the calculation.
     filename: string, optional
         Filename where the random walk has to be saved. If *None*,
         the current time in seconds since January 1970 is used.
@@ -601,25 +595,9 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     ndim = len(vars)
     pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
 
-    if verbose:
-        try:
-            widgets = ['Walk:', progressbar.Percentage(), ' ',
-                       progressbar.Bar(marker=progressbar.RotatingMarker()),
-                       ' ', progressbar.AdaptiveETA(num_samples=100)]
-            pbar = progressbar.ProgressBar(widgets=widgets,
-                                           maxval=walkers * nsteps).start()
-        except:
-            pbar = 0
-    else:
-        pbar = 0
-
-    def lnprobList(fvars, groupParams, f, x, y, xerr, func, pbar):
+    def lnprobList(fvars, groupParams, f, x, y, xerr, func):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
-        try:
-            pbar += 1
-        except:
-            pass
         return likelihood_lnprob(groupParams, f, x, y, xerr, func)
 
     groupParams = lm.Parameters()
@@ -631,7 +609,7 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
                                           priormin=params[key].min,
                                           priormax=params[key].max)
     sampler = mcmc.EnsembleSampler(walkers, ndim, lnprobList,
-                                   args=(groupParams, f, x, y, xerr, func, pbar))
+                                   args=(groupParams, f, x, y, xerr, func))
 
     if filename is None:
         import time
@@ -646,21 +624,21 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
             pos = dset[-walkers:, :]
             dset.resize(offset + nsteps * walkers, axis=0)
 
-            for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
-                result = result[0]
-                dset[offset + i * walkers:offset + (i + 1) * walkers, :] = result
+            with tqdm.tqdm(total=nsteps, desc='Walk', leave=True) as pbar:
+                for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
+                    result = result[0]
+                    dset[offset + i * walkers:offset + (i + 1) * walkers, :] = result
+                    pbar.update(1)
     else:
         with h5py.File(filename, 'w') as store:
             dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip', maxshape=(None, ndim))
             dset.attrs['format'] = np.array([f.encode('utf-8') for f in var_names])
 
-            for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
-                result = result[0]
-                dset[i * walkers:(i + 1) * walkers, :] = result
-    try:
-        pbar.finish()
-    except:
-        pass
+            with tqdm.tqdm(total=nsteps, desc='Walk', leave=True) as pbar:
+                for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
+                    result = result[0]
+                    dset[i * walkers:(i + 1) * walkers, :] = result
+                    pbar.update(1)
 
     f.mle_fit = params
     f.params = params

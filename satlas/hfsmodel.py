@@ -740,7 +740,7 @@ class HFSModel(BaseModel):
                                 2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-            superx = np.linspace(superx.min(), superx.max(), 10**3)
+            # superx = np.linspace(superx.min(), superx.max(), 10**3)
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
@@ -780,8 +780,8 @@ class HFSModel(BaseModel):
         else:
             line, = ax.plot(superx, self(superx)/norm, label=legend)
         if indicate:
-            height = self(superx)/norm.min()
             for (p, l) in zip(self.locations, self.ftof):
+                height = self(p)
                 lab = l.split('__')
                 lableft = '/'.join(lab[0].split('_'))
                 labright = '/'.join(lab[1].split('_'))
