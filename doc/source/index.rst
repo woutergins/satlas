@@ -53,7 +53,7 @@ This package makes use of the following packages:
     * `emcee <http://dan.iel.fm/emcee/current/>`_
     * `sympy <http://www.sympy.org/>`_
     * `h5py <http://docs.h5py.org/en/latest/index.html>`_
-    * `progressbar2 <http://progressbar-2.readthedocs.org/en/latest/>`_
+    * `tqdm <https://github.com/tqdm/tqdm>`_
 
 Code can be downloaded `here <https://github.com/woutergins/satlas>`_. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al. :cite:`Foreman-Mackey2014`, for the correlation plot code.
 
