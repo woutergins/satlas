@@ -118,8 +118,7 @@ class CombinedModel(BaseModel):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts', plot_kws={}):
+             ax=None, show=True, plot_kws={}):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -131,24 +130,19 @@ class CombinedModel(BaseModel):
             Experimental y-data.
         yerr: list of arrays or dict('high': array, 'low': array)
             Experimental errors on y.
-        no_of_points: int
-            Number of points to use for the plot of the hfs if
-            experimental data is given.
         ax: matplotlib axes object
             If provided, plots on this axis.
         show: boolean
             If True, the plot will be shown at the end.
-        legend: string, optional
-            If given, an entry in the legend will be made for the spectrum.
-        data_legend: string, optional
-            If given, an entry in the legend will be made for the experimental
-            data.
+        plot_kws: dictionary
+            Dictionary containing the additional keyword arguments for the *plot*
+            method of the underlying models. Note that the keyword *ax*
+            is passed along correctly.
 
         Returns
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
-        ax = plot_kws.pop('ax', None)
         if ax is None:
             fig, ax = plt.subplots(len(self.models), 1)
             height = fig.get_figheight()
@@ -166,24 +160,34 @@ class CombinedModel(BaseModel):
             yerr = [None] * len(self.models)
 
         selected = int(np.floor(len(self.models)/2 - 1))
+
+        plot_kws_no_xlabel = copy.deepcopy(plot_kws)
+        plot_kws_no_xlabel['xlabel'] = None
+
+        plot_kws_no_ylabel = copy.deepcopy(plot_kws)
+        plot_kws_no_ylabel['ylabel'] = None
+
+        plot_kws_no_xlabel_no_ylabel = copy.deepcopy(plot_kws)
+        plot_kws_no_xlabel_no_ylabel['xlabel'] = None
+        plot_kws_no_xlabel_no_ylabel['ylabel'] = None
+
         for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
                                                    self.models)):
             if i == selected:
                 try:
                     spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], **plot_kws, ax=ax[i])
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
-                              data_legend=data_legend, legend=legend, xlabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel)
             elif i == len(self.models) - 1:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_ylabel)
             else:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
 
         plt.tight_layout()
         if show:

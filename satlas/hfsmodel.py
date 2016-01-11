@@ -739,7 +739,6 @@ class HFSModel(BaseModel):
                                 2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-            # superx = np.linspace(superx.min(), superx.max(), 10**3)
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
@@ -765,7 +764,7 @@ class HFSModel(BaseModel):
                 ax.plot(x, y, 'o')
         if model:
             range = (self.locations.min(), self.locations.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000)[1])
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
             min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
