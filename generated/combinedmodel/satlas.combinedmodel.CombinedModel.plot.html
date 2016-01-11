@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.combinedmodel.CombinedModel.plot &mdash; SATLAS 0.1.0b10 documentation</title>
+    <title>satlas.combinedmodel.CombinedModel.plot &mdash; SATLAS 0.1.0b11 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b10',
+        VERSION:     '0.1.0b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b10 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../../index.html" >
     <link rel="up" title="satlas.combinedmodel.CombinedModel" href="../satlas.combinedmodel.CombinedModel.html" >
     <link rel="next" title="satlas.combinedmodel.CombinedModel.plot_spectroscopic" href="satlas.combinedmodel.CombinedModel.plot_spectroscopic.html" >
     <link rel="prev" title="satlas.combinedmodel.CombinedModel.__add__" href="satlas.combinedmodel.CombinedModel.__add__.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b10 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b11 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.combinedmodel.CombinedModel.html" accesskey="U">satlas.combinedmodel.CombinedModel</a></li> 
@@ -87,7 +87,7 @@
 <h1>satlas.combinedmodel.CombinedModel.plot<a class="headerlink" href="#satlas-combinedmodel-combinedmodel-plot" title="Permalink to this headline">¶</a></h1>
 <dl class="method">
 <dt id="satlas.combinedmodel.CombinedModel.plot">
-<code class="descclassname">CombinedModel.</code><code class="descname">plot</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>yerr=None</em>, <em>no_of_points=10000</em>, <em>ax=None</em>, <em>show=True</em>, <em>legend=None</em>, <em>data_legend=None</em>, <em>xlabel='Frequency (MHz)'</em>, <em>ylabel='Counts'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/combinedmodel.html#CombinedModel.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.combinedmodel.CombinedModel.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">CombinedModel.</code><code class="descname">plot</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>yerr=None</em>, <em>ax=None</em>, <em>show=True</em>, <em>plot_kws={}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/combinedmodel.html#CombinedModel.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.combinedmodel.CombinedModel.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Routine that plots the hfs, possibly on top of experimental data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -98,13 +98,11 @@
 the peaks is chosen to plot the hfs.</li>
 <li><strong>y</strong> (<em>list of arrays</em>) &#8211; Experimental y-data.</li>
 <li><strong>yerr</strong> (<em>list of arrays or dict(&#8216;high&#8217;: array, &#8216;low&#8217;: array)</em>) &#8211; Experimental errors on y.</li>
-<li><strong>no_of_points</strong> (<em>int</em>) &#8211; Number of points to use for the plot of the hfs if
-experimental data is given.</li>
 <li><strong>ax</strong> (<em>matplotlib axes object</em>) &#8211; If provided, plots on this axis.</li>
 <li><strong>show</strong> (<em>boolean</em>) &#8211; If True, the plot will be shown at the end.</li>
-<li><strong>legend</strong> (<em>string, optional</em>) &#8211; If given, an entry in the legend will be made for the spectrum.</li>
-<li><strong>data_legend</strong> (<em>string, optional</em>) &#8211; If given, an entry in the legend will be made for the experimental
-data.</li>
+<li><strong>plot_kws</strong> (<em>dictionary</em>) &#8211; Dictionary containing the additional keyword arguments for the <em>plot</em>
+method of the underlying models. Note that the keyword <em>ax</em>
+is passed along correctly.</li>
 </ul>
 </td>
 </tr>

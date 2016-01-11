@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.multimodel.MultiModel.plot &mdash; SATLAS 0.1.0b10 documentation</title>
+    <title>satlas.multimodel.MultiModel.plot &mdash; SATLAS 0.1.0b11 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b10',
+        VERSION:     '0.1.0b11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b10 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../../index.html" >
     <link rel="up" title="satlas.multimodel.MultiModel" href="../satlas.multimodel.MultiModel.html" >
     <link rel="next" title="satlas.multimodel.MultiModel.plot_spectroscopic" href="satlas.multimodel.MultiModel.plot_spectroscopic.html" >
     <link rel="prev" title="satlas.multimodel.MultiModel.__add__" href="satlas.multimodel.MultiModel.__add__.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b10 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b11 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.multimodel.MultiModel.html" accesskey="U">satlas.multimodel.MultiModel</a></li> 
@@ -87,7 +87,7 @@
 <h1>satlas.multimodel.MultiModel.plot<a class="headerlink" href="#satlas-multimodel-multimodel-plot" title="Permalink to this headline">¶</a></h1>
 <dl class="method">
 <dt id="satlas.multimodel.MultiModel.plot">
-<code class="descclassname">MultiModel.</code><code class="descname">plot</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>yerr=None</em>, <em>no_of_points=10000</em>, <em>ax=None</em>, <em>show=True</em>, <em>xlabel='Frequency (MHz)'</em>, <em>ylabel='Counts'</em>, <em>data_legend='Data'</em>, <em>indicate=False</em>, <em>plot_seperate=True</em>, <em>normalized=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/multimodel.html#MultiModel.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.multimodel.MultiModel.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">MultiModel.</code><code class="descname">plot</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>yerr=None</em>, <em>ax=None</em>, <em>plot_seperate=True</em>, <em>no_of_points=1000</em>, <em>show=True</em>, <em>legend=None</em>, <em>xlabel='Frequency (MHz)'</em>, <em>ylabel='Counts'</em>, <em>indicate=False</em>, <em>model=False</em>, <em>colormap='bone_r'</em>, <em>normalized=False</em>, <em>distance=4</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/multimodel.html#MultiModel.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.multimodel.MultiModel.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Routine that plots the hfs of all the models,
 possibly on top of experimental data.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -99,18 +99,27 @@ possibly on top of experimental data.</p>
 the peaks is chosen to plot the hfs.</li>
 <li><strong>y</strong> (<em>list of arrays</em>) &#8211; Experimental y-data.</li>
 <li><strong>yerr</strong> (<em>list of arrays</em>) &#8211; Experimental errors on y.</li>
-<li><strong>no_of_points</strong> (<em>int</em>) &#8211; Number of points to use for the plot of the hfs.</li>
-<li><strong>ax</strong> (<em>matplotlib axes object</em>) &#8211; If provided, plots on this axis</li>
+<li><strong>plot_seperate</strong> (<em>boolean, optional</em>) &#8211; Controls if the underlying models are drawn as well, or only
+the sum. Defaults to False.</li>
+<li><strong>no_of_points</strong> (<em>int</em>) &#8211; Number of points to use for the plot of the hfs if
+experimental data is given.</li>
+<li><strong>ax</strong> (<em>matplotlib axes object</em>) &#8211; If provided, plots on this axis.</li>
 <li><strong>show</strong> (<em>boolean</em>) &#8211; If True, the plot will be shown at the end.</li>
-<li><strong>xlabel</strong> (<em>string</em>) &#8211; String to display on the x-axis.</li>
-<li><strong>ylabel</strong> (<em>string</em>) &#8211; String to display on the y-axis.</li>
-<li><strong>data_legend</strong> (<em>string</em>) &#8211; String to use as the legend for the data.</li>
-<li><strong>indicate</strong> (<em>boolean</em>) &#8211; If True, the peaks will be marked with
-the transition.</li>
-<li><strong>plot_seperate</strong> (<em>boolean</em>) &#8211; If True, the seperate response of each of the models will be
-plotted on the figure as well as their sum</li>
+<li><strong>legend</strong> (<em>string, optional</em>) &#8211; If given, an entry in the legend will be made for the spectrum.</li>
+<li><strong>data_legend</strong> (<em>string, optional</em>) &#8211; If given, an entry in the legend will be made for the experimental
+data.</li>
+<li><strong>xlabel</strong> (<em>string, optional</em>) &#8211; If given, sets the xlabel to this string. Defaults to &#8216;Frequency (MHz)&#8217;.</li>
+<li><strong>ylabel</strong> (<em>string, optional</em>) &#8211; If given, sets the ylabel to this string. Defaults to &#8216;Counts&#8217;.</li>
+<li><strong>indicate</strong> (<em>boolean, optional</em>) &#8211; If set to True, dashed lines are drawn to indicate the location of the
+transitions, and the labels are attached. Defaults to False.</li>
+<li><strong>model</strong> (<em>boolean, optional</em>) &#8211; If given, the region around the fitted line will be shaded, with
+the luminosity indicating the pmf of the Poisson
+distribution characterized by the value of the fit. Note that
+the argument <em>yerr</em> is ignored if <em>model</em> is True.</li>
 <li><strong>normalized</strong> (<em>Boolean</em>) &#8211; If True, the data and fit are plotted normalized such that the highest
 data point is one.</li>
+<li><strong>distance</strong> (<em>float, optional</em>) &#8211; Controls how many FWHM deviations are used to generate the plot.
+Defaults to 4.</li>
 </ul>
 </td>
 </tr>

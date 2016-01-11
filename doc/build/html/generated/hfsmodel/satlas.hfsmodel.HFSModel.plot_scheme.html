@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.hfsmodel.HFSModel.__add__ &mdash; SATLAS 0.1.0b11 documentation</title>
+    <title>satlas.hfsmodel.HFSModel.plot_scheme &mdash; SATLAS 0.1.0b11 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
     <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../../index.html" >
     <link rel="up" title="satlas.hfsmodel.HFSModel" href="../satlas.hfsmodel.HFSModel.html" >
-    <link rel="next" title="satlas.hfsmodel.HFSModel.fix_ratio" href="satlas.hfsmodel.HFSModel.fix_ratio.html" >
-    <link rel="prev" title="satlas.hfsmodel.HFSModel.__call__" href="satlas.hfsmodel.HFSModel.__call__.html" > 
+    <link rel="next" title="satlas.hfsmodel.HFSModel.seperate_response" href="satlas.hfsmodel.HFSModel.seperate_response.html" >
+    <link rel="prev" title="satlas.hfsmodel.HFSModel.plot_spectroscopic" href="satlas.hfsmodel.HFSModel.plot_spectroscopic.html" > 
   </head>
   <body>
 
@@ -63,11 +63,11 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="satlas.hfsmodel.HFSModel.fix_ratio.html" title="satlas.hfsmodel.HFSModel.fix_ratio"
+        <a href="satlas.hfsmodel.HFSModel.seperate_response.html" title="satlas.hfsmodel.HFSModel.seperate_response"
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="satlas.hfsmodel.HFSModel.__call__.html" title="satlas.hfsmodel.HFSModel.__call__"
+        <a href="satlas.hfsmodel.HFSModel.plot_spectroscopic.html" title="satlas.hfsmodel.HFSModel.plot_spectroscopic"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -83,21 +83,31 @@
         <div class="bodywrapper">
           <div class="body" id="spc-section-body">
             
-  <div class="section" id="satlas-hfsmodel-hfsmodel-add">
-<h1>satlas.hfsmodel.HFSModel.__add__<a class="headerlink" href="#satlas-hfsmodel-hfsmodel-add" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="satlas-hfsmodel-hfsmodel-plot-scheme">
+<h1>satlas.hfsmodel.HFSModel.plot_scheme<a class="headerlink" href="#satlas-hfsmodel-hfsmodel-plot-scheme" title="Permalink to this headline">¶</a></h1>
 <dl class="method">
-<dt id="satlas.hfsmodel.HFSModel.__add__">
-<code class="descclassname">HFSModel.</code><code class="descname">__add__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.__add__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.__add__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add two spectra together to get an <a class="reference internal" href="../satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>.</p>
+<dt id="satlas.hfsmodel.HFSModel.plot_scheme">
+<code class="descclassname">HFSModel.</code><code class="descname">plot_scheme</code><span class="sig-paren">(</span><em>show=True</em>, <em>upper_color='r'</em>, <em>lower_color='k'</em>, <em>arrow_color='b'</em>, <em>distance=5</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.plot_scheme"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.plot_scheme" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a figure where both the splitting of the upper and lower state is drawn,
+and the hfs associated with this.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="../satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><em>HFSModel</em></a>) &#8211; Other spectrum to add.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>show</strong> (<em>boolean, optional</em>) &#8211; If True, immediately shows the figure. Defaults to True.</li>
+<li><strong>upper_color</strong> (<em>matplotlib color definition</em>) &#8211; Sets the color of the upper state. Defaults to red.</li>
+<li><strong>lower_color</strong> (<em>matplotlib color definition</em>) &#8211; Sets the color of the lower state. Defaults to black.</li>
+<li><strong>arrow_color</strong> (<em>matplotlib color definition</em>) &#8211; Sets the color of the arrows indicating the transitions.
+Defaults to blue.</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A MultiModel combining both spectra.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Tuple containing the figure and both axes, also in a tuple.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="../satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel">MultiModel</a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -112,14 +122,14 @@
       <div class="spc-rightsidebar span3">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="satlas.hfsmodel.HFSModel.__call__.html"
-                        title="previous chapter">satlas.hfsmodel.HFSModel.__call__</a></p>
+  <p class="topless"><a href="satlas.hfsmodel.HFSModel.plot_spectroscopic.html"
+                        title="previous chapter">satlas.hfsmodel.HFSModel.plot_spectroscopic</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="satlas.hfsmodel.HFSModel.fix_ratio.html"
-                        title="next chapter">satlas.hfsmodel.HFSModel.fix_ratio</a></p>
+  <p class="topless"><a href="satlas.hfsmodel.HFSModel.seperate_response.html"
+                        title="next chapter">satlas.hfsmodel.HFSModel.seperate_response</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../../_sources/generated/hfsmodel/satlas.hfsmodel.HFSModel.__add__.txt"
+    <a href="../../_sources/generated/hfsmodel/satlas.hfsmodel.HFSModel.plot_scheme.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>

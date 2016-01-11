@@ -17,6 +17,7 @@ satlas.hfsmodel.HFSModel
       ~HFSModel.fix_ratio
       ~HFSModel.plot
       ~HFSModel.plot_spectroscopic
+      ~HFSModel.plot_scheme
       ~HFSModel.seperate_response
 
    .. rubric:: Attributes
