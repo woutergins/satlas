@@ -5,5 +5,5 @@ matplotlib
 pandas
 emcee
 lmfit==0.8.2
-progressbar2
+tqdm
 h5py

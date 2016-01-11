@@ -72,7 +72,6 @@ class CombinedModel(BaseModel):
                     p[new_key].vary = False
                 if new_key in self._expr.keys():
                     p[new_key].expr = self._expr[new_key]
-                    
             params += p
         return params
 
@@ -88,11 +87,12 @@ class CombinedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = lm.Parameter(new_key,value=params[key].value,
-                                             min=params[key].min,
-                                             max=params[key].max)
+                    par[new_key] = lm.Parameter(new_key,
+                                                value=params[key].value,
+                                                min=params[key].min,
+                                                max=params[key].max,
+                                                vary=params[key].vary)
                     par[new_key].stderr = params[key].stderr
-
             spec.params = par
 
     def seperate_response(self, x):
@@ -119,7 +119,7 @@ class CombinedModel(BaseModel):
 
     def plot(self, x=None, y=None, yerr=None,
              no_of_points=10**4, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
+             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts', plot_kws={}):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -148,8 +148,9 @@ class CombinedModel(BaseModel):
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
+        ax = plot_kws.pop('ax', None)
         if ax is None:
-            fig, ax = plt.subplots(len(self.models), 1, sharex=True)
+            fig, ax = plt.subplots(len(self.models), 1)
             height = fig.get_figheight()
             width = fig.get_figwidth()
             fig.set_size_inches(width, len(self.models) * height, forward=True)
@@ -169,8 +170,7 @@ class CombinedModel(BaseModel):
                                                    self.models)):
             if i == selected:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False,
-                              data_legend=data_legend, legend=legend, xlabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], **plot_kws, ax=ax[i])
                 except:
                     spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
                               data_legend=data_legend, legend=legend, xlabel='')

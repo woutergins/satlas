@@ -672,7 +672,6 @@ class HFSModel(BaseModel):
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
         background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
         return s + np.polyval(background_params, x)
-        # return s + self._params['Background'].value
 
     ###############################
     #      PLOTTING ROUTINES      #
@@ -682,7 +681,7 @@ class HFSModel(BaseModel):
              no_of_points=10**3, ax=None, show=True, legend=None,
              data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
              indicate=False, model=False, colormap='bone_r',
-             normalized=False):
+             normalized=False, distance=4):
         """Plot the hfs, possibly on top of experimental data.
 
         Parameters
@@ -735,8 +734,8 @@ class HFSModel(BaseModel):
             fwhm = self.parts[0].fwhm
 
             for pos in self.locations:
-                r = np.linspace(pos - 4 * fwhm,
-                                pos + 4 * fwhm,
+                r = np.linspace(pos - distance * fwhm,
+                                pos + distance * fwhm,
                                 2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
@@ -834,3 +833,113 @@ class HFSModel(BaseModel):
             yerr = None
         kwargs['yerr'] = yerr
         return self.plot(**kwargs)
+
+
+    def plot_scheme(self, show=True, upper_color='r', lower_color='k', arrow_color='b', distance=5):
+        """Create a figure where both the splitting of the upper and lower state is drawn,
+        and the hfs associated with this.
+
+        Parameters
+        ----------
+        show: boolean, optional
+            If True, immediately shows the figure. Defaults to True.
+        upper_color: matplotlib color definition
+            Sets the color of the upper state. Defaults to red.
+        lower_color: matplotlib color definition
+            Sets the color of the lower state. Defaults to black.
+        arrow_color: matplotlib color definition
+            Sets the color of the arrows indicating the transitions.
+            Defaults to blue.
+
+        Returns
+        -------
+        fig, tuple of axes"""
+        from fractions import Fraction
+        from matplotlib import lines
+        fig = plt.figure()
+        ax = fig.add_axes([0.5, 0, 0.5, 0.5], axisbg=[1, 1, 1, 0])
+        self.plot(ax=ax, show=False, distance=distance)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        locations = self.locations
+        plotrange = ax.get_xlim()
+        distances = (locations - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
+        height = self(locations)
+        plotrange = ax.get_ylim()
+        height = (height - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
+        A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
+                              np.ones(self.num_upper) * self._params['Au'].value)
+        B = np.append(np.ones(self.num_lower) * self._params['Bl'].value,
+                              np.ones(self.num_upper) * self._params['Bu'].value)
+        C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
+                              np.ones(self.num_upper) * self._params['Cu'].value)
+        energies = self.C * A + self.D * B + self.E * C
+        #energies -= energies.min()
+        energies_upper = energies[self.num_lower:] / np.abs(energies[self.num_lower:]).max() * 0.1
+        energies_lower = energies[:self.num_lower] / np.abs(energies[:self.num_lower]).max() * 0.1
+        energies = np.append(energies_lower, energies_upper)
+
+        ax2 = fig.add_axes([0, 0, 1, 1], axisbg=[1, 1, 1, 0])
+        ax2.get_xaxis().set_visible(False)
+        ax2.get_yaxis().set_visible(False)
+
+        # Lower state
+        x = np.array([0, 0.3])
+        y = np.array([0.625, 0.625])
+        line = lines.Line2D(x, y, lw=2., color=lower_color)
+        ax2.add_line(line)
+
+        # Upper state
+        x = np.array([0, 0.3])
+        y = np.array([0.875, 0.875])
+        line = lines.Line2D(x, y, lw=2., color=upper_color)
+        ax2.add_line(line)
+
+        for i, F in enumerate(self.F):
+            # Level
+            F = Fraction.from_float(F)
+            x = distances + 0.5
+            x = np.array([0.5, 1])
+            if i < self.num_lower:
+                y = np.zeros(len(x)) + 0.625 + energies[i]
+                color = lower_color
+                starting = 0.625
+            else:
+                y = np.zeros(len(x)) + 0.875 + energies[i]
+                color = upper_color
+                starting = 0.875
+            line = lines.Line2D(x, y, lw=2., color=color)
+            ax2.add_line(line)
+
+            x = np.array([0.3, x.min()])
+            y = np.array([starting, y[0]])
+            line = lines.Line2D(x, y, lw=2., color=color, alpha=0.4, linestyle='dashed')
+            ax2.add_line(line)
+            ax2.text(0.4, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'center', 'verticalalignment': 'center'})
+
+        for i, label in enumerate(self.ftof):
+            lower, upper = label.split('__')
+            if '_' in lower:
+                lower = lower.split('_')
+                lower = float(lower[0]) / float(lower[1])
+            else:
+                lower = float(lower)
+            if '_' in upper:
+                upper = upper.split('_')
+                upper = float(upper[0]) / float(upper[1])
+            else:
+                upper = float(upper)
+
+            x = np.array([distances[i], distances[i]]) + 0.5
+            lower = energies[np.where(self.F[:self.num_lower]==lower)[0]]
+            upper = energies[np.where(self.F[self.num_lower:]==upper)[0] + self.num_lower]
+            y = np.array([lower + 0.625, upper + 0.875]).flatten()
+            ax2.arrow(x[0], y[0], x[1] - x[0], y[1] - y[0], fc=arrow_color, ec=arrow_color, length_includes_head=True, overhang=0.5, zorder=10)
+
+        ax2.text(0.15, 0.64, 'J=' + str(Fraction.from_float(self.J[0])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, 0.89, 'J=' + str(Fraction.from_float(self.J[-1])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, 0.765, 'I=' + str(Fraction.from_float(self.I)), fontsize=20, fontdict={'horizontalalignment': 'right'})
+        if show:
+            plt.show()
+        return fig, (ax, ax2)

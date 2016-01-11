@@ -77,7 +77,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         bottom = yerr
     return (y - model) / bottom
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -107,9 +107,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None):
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(f, x, y, yerr, xerr=xerr, func=func)
+    return chisquare_fit(f, x, y, yerr, xerr=xerr, func=func, verbose=verbose)
 
-def chisquare_fit(f, x, y, yerr, xerr=None, func=None):
+def chisquare_fit(f, x, y, yerr, xerr=None, func=None, verbose=True):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -146,19 +146,33 @@ def chisquare_fit(f, x, y, yerr, xerr=None, func=None):
     except:
         pass
 
-    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func))
+    def iter_cb(params, iter, resid, *args, **kwargs):
+        if verbose:
+            progress.update(0)
+            progress.set_description('Chisquare fitting in progress (' + str(resid.sum()) + ')')
+        else:
+            pass
+
+    if verbose:
+        progress = tqdm.tqdm(desc='Chisquare fitting in progress', leave=True)
+
+    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
     f.params = copy.deepcopy(result.params)
     f.chisqr = copy.deepcopy(result.chisqr)
 
     success = False
     counter = 0
     while not success:
-        result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func))
+        result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
         f.params = copy.deepcopy(result.params)
         success = np.isclose(result.chisqr, f.chisqr)
         f.chisqr = copy.deepcopy(result.chisqr)
         if counter > 10 and not success:
             break
+    if verbose:
+        progress.set_description('Chisquare fitting done')
+        progress.close()
+
     f.chisq_res_par = copy.deepcopy(result.params)
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
@@ -243,7 +257,7 @@ def likelihood_x_err(f, x, y, xerr, func):
         _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
     # Calculate the loglikelihoods for the grid of uncertainty.
     # Each column is a new datapoint.
-    vals = func(y_grid, np.hstack(f(x_grid + xerr * theta)))
+    vals = func(y_grid, f(x_grid + xerr * theta))
     # To avoid overflows, subtract the maximal values from each column.
     mod = vals.max(axis=0)
     vals_mod = vals - mod
@@ -323,7 +337,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
         return_value = likelihood_x_err(f, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}, verbose=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -369,21 +383,32 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         the message from the optimizer."""
 
     def negativeloglikelihood(*args, **kwargs):
-        return -likelihood_lnprob(*args, **kwargs)
+        return_val = -likelihood_lnprob(*args, **kwargs)
+        return return_val
+
+    def iter_cb(params, iter, resid, *args, **kwargs):
+        if verbose:
+            progress.update(0)
+            progress.set_description('Likelihood fitting in progress (' + str(resid) + ')')
+        else:
+            pass
 
     y = np.hstack(y)
     params = f.params
     # Eliminate the estimated uncertainties
     for p in params:
         params[p].stderr = None
-    result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func))
+    if verbose:
+        progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
+
+    result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
     result.scalar_minimize(method=method, **method_kws)
     f.params = result.params
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
     success = False
     counter = 0
     while not success:
-        result = lm.Minimizer(negativeloglikelihood, f.params, fcn_args=(f, x, y, xerr, func))
+        result = lm.Minimizer(negativeloglikelihood, f.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
         result.scalar_minimize(method=method, **method_kws)
         counter += 1
         f.params = result.params
@@ -392,6 +417,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         val = new_val
         if not success and counter > 10:
             break
+    if verbose:
+        progress.set_description('Likelihood fitting done')
+        progress.close()
     f.mle_fit = result.params
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
@@ -594,6 +622,9 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
             vars.append(params[key].value)
     ndim = len(vars)
     pos = mcmc.utils.sample_ball(vars, [1e-4] * len(vars), size=walkers)
+    for i in range(pos.shape[1]):
+        pos[:, i] = np.where(pos[:, i] < params[var_names[i]].min, params[var_names[i]].min+(1E-5), pos[:, i])
+        pos[:, i] = np.where(pos[:, i] > params[var_names[i]].max, params[var_names[i]].max-(1E-5), pos[:, i])
 
     def lnprobList(fvars, groupParams, f, x, y, xerr, func):
         for val, n in zip(fvars, var_names):

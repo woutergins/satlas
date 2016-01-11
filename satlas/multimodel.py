@@ -86,9 +86,11 @@ class MultiModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = lm.Parameter(new_key,value=params[key].value,
-                                             min=params[key].min,
-                                             max=params[key].max)
+                    par[new_key] = lm.Parameter(new_key,
+                                                value=params[key].value,
+                                                min=params[key].min,
+                                                max=params[key].max,
+                                                vary=params[key].vary)
                     par[new_key].stderr = params[key].stderr
             spec.params = par
 
@@ -153,7 +155,7 @@ class MultiModel(BaseModel):
             If True, the peaks will be marked with
             the transition.
         plot_seperate: boolean
-            If True, the seperate response of each of the models will be 
+            If True, the seperate response of each of the models will be
             plotted on the figure as well as their sum
         normalized: Boolean
             If True, the data and fit are plotted normalized such that the highest

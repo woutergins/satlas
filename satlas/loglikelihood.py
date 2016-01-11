@@ -49,3 +49,13 @@ def gaussian_llh(x, l):
     s = l ** 0.5
     deviation = (x-l)/s
     return -(0.5 * deviation * deviation + np.log(sqrt2pi*s))
+
+def gaussian_adapted(x, l):
+    s = l ** 0.5
+    deviation = (x-l)/s
+    return -(0.5 * deviation * deviation)
+
+def gaussian_traditional(x, l):
+    s = x ** 0.5
+    deviation = (x-l)/s
+    return -(0.5 * deviation * deviation)

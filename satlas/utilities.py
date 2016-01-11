@@ -175,7 +175,7 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
+def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}, distance=3):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -247,6 +247,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
     title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    fit_kws['verbose'] = False
 
     func(f, x_data, y_data, **fit_kws)
 
@@ -347,7 +348,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         left = np.abs(ranges[param_names[i]]['left'] - value)
         params[param_names[i]].vary = False
 
-        left_val, right_val = max(value - 3 * left, orig_params[param_names[i]].min), min(value + 3 * right, orig_params[param_names[i]].max)
+        left_val, right_val = max(value - distance * left, orig_params[param_names[i]].min), min(value + distance * right, orig_params[param_names[i]].max)
         ranges[param_names[i]]['right_val'] = right_val
         ranges[param_names[i]]['left_val'] = left_val
         value_range = np.linspace(left_val, right_val, resolution_diag)
@@ -469,7 +470,8 @@ def generate_correlation_plot(filename, filter=None, bins=None):
                 i = columns.index(val)
                 x = store['data'][:, i]
                 if bins[bin_index] is None:
-                    bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
+                    # bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
+                    bins[bin_index] = 50
                 try:
                     ax.hist(x, int(bins[bin_index]))
                 except ValueError:
