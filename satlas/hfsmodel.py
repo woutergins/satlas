@@ -853,7 +853,8 @@ class HFSModel(BaseModel):
 
         Returns
         -------
-        fig, tuple of axes"""
+        tuple
+            Tuple containing the figure and both axes, also in a tuple."""
         from fractions import Fraction
         from matplotlib import lines
         fig = plt.figure()
