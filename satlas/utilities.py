@@ -31,7 +31,9 @@ __all__ = ['weighted_average',
            'generate_correlation_plot',
            'generate_spectrum',
            'poisson_interval',
-           'load_model']
+           'load_model',
+           'beta',
+           'dopplerfactor']
 
 def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated
@@ -622,3 +624,50 @@ def load_model(path):
     import pickle
     with open(path, 'rb') as f:
         return pickle.load(f)
+
+def beta(mass, V):
+    """Calculates the beta-factor for a mass in amu
+    and applied voltage in Volt.
+
+    Parameters
+    ----------
+    mass : float
+        Mass in amu.
+    V : float
+        voltage in volt.
+
+    Returns
+    -------
+    float
+        Relativistic beta-factor.
+    """
+    c = 299792458.0
+    q = 1.60217657 * (10 ** (-19))
+    AMU2KG = 1.66053892 * 10 ** (-27)
+    mass = mass * AMU2KG
+    top = mass ** 2 * c ** 4
+    bottom = (mass * c ** 2 + q * V) ** 2
+    beta = np.sqrt(1 - top / bottom)
+    return beta
+
+def dopplerfactor(mass, V):
+    """Calculates the Doppler shift of the laser frequency for a
+    given mass in amu and voltage in V. Transforms from the lab frame
+    to the particle frame. To invert, divide instead of multiply with
+    this factor.
+
+    Parameters
+    ----------
+    mass : float
+        Mass in amu.
+    V : float
+        Voltage in volt.
+
+    Returns
+    -------
+    float
+        Doppler factor.
+    """
+    betaFactor = beta(mass, V)
+    dopplerFactor = np.sqrt((1.0 - betaFactor) / (1.0 + betaFactor))
+    return dopplerFactor

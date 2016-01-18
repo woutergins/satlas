@@ -10,13 +10,12 @@ import numpy as np
 import copy
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import warnings
-__all__ = ['CombinedModel']
-warn_msg = """Use of the class CombinedModel has been deprecated and will be removed in further updates. Please use the LinkedModel class in the future."""
+__all__ = ['LinkedModel']
 
-class CombinedModel(BaseModel):
 
-    """Combines different models for simultaneous fitting."""
+class LinkedModel(BaseModel):
+
+    """Links different models for simultaneous fitting."""
 
     def __init__(self, models):
         """Initializes the class for simultaneous fitting of different models.
@@ -25,8 +24,7 @@ class CombinedModel(BaseModel):
         ----------
         models: list of :class:`.BaseModel` or :class:`.SingleSpectrum` objects
             A list defining the different models."""
-        warnings.warn(warn_msg)
-        super(CombinedModel, self).__init__()
+        super(LinkedModel, self).__init__()
         self.models = models
         self.shared = ['Al',
                        'Au',
@@ -231,17 +229,17 @@ class CombinedModel(BaseModel):
     ###########################
 
     def __add__(self, other):
-        """Adding another CombinedModel adds the models therein
+        """Adding another LinkedModel adds the models therein
         to the list of models, adding an IsomerSpectrum or SingleSpectrum
         adds that one spectrum to the list.
 
         Returns
         -------
-        CombinedModel"""
-        if isinstance(other, CombinedModel):
-            return_object = CombinedModel(self.models.extend(other.models))
+        LinkedModel"""
+        if isinstance(other, LinkedModel):
+            return_object = LinkedModel(self.models.extend(other.models))
         elif isinstance(other, Spectrum):
-            return_object = CombinedModel(self.models.append(other))
+            return_object = LinkedModel(self.models.append(other))
         return return_object
 
     def __call__(self, x):

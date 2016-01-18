@@ -13,7 +13,7 @@ import scipy.optimize as optimize
 from fractions import Fraction
 from sympy.physics.wigner import wigner_6j, wigner_3j
 
-from .multimodel import MultiModel
+from .summodel import SumModel
 from .basemodel import BaseModel
 from .utilities import poisson_interval
 from .loglikelihood import poisson_llh
@@ -427,7 +427,7 @@ class HFSModel(BaseModel):
             par.add('Background' + str(i), value=background_params[i], vary=True)
         par.add('N', value=n, vary=False)
         if n > 0:
-            par.add('Poisson', value=poisson, vary=False, min=0)
+            par.add('Poisson', value=poisson, vary=True, min=0, max=1)
             par.add('Offset', value=offset, vary=False, min=None, max=0)
 
         self.params = self._check_variation(par)
@@ -626,7 +626,7 @@ class HFSModel(BaseModel):
     ###########################
 
     def __add__(self, other):
-        """Add two spectra together to get an :class:`.MultiModel`.
+        """Add two spectra together to get an :class:`.SumModel`.
 
         Parameters
         ----------
@@ -635,13 +635,13 @@ class HFSModel(BaseModel):
 
         Returns
         -------
-        MultiModel
-            A MultiModel combining both spectra."""
+        SumModel
+            A SumModel combining both spectra."""
         if isinstance(other, HFSModel):
             l = [self, other]
-        elif isinstance(other, MultiModel):
+        elif isinstance(other, SumModel):
             l = [self] + other.models
-        return MultiModel(l)
+        return SumModel(l)
 
     def __radd__(self, other):
         if other == 0:
@@ -664,9 +664,9 @@ class HFSModel(BaseModel):
         if self._params['N'].value > 0:
             s = np.zeros(x.shape)
             for i in range(self._params['N'].value + 1):
-                s += (self._params['Poisson'].value ** i) * sum([prof(x + i * self._params['Offset'].value)
-                                                for prof in self.parts]) \
-                    / np.math.factorial(i)
+                # print(i, i * self._params['Offset'].value, self._params['Poisson'].value, (self._params['Poisson'].value ** i) / np.math.factorial(i))
+                s += (self._params['Poisson'].value ** i) * (sum([prof(x - i * self._params['Offset'].value)
+                                                                for prof in self.parts]) * self._params['Scale'].value) / np.math.factorial(i)
             s = s * self._params['Scale'].value
         else:
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
@@ -856,7 +856,7 @@ class HFSModel(BaseModel):
             Tuple containing the figure and both axes, also in a tuple."""
         from fractions import Fraction
         from matplotlib import lines
-        fig = plt.figure()
+        fig = plt.figure(frameon=False)
         ax = fig.add_axes([0.5, 0, 0.5, 0.5], axisbg=[1, 1, 1, 0])
         self.plot(ax=ax, show=False, distance=distance)
         ax.get_xaxis().set_visible(False)
@@ -883,6 +883,7 @@ class HFSModel(BaseModel):
         ax2 = fig.add_axes([0, 0, 1, 1], axisbg=[1, 1, 1, 0])
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
+        ax2.axis('off')
 
         # Lower state
         x = np.array([0, 0.3])
@@ -916,7 +917,7 @@ class HFSModel(BaseModel):
             y = np.array([starting, y[0]])
             line = lines.Line2D(x, y, lw=2., color=color, alpha=0.4, linestyle='dashed')
             ax2.add_line(line)
-            ax2.text(0.4, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'center', 'verticalalignment': 'center'})
+            ax2.text(1, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'left', 'verticalalignment': 'center'})
 
         for i, label in enumerate(self.ftof):
             lower, upper = label.split('__')

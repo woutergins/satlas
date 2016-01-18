@@ -9,17 +9,14 @@ import matplotlib.pyplot as plt
 from .basemodel import BaseModel
 from .utilities import poisson_interval
 import lmfit as lm
-import warnings
 import copy
 
-__all__ = ['MultiModel']
-warn_msg = """Use of the class MultiModel has been deprecated and will be removed in further updates. Please use the SumModel class in the future."""
+__all__ = ['SumModel']
 
 
-class MultiModel(BaseModel):
+class SumModel(BaseModel):
 
-    """Create a spectrum containing the information of multiple hyperfine
-    structures."""
+    """Create a model that sums all the underlying models for a single input variable."""
 
     def __init__(self, models):
         """Initializes the HFS by providing a list of :class:`.HFSModel`
@@ -29,8 +26,7 @@ class MultiModel(BaseModel):
         ----------
         models: list of :class:`.HFSModel` instances
             A list containing the models."""
-        warnings.warn(warn_msg)
-        super(MultiModel, self).__init__()
+        super(SumModel, self).__init__()
         self.models = models
         self.shared = []
 
@@ -292,15 +288,15 @@ class MultiModel(BaseModel):
         return self.plot(**kwargs)
 
     def __add__(self, other):
-        """Adding an MultiModel results in a new MultiModel
+        """Adding an SumModel results in a new SumModel
         with the new spectrum added.
 
         Returns
         -------
-        MultiModel"""
-        if isinstance(other, MultiModel):
+        SumModel"""
+        if isinstance(other, SumModel):
             models = self.models + other.models
-            return MultiModel(models)
+            return SumModel(models)
         else:
             try:
                 return other.__add__(self)

@@ -3,14 +3,14 @@ Plotting routines
 =================
 
 For ease-of-use, standard implementations for plotting spectra have been
-implemented. Each :class:`HFSModel` has a method to plot to an axis,
-while both :class:`MultiModel` and :class:`CombinedModel` call this
+implemented. Each :class:`.HFSModel` has a method to plot to an axis,
+while both :class:`.SumModel` and :class:`.LinkedModel` call this
 plotting routine for the underlying spectrum.
 
 Overview plotting
 -----------------
 
-Considering a :class:`HFSModel`, the standard plotting routines finds
+Considering a :class:`.HFSModel`, the standard plotting routines finds
 out where the peaks in the spectrum are located, and samples around this
 area taking the FWHM into account. Take this toy example of a spectrum
 on a constant background:
