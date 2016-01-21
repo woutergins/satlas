@@ -78,9 +78,4 @@ class TransformHFSModel(HFSModel):
         return to_return
 
     def __call__(self, *args, **kwargs):
-        return self._post_transform
-                (super(TransformHFSModel, self).__call__
-                    (self._pre_transform(*args, **kwargs
-                                        )
-                    )
-                )
+        return self._post_transform(super(TransformHFSModel, self).__call__(self._pre_transform(*args, **kwargs)))
