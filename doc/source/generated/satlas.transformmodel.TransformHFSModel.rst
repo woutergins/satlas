@@ -21,4 +21,5 @@ satlas.transformmodel.TransformHFSModel
 
    .. autosummary::
 
-      ~TransformHFSModel.transform
+      ~TransformHFSModel.pre_transform
+      ~TransformHFSModel.post_transform
