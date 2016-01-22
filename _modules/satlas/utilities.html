@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.utilities &mdash; SATLAS 0.1.0b11 documentation</title>
+    <title>satlas.utilities &mdash; SATLAS 0.1.0b17 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b11',
+        VERSION:     '0.1.0b17',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b17 documentation" href="../../index.html" >
     <link rel="up" title="Module code" href="../index.html" > 
   </head>
   <body>
@@ -44,7 +44,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b11 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b17 documentation</a></li>
 	
           <li class="active"><a href="../index.html" accesskey="U">Module code</a></li> 
     </ul>
@@ -106,7 +106,9 @@
            <span class="s">&#39;generate_correlation_plot&#39;</span><span class="p">,</span>
            <span class="s">&#39;generate_spectrum&#39;</span><span class="p">,</span>
            <span class="s">&#39;poisson_interval&#39;</span><span class="p">,</span>
-           <span class="s">&#39;load_model&#39;</span><span class="p">]</span>
+           <span class="s">&#39;load_model&#39;</span><span class="p">,</span>
+           <span class="s">&#39;beta&#39;</span><span class="p">,</span>
+           <span class="s">&#39;dopplerfactor&#39;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="weighted_average"><a class="viewcode-back" href="../../utilities/satlas.utilities.weighted_average.html#satlas.utilities.weighted_average">[docs]</a><span class="k">def</span> <span class="nf">weighted_average</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">r&quot;&quot;&quot;Takes the weighted average of an array of values and the associated</span>
@@ -696,7 +698,54 @@
 <span class="sd">        Saved BaseModel/child class instance.&quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">pickle</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</div>
+<span class="k">def</span> <span class="nf">beta</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the beta-factor for a mass in amu</span>
+<span class="sd">    and applied voltage in Volt.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mass : float</span>
+<span class="sd">        Mass in amu.</span>
+<span class="sd">    V : float</span>
+<span class="sd">        voltage in volt.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Relativistic beta-factor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mf">299792458.0</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mf">1.60217657</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">19</span><span class="p">))</span>
+    <span class="n">AMU2KG</span> <span class="o">=</span> <span class="mf">1.66053892</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">27</span><span class="p">)</span>
+    <span class="n">mass</span> <span class="o">=</span> <span class="n">mass</span> <span class="o">*</span> <span class="n">AMU2KG</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">mass</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">c</span> <span class="o">**</span> <span class="mi">4</span>
+    <span class="n">bottom</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span> <span class="o">*</span> <span class="n">c</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">q</span> <span class="o">*</span> <span class="n">V</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">top</span> <span class="o">/</span> <span class="n">bottom</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">beta</span>
+
+<span class="k">def</span> <span class="nf">dopplerfactor</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the Doppler shift of the laser frequency for a</span>
+<span class="sd">    given mass in amu and voltage in V. Transforms from the lab frame</span>
+<span class="sd">    to the particle frame. To invert, divide instead of multiply with</span>
+<span class="sd">    this factor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mass : float</span>
+<span class="sd">        Mass in amu.</span>
+<span class="sd">    V : float</span>
+<span class="sd">        Voltage in volt.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Doppler factor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">betaFactor</span> <span class="o">=</span> <span class="n">beta</span><span class="p">(</span><span class="n">mass</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+    <span class="n">dopplerFactor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">betaFactor</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">betaFactor</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">dopplerFactor</span>
 </pre></div>
 
           </div>

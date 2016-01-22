@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>BaseModelCreation and evaluation &mdash; SATLAS 0.1.0b11 documentation</title>
+    <title>BaseModelCreation and evaluation &mdash; SATLAS 0.1.0b17 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b11',
+        VERSION:     '0.1.0b17',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b17 documentation" href="../index.html" >
     <link rel="up" title="Tutorials" href="../tutorial.html" >
     <link rel="next" title="Fitting routines" href="fittingroutines.html" >
     <link rel="prev" title="Tutorials" href="../tutorial.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b11 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b17 documentation</a></li>
 	
           <li class="active"><a href="../tutorial.html" accesskey="U">Tutorials</a></li> 
     </ul>
@@ -176,19 +176,19 @@ looking at <code class="xref py py-attr docutils literal"><span class="pre">loca
 saved in <code class="xref py py-attr docutils literal"><span class="pre">ftof</span></code>.</p>
 </div>
 </div>
-<div class="section" id="multimodel-creation">
-<h2>MultiModel creation<a class="headerlink" href="#multimodel-creation" title="Permalink to this headline">¶</a></h2>
-<p>In order to make a <a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>, which takes another isomer or
+<div class="section" id="summodel-creation">
+<h2>SumModel creation<a class="headerlink" href="#summodel-creation" title="Permalink to this headline">¶</a></h2>
+<p>In order to make a <a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>, which takes another isomer or
 isotope into account, two options are available for creation, with both
 being equivalent. The first option is initialising the
-<a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a> with a list containing <a class="reference internal" href="../generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a>
+<a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a> with a list containing <a class="reference internal" href="../generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a>
 objects.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">I</span> <span class="o">=</span> <span class="mf">4.0</span>
 <span class="n">centroid</span> <span class="o">=</span> <span class="mi">0</span>
 
 <span class="n">basemodel_high</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>  <span class="c">#Make another basemodel, with a different nuclear spin and centroid</span>
 
-<span class="n">basemodel_both</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">MultiModel</span><span class="p">([</span><span class="n">basemodel_low</span><span class="p">,</span> <span class="n">basemodel_high</span><span class="p">])</span>
+<span class="n">basemodel_both</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">SumModel</span><span class="p">([</span><span class="n">basemodel_low</span><span class="p">,</span> <span class="n">basemodel_high</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>The other option is simply adding the <a class="reference internal" href="../generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a> objects
@@ -198,7 +198,7 @@ together, making use of operator overloading.</p>
 </div>
 <p>There is no restriction on how many spectra can be combined in either
 way. Afterwards, the easiest way to add another <a class="reference internal" href="../generated/satlas.hfsmodel.HFSModel.html#satlas.hfsmodel.HFSModel" title="satlas.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a> is
-by summing this with the <a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>.</p>
+by summing this with the <a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>.</p>
 <div class="code python highlight-python"><div class="highlight"><pre><span class="n">centroid</span> <span class="o">=</span> <span class="mi">600</span>
 
 <span class="n">basemodel_high_shifted</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
@@ -207,21 +207,21 @@ by summing this with the <a class="reference internal" href="../generated/satlas
 </pre></div>
 </div>
 <p>When combining spectra in this way, parameters can be forced to be a
-shared value. This is done by accessing the <code class="xref py py-attr docutils literal"><span class="pre">MultiModel.shared</span></code>
+shared value. This is done by accessing the <code class="xref py py-attr docutils literal"><span class="pre">SumModel.shared</span></code>
 attribute. By default this is set to an empty list, meaning no
 parameters are shared.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel_both</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;FWHMG&#39;</span><span class="p">,</span> <span class="s">&#39;FWHML&#39;</span><span class="p">]</span>  <span class="c">#Makes sure the same linewidth is u</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel_both</span><span class="o">.</span><span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;FWHMG&#39;</span><span class="p">,</span> <span class="s">&#39;FWHML&#39;</span><span class="p">]</span>  <span class="c">#Makes sure the same linewidth is used</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="combinedmodel-creation">
-<h2>CombinedModel creation<a class="headerlink" href="#combinedmodel-creation" title="Permalink to this headline">¶</a></h2>
-<p>Making a <a class="reference internal" href="../generated/satlas.combinedmodel.CombinedModel.html#satlas.combinedmodel.CombinedModel" title="satlas.combinedmodel.CombinedModel"><code class="xref py py-class docutils literal"><span class="pre">CombinedModel</span></code></a> uses the same syntax as the first
-method of creating an <a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel_seperate</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">CombinedModel</span><span class="p">([</span><span class="n">basemodel_low</span><span class="p">,</span> <span class="n">basemodel_low</span><span class="p">])</span>
+<div class="section" id="linkedmodel-creation">
+<h2>LinkedModel creation<a class="headerlink" href="#linkedmodel-creation" title="Permalink to this headline">¶</a></h2>
+<p>Making a <a class="reference internal" href="../generated/satlas.linkedmodel.LinkedModel.html#satlas.linkedmodel.LinkedModel" title="satlas.linkedmodel.LinkedModel"><code class="xref py py-class docutils literal"><span class="pre">LinkedModel</span></code></a> uses the same syntax as the first
+method of creating an <a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>:</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel_seperate</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">LinkedModel</span><span class="p">([</span><span class="n">basemodel_low</span><span class="p">,</span> <span class="n">basemodel_low</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>In the same way as for an <a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>, parameters can be
+<p>In the same way as for an <a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>, parameters can be
 shared between spectra. By default, this is set to the hyperfine
 parameters and the sidepeak offset.</p>
 </div>
@@ -231,14 +231,14 @@ parameters and the sidepeak offset.</p>
 average number of counts) is calculated by calling any
 <a class="reference internal" href="../generated/satlas.basemodel.BaseModel.html#satlas.basemodel.BaseModel" title="satlas.basemodel.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">BaseModel</span></code></a> object with the frequency. There are some caveats:</p>
 <ol class="arabic simple">
-<li>For a <a class="reference internal" href="../generated/satlas.combinedmodel.CombinedModel.html#satlas.combinedmodel.CombinedModel" title="satlas.combinedmodel.CombinedModel"><code class="xref py py-class docutils literal"><span class="pre">CombinedModel</span></code></a>, a float cannot be given. The method
+<li>For a <a class="reference internal" href="../generated/satlas.linkedmodel.LinkedModel.html#satlas.linkedmodel.LinkedModel" title="satlas.linkedmodel.LinkedModel"><code class="xref py py-class docutils literal"><span class="pre">LinkedModel</span></code></a>, a float cannot be given. The method
 expects a list of floats, or list of arrays, with a length equal to
 the number of spectra that have been combined. The output, in
 contrast to the other objects, is again a list of floats or arrays.</li>
-<li>When evaluating a <a class="reference internal" href="../generated/satlas.multimodel.MultiModel.html#satlas.multimodel.MultiModel" title="satlas.multimodel.MultiModel"><code class="xref py py-class docutils literal"><span class="pre">MultiModel</span></code></a>, the response is the
+<li>When evaluating a <a class="reference internal" href="../generated/satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>, the response is the
 <strong>total</strong> response. If the seperate response of each basemodel is
 required, the convenience method
-<a class="reference internal" href="../generated/multimodel/satlas.multimodel.MultiModel.seperate_response.html#satlas.multimodel.MultiModel.seperate_response" title="satlas.multimodel.MultiModel.seperate_response"><code class="xref py py-meth docutils literal"><span class="pre">MultiModel.seperate_response</span></code></a> takes a list of floats or
+<a class="reference internal" href="../generated/summodel/satlas.summodel.SumModel.seperate_response.html#satlas.summodel.SumModel.seperate_response" title="satlas.summodel.SumModel.seperate_response"><code class="xref py py-meth docutils literal"><span class="pre">SumModel.seperate_response</span></code></a> takes a list of floats or
 arrays and outputs the response of each basemodel. Note the keyword
 <em>background</em> in this method, which changes the output significantly.</li>
 </ol>
@@ -249,8 +249,8 @@ arrays and outputs the response of each basemodel. Note the keyword
 <span class="n">freq_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>  <span class="c">#Consult the NumPy documentation for more information about generating ranges.</span>
 
 <span class="n">response_hfsmodel</span> <span class="o">=</span> <span class="n">basemodel_low</span><span class="p">(</span><span class="n">freq_range</span><span class="p">)</span>
-<span class="n">response_multimodel</span> <span class="o">=</span> <span class="n">basemodel_both</span><span class="p">(</span><span class="n">freq_range</span><span class="p">)</span>
-<span class="n">response_combinedmodel</span> <span class="o">=</span> <span class="n">basemodel_seperate</span><span class="p">([</span><span class="n">freq_range</span><span class="p">,</span> <span class="n">freq_range</span><span class="p">])</span>
+<span class="n">response_summodel</span> <span class="o">=</span> <span class="n">basemodel_both</span><span class="p">(</span><span class="n">freq_range</span><span class="p">)</span>
+<span class="n">response_linkedmodel</span> <span class="o">=</span> <span class="n">basemodel_seperate</span><span class="p">([</span><span class="n">freq_range</span><span class="p">,</span> <span class="n">freq_range</span><span class="p">])</span>
 </pre></div>
 </div>
 </div>
@@ -270,8 +270,8 @@ arrays and outputs the response of each basemodel. Note the keyword
 <li><a class="reference internal" href="#setting-conditions">Setting conditions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#multimodel-creation">MultiModel creation</a></li>
-<li><a class="reference internal" href="#combinedmodel-creation">CombinedModel creation</a></li>
+<li><a class="reference internal" href="#summodel-creation">SumModel creation</a></li>
+<li><a class="reference internal" href="#linkedmodel-creation">LinkedModel creation</a></li>
 <li><a class="reference internal" href="#evaluating-spectra">Evaluating spectra</a></li>
 </ul>
 </li>

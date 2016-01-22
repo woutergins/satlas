@@ -5,6 +5,8 @@ API reference
 
 .. currentmodule:: satlas
 
+Note that the CombinedModel and MultiModel are still available for use, but are deprecated and will be removed in a future release. Please upgrade your code to use :class:`.LinkedModel` and :class:`.SumModel` instead.
+
 Models
 ------
 
@@ -17,8 +19,9 @@ Models
 
     satlas.basemodel.BaseModel
     satlas.hfsmodel.HFSModel
-    satlas.multimodel.MultiModel
-    satlas.combinedmodel.CombinedModel
+    satlas.transformmodel.TransformHFSModel
+    satlas.summodel.SumModel
+    satlas.linkedmodel.LinkedModel
 
 Fitting routines
 ----------------

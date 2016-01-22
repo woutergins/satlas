@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.multimodel &mdash; SATLAS 0.1.0b11 documentation</title>
+    <title>satlas.multimodel &mdash; SATLAS 0.1.0b17 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b11',
+        VERSION:     '0.1.0b17',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b11 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b17 documentation" href="../../index.html" >
     <link rel="up" title="Module code" href="../index.html" > 
   </head>
   <body>
@@ -44,7 +44,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b11 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b17 documentation</a></li>
 	
           <li class="active"><a href="../index.html" accesskey="U">Module code</a></li> 
     </ul>
@@ -165,7 +165,8 @@
                                                 <span class="n">value</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                                                 <span class="nb">min</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
                                                 <span class="nb">max</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">,</span>
-                                                <span class="n">vary</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">)</span>
+                                                <span class="n">vary</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">,</span>
+                                                <span class="n">expr</span><span class="o">=</span><span class="n">expr</span><span class="p">)</span>
                     <span class="n">par</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span>
             <span class="n">spec</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">par</span>
 
@@ -198,7 +199,7 @@
 </div>
 <div class="viewcode-block" id="MultiModel.plot"><a class="viewcode-back" href="../../generated/multimodel/satlas.multimodel.MultiModel.plot.html#satlas.multimodel.MultiModel.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
              <span class="n">plot_seperate</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">no_of_points</span><span class="o">=</span><span class="mi">10</span><span class="o">**</span><span class="mi">3</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-             <span class="n">legend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s">&#39;Frequency (MHz)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s">&#39;Counts&#39;</span><span class="p">,</span>
+             <span class="n">legend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data_legend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s">&#39;Frequency (MHz)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s">&#39;Counts&#39;</span><span class="p">,</span>
              <span class="n">indicate</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s">&#39;bone_r&#39;</span><span class="p">,</span>
              <span class="n">normalized</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Routine that plots the hfs of all the models,</span>

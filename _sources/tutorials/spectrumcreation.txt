@@ -117,13 +117,13 @@ Additionally, the location of the peaks can be easily retrived by
 looking at :attr:`.locations`, with the labelling of the peaks being
 saved in :attr:`ftof`.
 
-MultiModel creation
--------------------
+SumModel creation
+-----------------
 
-In order to make a :class:`.MultiModel`, which takes another isomer or
+In order to make a :class:`.SumModel`, which takes another isomer or
 isotope into account, two options are available for creation, with both
 being equivalent. The first option is initialising the
-:class:`.MultiModel` with a list containing :class:`.HFSModel`
+:class:`.SumModel` with a list containing :class:`.HFSModel`
 objects.
 
 .. code:: python
@@ -133,7 +133,7 @@ objects.
 
     basemodel_high = s.HFSModel(I, J, ABC, centroid, scale=scale)  #Make another basemodel, with a different nuclear spin and centroid
 
-    basemodel_both = s.MultiModel([basemodel_low, basemodel_high])
+    basemodel_both = s.SumModel([basemodel_low, basemodel_high])
 
 The other option is simply adding the :class:`.HFSModel` objects
 together, making use of operator overloading.
@@ -144,7 +144,7 @@ together, making use of operator overloading.
 
 There is no restriction on how many spectra can be combined in either
 way. Afterwards, the easiest way to add another :class:`.HFSModel` is
-by summing this with the :class:`.MultiModel`.
+by summing this with the :class:`.SumModel`.
 
 .. code:: python
 
@@ -155,25 +155,25 @@ by summing this with the :class:`.MultiModel`.
     basemodel_three = basemodel_both + basemodel_high_shifted  #Adds a third basemodel
 
 When combining spectra in this way, parameters can be forced to be a
-shared value. This is done by accessing the :attr:`.MultiModel.shared`
+shared value. This is done by accessing the :attr:`.SumModel.shared`
 attribute. By default this is set to an empty list, meaning no
 parameters are shared.
 
 .. code:: python
 
-    basemodel_both.shared = ['FWHMG', 'FWHML']  #Makes sure the same linewidth is u
+    basemodel_both.shared = ['FWHMG', 'FWHML']  #Makes sure the same linewidth is used
 
-CombinedModel creation
-----------------------
+LinkedModel creation
+--------------------
 
-Making a :class:`.CombinedModel` uses the same syntax as the first
-method of creating an :class:`.MultiModel`:
+Making a :class:`.LinkedModel` uses the same syntax as the first
+method of creating an :class:`.SumModel`:
 
 .. code:: python
 
-    basemodel_seperate = s.CombinedModel([basemodel_low, basemodel_low])
+    basemodel_seperate = s.LinkedModel([basemodel_low, basemodel_low])
 
-In the same way as for an :class:`.MultiModel`, parameters can be
+In the same way as for an :class:`.SumModel`, parameters can be
 shared between spectra. By default, this is set to the hyperfine
 parameters and the sidepeak offset.
 
@@ -184,14 +184,14 @@ The response of the basemodel for a frequency (which is the estimated
 average number of counts) is calculated by calling any
 :class:`.BaseModel` object with the frequency. There are some caveats:
 
-1. For a :class:`.CombinedModel`, a float cannot be given. The method
+1. For a :class:`.LinkedModel`, a float cannot be given. The method
    expects a list of floats, or list of arrays, with a length equal to
    the number of spectra that have been combined. The output, in
    contrast to the other objects, is again a list of floats or arrays.
-2. When evaluating a :class:`.MultiModel`, the response is the
+2. When evaluating a :class:`.SumModel`, the response is the
    **total** response. If the seperate response of each basemodel is
    required, the convenience method
-   :meth:`.MultiModel.seperate_response` takes a list of floats or
+   :meth:`.SumModel.seperate_response` takes a list of floats or
    arrays and outputs the response of each basemodel. Note the keyword
    *background* in this method, which changes the output significantly.
 
@@ -204,6 +204,6 @@ average number of counts) is calculated by calling any
     freq_range = np.linspace(0, 10, 20)  #Consult the NumPy documentation for more information about generating ranges.
 
     response_hfsmodel = basemodel_low(freq_range)
-    response_multimodel = basemodel_both(freq_range)
-    response_combinedmodel = basemodel_seperate([freq_range, freq_range])
+    response_summodel = basemodel_both(freq_range)
+    response_linkedmodel = basemodel_seperate([freq_range, freq_range])
 
