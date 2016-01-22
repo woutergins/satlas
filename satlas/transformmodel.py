@@ -25,7 +25,7 @@ class TransformHFSModel(HFSModel):
         See :class:`.HFSModel` for input information."""
         super(TransformHFSModel, self).__init__(*args, **kwargs)
         self._pre_transform = lambda x: x
-        self._post_transform = lambda x: x
+        self._post_transform = lambda x, y: x
 
     @property
     def pre_transform(self):
@@ -48,19 +48,14 @@ class TransformHFSModel(HFSModel):
     @property
     def post_transform(self):
         """The transformation function to be applied to the output data.
-        Wrapping with the *functools.lru_cache* function is attempted, and
-        non-callable objects raise an error when assigned to
+        Non-callable objects raise an error when assigned to
         :attr:`.post_transform`."""
         return self._post_transform
 
     @post_transform.setter
     def post_transform(self, func):
         if callable(func):
-            try:
-                from functool import lru_cache
-                self._post_transform = lru_cache(maxsize=512, typed=True)(func)
-            except:
-                self._post_transform = func
+            self._post_transform = func
         else:
             raise TypeError('supplied value must be a callable!')
 
@@ -71,11 +66,9 @@ class TransformHFSModel(HFSModel):
         remember_pre = copy.deepcopy(self._pre_transform)
         remember_post = copy.deepcopy(self._post_transform)
         self._pre_transform = lambda x: x
-        self._post_transform = lambda x: x
         to_return = super(TransformHFSModel, self).plot(*args, **kwargs)
         self._pre_transform = remember_pre
-        self._post_transform = remember_post
         return to_return
 
     def __call__(self, *args, **kwargs):
-        return self._post_transform(super(TransformHFSModel, self).__call__(self._pre_transform(*args, **kwargs)))
+        return self._post_transform(super(TransformHFSModel, self).__call__(self._pre_transform(*args, **kwargs)), *args, **kwargs)
