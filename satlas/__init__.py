@@ -3,6 +3,8 @@ from . import hfsmodel
 from .hfsmodel import *
 from . import transformmodel
 from .transformmodel import *
+from . import linearmodel
+from .linearmodel import *
 from . import linkedmodel
 from .linkedmodel import *
 from . import summodel
@@ -22,6 +24,7 @@ __all__ = []
 
 __all__.extend(hfsmodel.__all__)
 __all__.extend(transformmodel.__all__)
+__all__.extend(linearmodel.__all__)
 __all__.extend(linkedmodel.__all__)
 __all__.extend(summodel.__all__)
 __all__.extend(utilities.__all__)

@@ -177,7 +177,7 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}, distance=3):
+def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}, distance=3):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -245,7 +245,8 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
+    mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
+               'chisquare': (fitting.chisquare_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
     title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
