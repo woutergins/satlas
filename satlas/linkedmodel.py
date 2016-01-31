@@ -176,7 +176,7 @@ class LinkedModel(BaseModel):
                                                    self.models)):
             if i == selected:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], **plot_kws_no_xlabel, ax=ax[i], show=False)
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_xlabel)
                 except:
                     spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel)
             elif i == len(self.models) - 1:
