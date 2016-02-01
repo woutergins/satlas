@@ -176,26 +176,26 @@ class LinkedModel(BaseModel):
                                                    self.models)):
             if i == selected:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], **plot_kws_no_xlabel, ax=ax[i], show=False)
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, plot_kws=plot_kws_no_xlabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel)
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, plot_kws=plot_kws_no_xlabel)
             elif i == len(self.models) - 1:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_ylabel)
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, plot_kws=plot_kws_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_ylabel)
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, plot_kws=plot_kws_no_ylabel)
             else:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, plot_kws=plot_kws_no_xlabel_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, plot_kws=plot_kws_no_xlabel_no_ylabel)
 
         plt.tight_layout()
         if show:
             plt.show()
         return toReturn
 
-    def plot_spectroscopic(self, x, y, plot_kws={}):
+    def plot_spectroscopic(self, x=None, y=None, plot_kws={}, **kwargs):
         """Routine that plots the hfs of all the models, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -216,13 +216,13 @@ class LinkedModel(BaseModel):
             Figure and axis used for the plotting."""
 
         yerr = []
-        for Y in y:
-            ylow, yhigh = poisson_interval(Y)
-            yerr.append({'low': Y - ylow, 'high': yhigh - Y})
-        plot_kws['x'] = x
-        plot_kws['y'] = y
-        plot_kws['yerr'] = yerr
-        return self.plot(**plot_kws)
+        if y is not None:
+            for Y in y:
+                ylow, yhigh = poisson_interval(Y)
+                yerr.append({'low': Y - ylow, 'high': yhigh - Y})
+        else:
+            yerr = None
+        return self.plot(x=x, y=y, yerr=yerr, plot_kws=plot_kws, **kwargs)
 
     ###########################
     #      MAGIC METHODS      #

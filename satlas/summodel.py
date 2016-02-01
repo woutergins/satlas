@@ -30,7 +30,7 @@ class SumModel(BaseModel):
         self.models = models
         self.shared = []
 
-    def lnprior(self, params):
+    def lnprior(self):
         return_value = 0
         for i, spec in enumerate(self.models):
             return_value += spec.lnprior()
@@ -122,10 +122,9 @@ class SumModel(BaseModel):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None, ax=None,
-             plot_seperate=True, no_of_points=10**3, show=True,
-             legend=None, data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             indicate=False, model=False, colormap='bone_r',
-             normalized=False, distance=4):
+             plot_kws={}, plot_seperate=True, show=True,
+             legend=None, data_legend=None, xlabel='Frequency (MHz)',
+             ylabel='Counts'):
         """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 
@@ -177,75 +176,40 @@ class SumModel(BaseModel):
         fig, ax: matplotlib figure and axes"""
         if ax is None:
             fig, ax = plt.subplots(1, 1)
-            toReturn = fig, ax
         else:
-            toReturn = None
-
-        if x is None:
-            ranges = []
-
-            fwhm = max([p.fwhm for s in self.models for p in s.parts])
-
-            for pos in [l for spectrum in self.models for l in spectrum.locations]:
-                r = np.linspace(pos - distance * fwhm,
-                                pos + distance * fwhm,
-                                2 * 10**2)
-                ranges.append(r)
-            superx = np.sort(np.concatenate(ranges))
-
-        else:
-            superx = np.linspace(x.min(), x.max(), no_of_points)
-
-        if normalized:
-            norm = np.max(y)
-        else:
-            norm = 1
+            fig = ax.get_figure()
+        toReturn = fig, ax
 
         if x is not None and y is not None:
-            if not model:
-                try:
-                    ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
-                except:
-                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
-            else:
-                ax.plot(x, y, 'o')
-        resp = self.seperate_response(superx)
+            try:
+                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+            except:
+                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
 
-        if plot_seperate:
-            for i, r in enumerate(resp):
-                line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
-                if indicate:
-                    for l, lab in zip(self.models[i].locations, self.models[i].ftof):
-                        lab = lab.split('__')
-                        lab = lab[0] + '$\\rightarrow$' + lab[1]
-                        ax.annotate(lab, xy=(l, self.models[i](l)/norm), rotation=90, color=line.get_color(),
-                                    weight='bold', size=14, ha='center')
-        if model:
-            range = (self.locations.min(), self.locations.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
-            min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
-            min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
-            y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
-            x, y = np.meshgrid(superx, y)
-            from scipy import stats
-            z = stats.poisson(self(x) / norm).pmf(y)
+        plot_kws['background'] = False
+        x_points = np.array([])
+        line_counter = 1
+        for m in self.models:
+            # plot_kws['legend'] = 'I=' + str(m.I)
+            color = ax.lines[-1].get_color()
+            m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_kws)
+            x_points = np.append(x_points, ax.lines[-1].get_xdata())
+            if not plot_seperate:
+                ax.lines.pop(-1)
+            if x is not None:
+                ax.lines.pop(-1 - plot_seperate)
+            while not next(ax._get_lines.prop_cycler)['color'] == color:
+                pass
+            if plot_seperate:
+                c = next(ax._get_lines.prop_cycler)['color']
+                for l in ax.lines[line_counter:]:
+                    l.set_color(c)
+                while not next(ax._get_lines.prop_cycler)['color'] == c:
+                    pass
+            line_counter = len(ax.lines)
+        x = np.sort(x_points)
+        ax.plot(x, self(x))
 
-            z = z / z.sum(axis=0)
-            ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
-            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5)
-        else:
-            line, = ax.plot(superx, self(superx)/norm, label=legend)
-        if indicate:
-            for (p, l) in zip(self.locations, self.ftof):
-                height = self(p)
-                lab = l.split('__')
-                lableft = '/'.join(lab[0].split('_'))
-                labright = '/'.join(lab[1].split('_'))
-                lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
-                            weight='bold', size=14, ha='center', va='bottom')
-                ax.axvline(p, linewidth=0.5, linestyle='--')
-        ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
 
@@ -253,7 +217,7 @@ class SumModel(BaseModel):
             plt.show()
         return toReturn
 
-    def plot_spectroscopic(self, **kwargs):
+    def plot_spectroscopic(self, x=None, y=None, plot_kws={}, **kwargs):
         """Routine that plots the hfs of all the models, possibly on
         top of experimental data. It assumes that the y data is drawn from
         a Poisson distribution (e.g. counting data).
@@ -278,14 +242,12 @@ class SumModel(BaseModel):
         -------
         fig, ax: matplotlib figure and axes"""
 
-        y = kwargs.get('y', None)
         if y is not None:
             ylow, yhigh = poisson_interval(y)
             yerr = {'low': ylow, 'high': yhigh}
         else:
             yerr = None
-        kwargs['yerr'] = yerr
-        return self.plot(**kwargs)
+        return self.plot(x=x, y=y, yerr=yerr, plot_kws=plot_kws, **kwargs)
 
     def __add__(self, other):
         """Adding an SumModel results in a new SumModel

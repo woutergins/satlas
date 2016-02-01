@@ -678,10 +678,7 @@ class HFSModel(BaseModel):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**3, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             indicate=False, model=False, colormap='bone_r',
-             normalized=False, distance=4):
+             no_of_points=10**3, ax=None, show=True, plot_kws={}):
         """Plot the hfs, possibly on top of experimental data.
 
         Parameters
@@ -714,20 +711,35 @@ class HFSModel(BaseModel):
             the luminosity indicating the pmf of the Poisson
             distribution characterized by the value of the fit. Note that
             the argument *yerr* is ignored if *model* is True.
-        normalized: Boolean
+        normalized: boolean, optional
             If True, the data and fit are plotted normalized such that the highest
             data point is one.
+        background: boolean, optional
+            If True, the background is used, otherwise the pure spectrum is plotted.
 
         Returns
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
 
+        legend = plot_kws.pop('legend', None,)
+        data_legend = plot_kws.pop('data_legend', None)
+        xlabel = plot_kws.pop('xlabel', 'Frequency (MHz)')
+        ylabel = plot_kws.pop('ylabel', 'Counts',)
+        indicate = plot_kws.pop('indicate', False)
+        model = plot_kws.pop('model', False)
+        colormap = plot_kws.pop('colormap', 'bone_r',)
+        normalized = plot_kws.pop('normalized', False)
+        distance = plot_kws.pop('distance', 4)
+        background = plot_kws.pop('background', True)
+
         if ax is None:
             fig, ax = plt.subplots(1, 1)
         else:
             fig = ax.get_figure()
         toReturn = fig, ax
+        color_points = next(ax._get_lines.prop_cycler)['color']
+        color_lines = next(ax._get_lines.prop_cycler)['color']
 
         if x is None:
             ranges = []
@@ -753,6 +765,16 @@ class HFSModel(BaseModel):
         else:
             norm = 1
 
+        if indicate:
+            for (p, l) in zip(self.locations, self.ftof):
+                height = self(p)
+                lab = l.split('__')
+                lableft = '/'.join(lab[0].split('_'))
+                labright = '/'.join(lab[1].split('_'))
+                lab = '$' + lableft + '\\rightarrow' + labright + '$'
+                ax.annotate(lab, xy=(p, height), rotation=90,
+                            weight='bold', size=14, ha='center', va='bottom')
+                ax.axvline(p, linewidth=1.5, linestyle='--', color=color_lines)
         if x is not None and y is not None:
             if not model:
                 try:
@@ -774,19 +796,14 @@ class HFSModel(BaseModel):
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
-            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5)
+            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5, color=color_lines)
         else:
-            line, = ax.plot(superx, self(superx)/norm, label=legend)
-        if indicate:
-            for (p, l) in zip(self.locations, self.ftof):
-                height = self(p)
-                lab = l.split('__')
-                lableft = '/'.join(lab[0].split('_'))
-                labright = '/'.join(lab[1].split('_'))
-                lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
-                            weight='bold', size=14, ha='center', va='bottom')
-                ax.axvline(p, linewidth=0.5, linestyle='--')
+            if background:
+                y = self(superx)
+            else:
+                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                y = self(superx) - np.polyval(background_params, superx)
+            line, = ax.plot(superx, y/norm, label=legend, color=color_lines)
         ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

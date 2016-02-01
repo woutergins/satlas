@@ -488,12 +488,22 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
                 success = True
                 print('Fitting did not converge, carrying on...')
         return_value = getattr(f, attr) - orig_value
+        try:
+            try:
+                params_name = ' '.join(params_name)
+            except:
+                pass
+            pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
+            pbar.update()
+        except:
+            pass
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
                'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
     func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
+    fit_kws['verbose'] = False
 
     func(f, x, y, **fit_kws)
 
@@ -521,39 +531,55 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
         success = False
-        while True:
-            search_value += 0.5*stderr
-            if search_value > orig_params[param_names[i]].max:
-                search_value = orig_params[param_names[i]].max
-                ranges[param_names[i]]['right'] = search_value
-                break
-            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
-            if new_value > 0:
-                result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                                 value, search_value,
-                                                 args=(f, params, param_names[i], x, y, orig_value, func),
-                                                 full_output=True)
-                ranges[param_names[i]]['right'] = result
-                success = output.converged
-                break
+        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:
+            while True:
+                search_value += 0.5*stderr
+                if search_value > orig_params[param_names[i]].max:
+                    pbar.set_description(param_names[i] + ' (right limit reached)')
+                    pbar.update(0)
+                    search_value = orig_params[param_names[i]].max
+                    ranges[param_names[i]]['right'] = search_value
+                    break
+                new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
+                pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
+                pbar.update(0)
+                if new_value > 0:
+                    pbar.set_description(param_names[i] + ' (finding root)')
+                    pbar.update(0)
+                    result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                                     value, search_value,
+                                                     args=(f, params, param_names[i], x, y, orig_value, func),
+                                                     full_output=True)
+                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
+                    pbar.update(0)
+                    ranges[param_names[i]]['right'] = result
+                    success = output.converged
+                    break
         search_value = value
         # Do the same for the left
-        while True:
-            search_value -= 0.5*stderr
-            if search_value < orig_params[param_names[i]].min:
-                search_value = orig_params[param_names[i]].min
-                ranges[param_names[i]]['left'] = search_value
-                success = False
-                break
-            new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
-            if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                                 value, search_value,
-                                                 args=(f, params, param_names[i], x, y, orig_value, func),
-                                                 full_output=True)
-                ranges[param_names[i]]['left'] = result
-                success = success * output.converged
-                break
+        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching left)', mininterval=0) as pbar:
+            while True:
+                search_value -= 0.5*stderr
+                if search_value < orig_params[param_names[i]].min:
+                    pbar.set_description(param_names[i] + ' (left limit reached)')
+                    pbar.update(0)
+                    search_value = orig_params[param_names[i]].min
+                    ranges[param_names[i]]['left'] = search_value
+                    success = False
+                    break
+                new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
+                if new_value > 1 - 0.5*(method.lower() == 'mle'):
+                    pbar.set_description(param_names[i] + ' (finding root)')
+                    pbar.update(0)
+                    result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                                                     value, search_value,
+                                                     args=(f, params, param_names[i], x, y, orig_value, func),
+                                                     full_output=True)
+                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
+                    pbar.update(0)
+                    ranges[param_names[i]]['left'] = result
+                    success = success * output.converged
+                    break
 
         if not success:
             print("Warning: boundary calculation did not fully succeed for " + param_names[i])
