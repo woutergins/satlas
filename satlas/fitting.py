@@ -526,8 +526,8 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
         stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 0.01 * value
-        stderr = stderr if stderr != 0 else 0.01 * value
+        stderr = stderr if stderr is not None else 0.01 * np.abs(value)
+        stderr = stderr if stderr != 0 else 0.01 * np.abs(value)
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
         success = False

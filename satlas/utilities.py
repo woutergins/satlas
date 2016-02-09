@@ -293,8 +293,8 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         value = orig_params[param_names[i]].value
         ori_value = orig_value
         stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 0.1 * value
-        stderr = stderr if stderr != 0 else 0.1 * value
+        stderr = stderr if stderr is not None else np.abs(0.1 * value)
+        stderr = stderr if stderr != 0 else np.abs(0.1 * value)
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
         with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:

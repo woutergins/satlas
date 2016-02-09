@@ -193,6 +193,7 @@ class SumModel(BaseModel):
             # plot_kws['legend'] = 'I=' + str(m.I)
             color = ax.lines[-1].get_color()
             m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_kws)
+            # plot_kws['indicate'] = False
             x_points = np.append(x_points, ax.lines[-1].get_xdata())
             if not plot_seperate:
                 ax.lines.pop(-1)
@@ -210,8 +211,8 @@ class SumModel(BaseModel):
         x = np.sort(x_points)
         ax.plot(x, self(x))
 
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        # ax.set_xlabel(xlabel)
+        # ax.set_ylabel(ylabel)
 
         if show:
             plt.show()

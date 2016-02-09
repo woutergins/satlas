@@ -190,7 +190,7 @@ class LinkedModel(BaseModel):
                 except:
                     spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, plot_kws=plot_kws_no_xlabel_no_ylabel)
 
-        plt.tight_layout()
+        # plt.tight_layout()
         if show:
             plt.show()
         return toReturn

@@ -10,9 +10,11 @@ import numpy as np
 import pandas as pd
 import satlas.profiles as p
 import scipy.optimize as optimize
+import copy
 from fractions import Fraction
 from sympy.physics.wigner import wigner_6j, wigner_3j
 
+from .lineid_plot import plot_line_ids
 from .summodel import SumModel
 from .basemodel import BaseModel
 from .utilities import poisson_interval
@@ -722,16 +724,17 @@ class HFSModel(BaseModel):
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
 
-        legend = plot_kws.pop('legend', None,)
-        data_legend = plot_kws.pop('data_legend', None)
-        xlabel = plot_kws.pop('xlabel', 'Frequency (MHz)')
-        ylabel = plot_kws.pop('ylabel', 'Counts',)
-        indicate = plot_kws.pop('indicate', False)
-        model = plot_kws.pop('model', False)
-        colormap = plot_kws.pop('colormap', 'bone_r',)
-        normalized = plot_kws.pop('normalized', False)
-        distance = plot_kws.pop('distance', 4)
-        background = plot_kws.pop('background', True)
+        kws = copy.deepcopy(plot_kws)
+        legend = kws.pop('legend', None,)
+        data_legend = kws.pop('data_legend', None)
+        xlabel = kws.pop('xlabel', 'Frequency (MHz)')
+        ylabel = kws.pop('ylabel', 'Counts',)
+        indicate = kws.pop('indicate', False)
+        model = kws.pop('model', False)
+        colormap = kws.pop('colormap', 'bone_r',)
+        normalized = kws.pop('normalized', False)
+        distance = kws.pop('distance', 4)
+        background = kws.pop('background', True)
 
         if ax is None:
             fig, ax = plt.subplots(1, 1)
@@ -766,15 +769,29 @@ class HFSModel(BaseModel):
             norm = 1
 
         if indicate:
-            for (p, l) in zip(self.locations, self.ftof):
-                height = self(p)
+            if background:
+                Y = self(self.locations)
+            else:
+                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                Y = self(self.locations) - np.polyval(background_params, self.locations)
+            # Y = self(self.locations)
+            labels = []
+            for l in self.ftof:
                 lab = l.split('__')
                 lableft = '/'.join(lab[0].split('_'))
                 labright = '/'.join(lab[1].split('_'))
                 lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                ax.annotate(lab, xy=(p, height), rotation=90,
-                            weight='bold', size=14, ha='center', va='bottom')
-                ax.axvline(p, linewidth=1.5, linestyle='--', color=color_lines)
+                labels.append(lab)
+            plot_line_ids(self.locations, Y, self.locations, labels, ax=ax, max_iter=0)
+            # for (p, l) in zip(self.locations, self.ftof):
+            #     height = self(p)
+            #     lab = l.split('__')
+            #     lableft = '/'.join(lab[0].split('_'))
+            #     labright = '/'.join(lab[1].split('_'))
+            #     lab = '$' + lableft + '\\rightarrow' + labright + '$'
+            #     ax.annotate(lab, xy=(p, height), rotation=90,
+            #                 weight='bold', size=14, ha='center', va='bottom')
+            #     ax.axvline(p, linewidth=1.5, linestyle='--', color=color_lines)
         if x is not None and y is not None:
             if not model:
                 try:
