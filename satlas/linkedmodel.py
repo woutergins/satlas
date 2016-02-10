@@ -255,4 +255,4 @@ class LinkedModel(BaseModel):
         -------
         list of floats or NumPy arrays
             Response of each spectrum for each seperate value in *x*."""
-        return np.array([s(X) for s, X in zip(self.models, x)])
+        return np.hstack([s(X) for s, X in zip(self.models, x)])

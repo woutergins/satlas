@@ -1,6 +1,3 @@
-numpy
-scipy
-sympy
 matplotlib
 pandas
 emcee

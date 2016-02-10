@@ -16,6 +16,7 @@ import pandas as pd
 import h5py
 import os
 from . import loglikelihood as llh
+from . import linkedmodel
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
            'likelihood_fit', 'likelihood_walk']
@@ -71,6 +72,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
     if func is not None:
         yerr = func(model)
     if xerr is not None:
+        x = np.array(x)
         xerr = np.hstack((derivative(f, x, dx=1E-6) * xerr))
         bottom = np.sqrt(yerr * yerr + xerr * xerr)
     else:
@@ -245,19 +247,34 @@ def likelihood_x_err(f, x, y, xerr, func):
     # - FFT of x-uncertainty
     # Note that this works only if the uncertainty remains the same.
     # If a parameter approach is desired, this needs to be changed.
+    x = np.array(x)
+    y = np.array(y)
     key = hash(x.data.tobytes()) + hash(y.data.tobytes())
     if key in _x_err_calculation_stored:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
-        x_grid, theta = np.meshgrid(x, theta_array)
-        y_grid, _ = np.meshgrid(y, theta_array)
-        g_top = (np.exp(-theta*theta * 0.5)).T
-        g = (g_top.T / (sqrt2pi * xerr)).T
-        rfft_g = np.fft.rfft(g)
+        if isinstance(f, linkedmodel.LinkedModel):
+            x_grid = []
+            y_grid, _ = np.meshgrid(y, theta_array)
+            g = []
+            for X, Y in zip(x, y):
+                X_grid, theta = np.meshgrid(X, theta_array)
+                X_grid = X_grid + xerr * theta
+                x_grid.append(X_grid)
+                g_top = (np.exp(-theta*theta * 0.5)).T
+                g.append((g_top.T / (sqrt2pi * xerr)).T)
+            g = np.vstack(g)
+            rfft_g = np.fft.rfft(g)
+        else:
+            x_grid, theta = np.meshgrid(x, theta_array)
+            g_top = (np.exp(-theta*theta * 0.5)).T
+            g = (g_top.T / (sqrt2pi * xerr)).T
+            rfft_g = np.fft.rfft(g)
+            x_grid = x_grid + xerr * theta
         _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
     # Calculate the loglikelihoods for the grid of uncertainty.
     # Each column is a new datapoint.
-    vals = func(y_grid, f(x_grid + xerr * theta))
+    vals = func(y_grid, f(x_grid))
     # To avoid overflows, subtract the maximal values from each column.
     mod = vals.max(axis=0)
     vals_mod = vals - mod
