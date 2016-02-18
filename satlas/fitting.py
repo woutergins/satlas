@@ -4,19 +4,21 @@ Implementation of fitting routines specialised for BaseModel objects. Note that 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
+import copy
+import os
+
+from . import emcee as mcmc
+from . import linkedmodel
+from . import lmfit as lm
+from . import loglikelihood as llh
+from . import tqdm
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-import emcee as mcmc
-from scipy.misc import derivative
-from scipy import optimize
-import copy
-import tqdm
 import pandas as pd
-import h5py
-import os
-from . import loglikelihood as llh
-from . import linkedmodel
+from scipy import optimize
+from scipy.misc import derivative
+
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
            'likelihood_fit', 'likelihood_walk']
@@ -109,9 +111,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(f, x, y, yerr, xerr=xerr, func=func, verbose=verbose)
+    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose)
 
-def chisquare_fit(f, x, y, yerr, xerr=None, func=None, verbose=True):
+def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -150,7 +152,7 @@ def chisquare_fit(f, x, y, yerr, xerr=None, func=None, verbose=True):
 
     def iter_cb(params, iter, resid, *args, **kwargs):
         if verbose:
-            progress.update(0)
+            progress.update(1)
             progress.set_description('Chisquare fitting in progress (' + str(resid.sum()) + ')')
         else:
             pass
@@ -405,7 +407,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
 
     def iter_cb(params, iter, resid, *args, **kwargs):
         if verbose:
-            progress.update(0)
+            progress.update(1)
             progress.set_description('Likelihood fitting in progress (' + str(resid) + ')')
         else:
             pass
@@ -517,7 +519,8 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
+    mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
+               'chisquare': (fitting.chisquare_fit, 'chisqr', 'chisq_res_par'),
                'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
     func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
     fit_kws['verbose'] = False
@@ -553,22 +556,22 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
                 search_value += 0.5*stderr
                 if search_value > orig_params[param_names[i]].max:
                     pbar.set_description(param_names[i] + ' (right limit reached)')
-                    pbar.update(0)
+                    pbar.update(1)
                     search_value = orig_params[param_names[i]].max
                     ranges[param_names[i]]['right'] = search_value
                     break
                 new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
                 pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
-                pbar.update(0)
+                pbar.update(1)
                 if new_value > 0:
                     pbar.set_description(param_names[i] + ' (finding root)')
-                    pbar.update(0)
+                    pbar.update(1)
                     result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
                                                      value, search_value,
                                                      args=(f, params, param_names[i], x, y, orig_value, func),
                                                      full_output=True)
                     pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(0)
+                    pbar.update(1)
                     ranges[param_names[i]]['right'] = result
                     success = output.converged
                     break
@@ -579,7 +582,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
                 search_value -= 0.5*stderr
                 if search_value < orig_params[param_names[i]].min:
                     pbar.set_description(param_names[i] + ' (left limit reached)')
-                    pbar.update(0)
+                    pbar.update(1)
                     search_value = orig_params[param_names[i]].min
                     ranges[param_names[i]]['left'] = search_value
                     success = False
@@ -587,13 +590,13 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
                 new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
                 if new_value > 1 - 0.5*(method.lower() == 'mle'):
                     pbar.set_description(param_names[i] + ' (finding root)')
-                    pbar.update(0)
+                    pbar.update(1)
                     result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
                                                      value, search_value,
                                                      args=(f, params, param_names[i], x, y, orig_value, func),
                                                      full_output=True)
                     pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(0)
+                    pbar.update(1)
                     ranges[param_names[i]]['left'] = result
                     success = success * output.converged
                     break

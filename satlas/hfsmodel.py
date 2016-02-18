@@ -4,21 +4,22 @@ Implementation of a class for the analysis of hyperfine structure spectra.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
+import copy
+from fractions import Fraction
+
+from . import lmfit as lm
+from .basemodel import BaseModel
+from .lineid_plot import plot_line_ids
+from .loglikelihood import poisson_llh
+from .summodel import SumModel
+from .utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
 import scipy.optimize as optimize
-import copy
-from fractions import Fraction
 from sympy.physics.wigner import wigner_6j, wigner_3j
 
-from .lineid_plot import plot_line_ids
-from .summodel import SumModel
-from .basemodel import BaseModel
-from .utilities import poisson_interval
-from .loglikelihood import poisson_llh
 W6J = wigner_6j
 W3J = wigner_3j
 

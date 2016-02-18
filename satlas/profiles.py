@@ -8,7 +8,6 @@ Implementation of classes for different lineshapes, creating callables for easy 
 import numpy as np
 from scipy.special import wofz
 
-
 __all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'Crystalball']
 sqrt2 = 2 ** 0.5
 sqrt2pi = (2 * np.pi) ** 0.5

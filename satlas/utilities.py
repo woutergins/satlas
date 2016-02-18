@@ -3,17 +3,19 @@ Implementation of various functions that ease the work, but do not belong in one
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-import emcee as mcmc
-import lmfit as lm
+import copy
+
+from . import emcee as mcmc
+from . import lmfit as lm
+from . import tqdm
+import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2
 from scipy import optimize
-import h5py
-import copy
-import tqdm
+from scipy.stats import chi2
+
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -291,10 +293,9 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
 
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
-        ori_value = orig_value
         stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else np.abs(0.1 * value)
-        stderr = stderr if stderr != 0 else np.abs(0.1 * value)
+        stderr = stderr if stderr is not None else np.abs(0.01 * value)
+        stderr = stderr if stderr != 0 else np.abs(0.01 * value)
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
         with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:
@@ -306,15 +307,15 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                     search_value = orig_params[param_names[i]].max
                     ranges[param_names[i]]['right'] = search_value
                     break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, ori_value, func) - (1 - 0.5*(method.lower() == 'mle'))
+                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
                 pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
                 pbar.update(0)
                 if new_value > 0:
                     pbar.set_description(param_names[i] + ' (finding root)')
                     pbar.update(0)
-                    result = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                    result = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
                                              value, search_value,
-                                             args=(f, params, param_names[i], x_data, y_data, ori_value, func))
+                                             args=(f, params, param_names[i], x_data, y_data, orig_value, func))
                     pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
                     pbar.update(0)
                     ranges[param_names[i]]['right'] = result
@@ -331,12 +332,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                     search_value = orig_params[param_names[i]].min
                     ranges[param_names[i]]['left'] = search_value
                     break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, ori_value, func)
+                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
                 pbar.set_description(param_names[i] + ' (searching left: ' + str(new_value) + ')')
                 if new_value > 1 - 0.5*(method.lower() == 'mle'):
                     pbar.set_description(param_names[i] + ' (searching root)')
                     pbar.update(1)
-                    result = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
+                    result = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
                                            value, search_value,
                                            args=(f, params, param_names[i], x_data, y_data, ori_value, func))
                     pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')

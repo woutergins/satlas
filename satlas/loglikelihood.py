@@ -4,6 +4,7 @@ Implementation of calculation of the loglikelihood for common distributions.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
 import numpy as np
+
 sqrt2pi = np.sqrt(2*np.pi)
 __all__ = ['poisson_llh', 'gaussian_llh']
 

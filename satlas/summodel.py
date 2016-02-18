@@ -4,12 +4,14 @@ Implementation of a class for the analysis of hyperfine structure spectra with i
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import numpy as np
-import matplotlib.pyplot as plt
+import copy
+
+from . import lmfit as lm
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import lmfit as lm
-import copy
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 __all__ = ['SumModel']
 

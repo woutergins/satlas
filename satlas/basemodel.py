@@ -4,10 +4,11 @@ Implementation of base class for extension to models describing actual data.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
+from . import lmfit as lm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 
 __all__ = ['Model']
 

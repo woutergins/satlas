@@ -4,8 +4,10 @@ to the higher class. Currently only supports HFSModel.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-from .hfsmodel import HFSModel
 import copy
+
+from .hfsmodel import HFSModel
+
 
 __all__ = ['TransformHFSModel']
 

@@ -4,13 +4,15 @@ Implementation of a class for the simultaneous fitting of hyperfine structure sp
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
-import matplotlib.pyplot as plt
-import numpy as np
 import copy
+import warnings
+
+from . import lmfit as lm
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import warnings
+import matplotlib.pyplot as plt
+import numpy as np
+
 __all__ = ['CombinedModel']
 warn_msg = """Use of the class CombinedModel has been deprecated and will be removed in further updates. Please use the LinkedModel class in the future."""
 
