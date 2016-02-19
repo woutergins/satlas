@@ -1,6 +1,6 @@
+numpy>=1.5
+scipy>=0.13
+sympy
 matplotlib
 pandas
-emcee
-lmfit==0.8.2
-tqdm
 h5py

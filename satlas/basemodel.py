@@ -4,7 +4,10 @@ Implementation of base class for extension to models describing actual data.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
+import copy
+
 from . import lmfit as lm
+from .loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,28 +28,82 @@ class BaseModel(object):
         self._vary = {}
         self._constraints = {}
         self._params = None
+        self._lnprior_mapping = {}
+        self._chisquare_mapping = {}
+
+    def set_literature_values(self, literatureDict):
+        """Sets the lnprior and chisquare mapping to handle the given
+        literature values and uncertainties.
+
+        Parameters
+        ----------
+        literatureDict: dictionary
+            Dictionary with the parameter names as keys. Each
+            key should correspond to a dictionary containing
+            a 'value' and 'uncertainty' key."""
+        priorDict = {}
+        chisquareDict = {}
+        for k in literatureDict:
+            v, u = literatureDict[k]['value'], literatureDict[k]['uncertainty']
+
+            prior = create_gaussian_priormap(v, u)
+            priorDict[k] = prior
+
+            chisquare = lambda value: (value - v) / u
+            chisquareDict[k] = chisquare
+        self.set_chisquare_mapping(chisquareDict)
+        self.set_lnprior_mapping(priorDict)
+
+    def set_lnprior_mapping(self, mappingDict):
+        """Sets the prior mapping for the different parameters.
+        This will affect likelihood fits.
+
+        Parameters
+        ----------
+        mappingDict: dictionary
+            Dictionary containing the functions that give the
+            prior for the given parameter value. Use the parameter
+            names as keys."""
+        for k in mappingDict.keys():
+            self._lnprior_mapping[k] = copy.deepcopy(mappingDict[k])
+
+    def set_chisquare_mapping(self, mappingDict):
+        """Sets the prior mapping for the different parameters.
+        This will affect chisquare fits.
+
+        Parameters
+        ----------
+        mappingDict: dictionary
+            Dictionary containing the functions that give the
+            prior for the given parameter value. Use the parameter
+            names as keys."""
+        for k in mappingDict.keys():
+            self._chisquare_mapping[k] = copy.deepcopy(mappingDict[k])
 
     def set_value(self, valueDict):
-        """Sets the value of the selected parameter to the given value.
+        """Sets the value of the given parameters to the given values.
 
         Parameters
         ----------
         valueDict: dictionary
-            Dictionary containing the values for the parameters"""
+            Dictionary containing the values for the parameters
+            with the parameter names as keys."""
         par = self.params
         for key in valueDict:
-            par[key].value = valueDict[key]
+            par[key].value = copy.deepcopy(valueDict[key])
         self.params = par
 
     def set_expr(self, exprDict):
-        """Sets the expression of the selected parameter
-        to the given expression.
+        """Sets the expression of the selected parameters
+        to the given expressions.
 
         Parameters
         ----------
         exprDict: dictionary
-            Dictionary containing the expressions for the parameters"""
-        self._expr = exprDict
+            Dictionary containing the expressions for the parameters
+            with the parameter names as keys."""
+        for k in exprDict.keys():
+            self._expr[k] = copy.deepcopy(exprDict[k])
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
@@ -55,8 +112,10 @@ class BaseModel(object):
         Parameters
         ----------
         varyDict: dictionary
-            A dictionary containing 'key: True/False' mappings"""
-        self._vary = varyDict
+            A dictionary containing 'key: True/False' mappings with
+            the parameter names as keys."""
+        for k in varyDict.keys():
+            self._vary[k] = copy.deepcopy(varyDict[k])
 
     def set_boundaries(self, boundaryDict):
         """Sets the boundaries of the fitparameters as supplied in the
@@ -67,9 +126,9 @@ class BaseModel(object):
         boundaryDict: dictionary
             A dictionary containing "key: {'min': value, 'max': value}" mappings.
             A value of *None* or a missing key gives no boundary
-            in that direction."""
+            in that direction. The parameter names have to be used as keys."""
         for k in boundaryDict.keys():
-            self._constraints[k] = boundaryDict[k]
+            self._constraints[k] = copy.deepcopy(boundaryDict[k])
 
     def display_mle_fit(self, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.

@@ -6,6 +6,7 @@ Implementation of fitting routines specialised for BaseModel objects. Note that 
 """
 import copy
 import os
+import warnings
 
 from . import emcee as mcmc
 from . import linkedmodel
@@ -22,6 +23,7 @@ from scipy.misc import derivative
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
            'likelihood_fit', 'likelihood_walk']
+chisquare_warning_message = "The supplied dictionary for {} did not contain the necessary keys 'value' and 'uncertainty'."
 
 ###############################
 # CHI SQUARE FITTING ROUTINES #
@@ -79,7 +81,11 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         bottom = np.sqrt(yerr * yerr + xerr * xerr)
     else:
         bottom = yerr
-    return (y - model) / bottom
+    return_value = (y - model) / bottom
+    appended_values = f.get_chisquare_mapping()
+    if appended_values is not None:
+        return_value = np.append(return_value, appended_values)
+    return return_value
 
 def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
@@ -269,6 +275,7 @@ def likelihood_x_err(f, x, y, xerr, func):
             rfft_g = np.fft.rfft(g)
         else:
             x_grid, theta = np.meshgrid(x, theta_array)
+            y_grid, _ = np.meshgrid(y, theta_array)
             g_top = (np.exp(-theta*theta * 0.5)).T
             g = (g_top.T / (sqrt2pi * xerr)).T
             rfft_g = np.fft.rfft(g)
@@ -434,8 +441,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         new_val = negativeloglikelihood(f.params, f, x, y, xerr, func)
         success = np.isclose(val, new_val)
         val = new_val
-        if not success and counter > 10:
-            break
+        # if not success and counter > 10:
+        #     break
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
@@ -520,7 +527,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
-               'chisquare': (fitting.chisquare_fit, 'chisqr', 'chisq_res_par'),
+               'chisquare': (chisquare_fit, 'chisqr', 'chisq_res_par'),
                'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
     func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
     fit_kws['verbose'] = False

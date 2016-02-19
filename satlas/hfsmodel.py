@@ -217,6 +217,10 @@ class HFSModel(BaseModel):
     def roi(self, value):
         self._roi = (value[0], value[1])
 
+    def get_chisquare_mapping(self):
+        values = [self._chisquare_mapping(self._params[k].value for k in self._params.keys() if self._params)]
+
+
     def lnprior(self):
         # Implementation uses the 'fail early' paradigm to speed up calculations.
         # First, the easiest checks to fail are made, followed by slower ones.
@@ -238,14 +242,13 @@ class HFSModel(BaseModel):
                 if not leftbound < par.value < rightbound:
                     return -np.inf
         # If defined, calculate the lnprior for each seperate parameter
+        return_value = 1.0
         try:
-            return_value = 1.0
             for key in params.keys():
-                return_value += self.lnprior_mapping[key](params[key].value)
-            return return_value
+                return_value += self._lnprior_mapping[key](params[key].value)
         except:
             pass
-        return 1.0
+        return return_value
 
     @property
     def params(self):
