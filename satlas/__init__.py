@@ -1,3 +1,4 @@
+from .version import __version__, __release__
 import matplotlib as mpl
 from . import hfsmodel
 from .hfsmodel import *
@@ -13,7 +14,8 @@ from . import utilities
 from .utilities import *
 from . import fitting
 from .fitting import *
-from .version import __version__, __release__
+from . import loglikelihood
+from .loglikelihood import *
 
 from . import combinedmodel
 from .combinedmodel import *

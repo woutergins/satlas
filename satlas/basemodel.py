@@ -130,6 +130,32 @@ class BaseModel(object):
         for k in boundaryDict.keys():
             self._constraints[k] = copy.deepcopy(boundaryDict[k])
 
+    def get_chisquare_mapping(self):
+        return np.array([self._chisquare_mapping[k](self._params[k].value) for k in self._chisquare_mapping.keys()])
+
+    def get_lnprior_mapping(self):
+        # Implementation uses the 'fail early' paradigm to speed up calculations.
+        # Check if the parameter values are within the acceptable range.
+        for key in self._params.keys():
+            par = self._params[key]
+            if par.vary:
+                try:
+                    leftbound, rightbound = (par.priormin,
+                                             par.priormax)
+                except:
+                    leftbound, rightbound = par.min, par.max
+                leftbound = -np.inf if leftbound is None else leftbound
+                rightbound = np.inf if rightbound is None else rightbound
+                if not leftbound < par.value < rightbound:
+                    return -np.inf
+        # If defined, calculate the lnprior for each seperate parameter
+        return_value = 1.0
+        try:
+            return_value += sum([self._lnprior_mapping[k](self._params[k].value) for k in self._lnprior_mapping.keys()])
+        except:
+            pass
+        return return_value
+
     def display_mle_fit(self, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.
 

@@ -322,7 +322,10 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     not finite, the values are rejected from consideration by
     immediately returning -np.inf."""
     f.params = params
-    lp = f.lnprior()
+    try:
+        lp = f.get_lnprior_mapping()
+    except:
+        lp = f.lnprior()
     if not np.isfinite(lp):
         return -np.inf
     res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))

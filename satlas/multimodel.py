@@ -36,11 +36,11 @@ class MultiModel(BaseModel):
         self.models = models
         self.shared = []
 
-    def lnprior(self, params):
-        return_value = 0
-        for i, spec in enumerate(self.models):
-            return_value += spec.lnprior()
-        return return_value
+    def get_chisquare_mapping(self):
+        return np.hstack([f.get_chisquare_mapping() for f in self.models])
+
+    def get_lnprior_mapping(self):
+        return sum([f.get_lnprior_mapping() for f in self.models])
 
     @property
     def shared(self):

@@ -6,7 +6,7 @@ Implementation of calculation of the loglikelihood for common distributions.
 import numpy as np
 
 sqrt2pi = np.sqrt(2*np.pi)
-__all__ = ['poisson_llh', 'gaussian_llh', 'çreate_gaussian_llh']
+__all__ = ['poisson_llh', 'gaussian_llh', 'create_gaussian_llh']
 
 
 def poisson_llh(y, l):
