@@ -767,21 +767,6 @@ class HFSModel(BaseModel):
         else:
             norm = 1
 
-        if indicate:
-            if background:
-                Y = self(self.locations)
-            else:
-                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
-                Y = self(self.locations) - np.polyval(background_params, self.locations)
-            # Y = self(self.locations)
-            labels = []
-            for l in self.ftof:
-                lab = l.split('__')
-                lableft = '/'.join(lab[0].split('_'))
-                labright = '/'.join(lab[1].split('_'))
-                lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                labels.append(lab)
-            plot_line_ids(self.locations, Y, self.locations, labels, ax=ax, max_iter=0)
             # for (p, l) in zip(self.locations, self.ftof):
             #     height = self(p)
             #     lab = l.split('__')
@@ -823,6 +808,21 @@ class HFSModel(BaseModel):
         ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        if indicate:
+            if background:
+                Y = self(self.locations)
+            else:
+                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                Y = self(self.locations) - np.polyval(background_params, self.locations)
+            # Y = self(self.locations)
+            labels = []
+            for l in self.ftof:
+                lab = l.split('__')
+                lableft = '/'.join(lab[0].split('_'))
+                labright = '/'.join(lab[1].split('_'))
+                lab = '$' + lableft + '\\rightarrow' + labright + '$'
+                labels.append(lab)
+            plot_line_ids(self.locations, Y, self.locations, labels, ax=ax)
         if show:
             plt.show()
         return toReturn
@@ -889,15 +889,16 @@ class HFSModel(BaseModel):
             Tuple containing the figure and both axes, also in a tuple."""
         from fractions import Fraction
         from matplotlib import lines
+        length_plot = 0.4
         fig = plt.figure(frameon=False)
-        ax = fig.add_axes([0.5, 0, 0.5, 0.5], axisbg=[1, 1, 1, 0])
-        self.plot(ax=ax, show=False, distance=distance)
+        ax = fig.add_axes([0.5, 0, length_plot, 0.5], axisbg=[1, 1, 1, 0])
+        self.plot(ax=ax, show=False, plot_kws={'distance': distance})
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
         locations = self.locations
         plotrange = ax.get_xlim()
-        distances = (locations - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
+        distances = (locations - plotrange[0]) / (plotrange[1] - plotrange[0]) * length_plot
         height = self(locations)
         plotrange = ax.get_ylim()
         height = (height - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
@@ -933,8 +934,7 @@ class HFSModel(BaseModel):
         for i, F in enumerate(self.F):
             # Level
             F = Fraction.from_float(F)
-            x = distances + 0.5
-            x = np.array([0.5, 1])
+            x = np.array([0.5, 0.5 + length_plot])
             if i < self.num_lower:
                 y = np.zeros(len(x)) + 0.625 + energies[i]
                 color = lower_color
@@ -950,7 +950,7 @@ class HFSModel(BaseModel):
             y = np.array([starting, y[0]])
             line = lines.Line2D(x, y, lw=2., color=color, alpha=0.4, linestyle='dashed')
             ax2.add_line(line)
-            ax2.text(1, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'left', 'verticalalignment': 'center'})
+            ax2.text(0.5 + length_plot, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'left', 'verticalalignment': 'center'})
 
         for i, label in enumerate(self.ftof):
             lower, upper = label.split('__')
