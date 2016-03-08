@@ -224,26 +224,7 @@ class HFSModel(BaseModel):
         # Check if at least one of the peaks lies within the region of interest
         if not any((self.roi[0] < self.locations) & (self.locations < self.roi[1])):
             return -np.inf
-        # Check if the parameter values are within the acceptable range.
-        for key in self._params.keys():
-            par = self._params[key]
-            if par.vary:
-                try:
-                    leftbound, rightbound = (par.priormin,
-                                             par.priormax)
-                except:
-                    leftbound, rightbound = par.min, par.max
-                leftbound = -np.inf if leftbound is None else leftbound
-                rightbound = np.inf if rightbound is None else rightbound
-                if not leftbound < par.value < rightbound:
-                    return -np.inf
-        # If defined, calculate the lnprior for each seperate parameter
-        return_value = 1.0
-        try:
-            return_value += sum([self._lnprior_mapping[k](self._params[k].value) for k in self._lnprior_mapping.keys()])
-        except:
-            pass
-        return return_value
+        return super(HFSModel, self).get_lnprior_mapping()
 
     @property
     def params(self):
@@ -424,7 +405,7 @@ class HFSModel(BaseModel):
 
         par.add('Centroid', value=centroid, vary=True)
 
-        for i, val in enumerate(background_params):
+        for i, val in reversed(list(enumerate(background_params))):
             par.add('Background' + str(i), value=background_params[i], vary=True)
         par.add('N', value=n, vary=False)
         if n > 0:

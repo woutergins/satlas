@@ -11,6 +11,9 @@ from .hfsmodel import HFSModel
 
 __all__ = ['TransformHFSModel']
 
+def identity(*args):
+    return args[0]
+
 class TransformHFSModel(HFSModel):
     """Create an HFSModel that applies both a pre-processing
     transformation on the input data and a post-processing
@@ -26,8 +29,8 @@ class TransformHFSModel(HFSModel):
         """Passes all arguments on the :class:`.HFSModel`.
         See :class:`.HFSModel` for input information."""
         super(TransformHFSModel, self).__init__(*args, **kwargs)
-        self._pre_transform = lambda x: x
-        self._post_transform = lambda x, y: x
+        self._pre_transform = identity
+        self._post_transform = identity
 
     @property
     def pre_transform(self):
@@ -67,7 +70,7 @@ class TransformHFSModel(HFSModel):
         identity transform."""
         remember_pre = copy.deepcopy(self._pre_transform)
         remember_post = copy.deepcopy(self._post_transform)
-        self._pre_transform = lambda x: x
+        self._pre_transform = identity
         to_return = super(TransformHFSModel, self).plot(*args, **kwargs)
         self._pre_transform = remember_pre
         return to_return

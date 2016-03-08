@@ -618,15 +618,15 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         ranges[param_names[i]]['uncertainty'] = max(right, left)
         ranges[param_names[i]]['value'] = orig_params[param_names[i]].value
 
-        f.params = copy.deepcopy(orig_params)
-        func(f, x, y, **fit_kws)
     # First, clear all uncertainty estimates
-    for p in getattr(f, save_attr):
-        getattr(f, save_attr)[p].stderr = None
+    for p in orig_params:
+        orig_params[p].stderr = None
     # Save all MINOS estimates
     for param_name in ranges.keys():
-        getattr(f, save_attr)[param_name].stderr = ranges[param_name]['uncertainty']
-        getattr(f, save_attr)[param_name].value = ranges[param_name]['value']
+        orig_params[param_name].stderr = ranges[param_name]['uncertainty']
+        orig_params[param_name].value = ranges[param_name]['value']
+    setattr(f, save_attr, copy.deepcopy(orig_params))
+    f.params = copy.deepcopy(orig_params)
 
 def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20,
                     filename=None):

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-__all__ = ['PolynomialModel']
+__all__ = ['PolynomialModel', 'MiscModel']
 
 
 class PolynomialModel(BaseModel):
@@ -41,8 +41,8 @@ class PolynomialModel(BaseModel):
     def _populate_params(self, *args):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
-        for i, val in reversed(enumerate(args)):
-            par.add('Param' + str(i), value=val, vary=True)
+        for i, val in reversed(list(enumerate(args))):
+            par.add('Order' + str(i) + 'Coeff', value=val, vary=True)
 
         self.params = self._check_variation(par)
 
@@ -87,17 +87,24 @@ class PolynomialModel(BaseModel):
             return self.__add__(other)
 
     def __call__(self, x):
-        s = self._params['Slope'].value * x + self._params['Intercept'].value
-        return s
+        return np.polyval([self.params[p].value for p in self.params.keys()], x)
 
 class MiscModel(BaseModel):
 
-    r"""Constructs a response from a supplied function."""
+    r"""Constructs a response from a supplied function.
+    Call signature is
 
-    def __init__(self, func, args):
+    def func(x, par):
+        a = par[0]
+        b = par[1]
+        ...
+        return y"""
+
+    def __init__(self, func, args, name_list=None):
         super(MiscModel, self).__init__()
+        self.func = func
         self.lnprior_mapping = {}
-        self._populate_params(*args)
+        self._populate_params(*args, name_list=name_list)
 
     @property
     def params(self):
@@ -114,11 +121,15 @@ class MiscModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, *args):
+    def _populate_params(self, *args, name_list=None):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
-        for i, val in enumerate(args):
-            par.add('Param' + str(i), value=val, vary=True)
+        if name_list is None:
+            for i, val in enumerate(args):
+                par.add('Param' + str(i + 1), value=val, vary=True)
+        else:
+            for name, val in zip(name_list, args):
+                par.add(name, value=val, vary=True)
 
         self.params = self._check_variation(par)
 
@@ -163,5 +174,4 @@ class MiscModel(BaseModel):
             return self.__add__(other)
 
     def __call__(self, x):
-        s = self._params['Slope'].value * x + self._params['Intercept'].value
-        return s
+        return self.func(x, [self.params[p].value for p in self.params.keys()])

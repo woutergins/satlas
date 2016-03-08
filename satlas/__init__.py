@@ -4,8 +4,8 @@ from . import hfsmodel
 from .hfsmodel import *
 from . import transformmodel
 from .transformmodel import *
-from . import linearmodel
-from .linearmodel import *
+from . import models
+from .models import *
 from . import linkedmodel
 from .linkedmodel import *
 from . import summodel
@@ -26,7 +26,7 @@ __all__ = []
 
 __all__.extend(hfsmodel.__all__)
 __all__.extend(transformmodel.__all__)
-__all__.extend(linearmodel.__all__)
+__all__.extend(models.__all__)
 __all__.extend(linkedmodel.__all__)
 __all__.extend(summodel.__all__)
 __all__.extend(utilities.__all__)
@@ -78,7 +78,7 @@ style = {'backend': 'qt4agg',
          'axes.formatter.use_mathtext': True,
          'axes.formatter.useoffset': False,
          'axes.unicode_minus': True,
-         'axes.color_cycle': ['0072B2', '009E73', 'D55E00', 'CC79A7', 'F0E442', '56B4E9'],
+         'axes.color_cycle': ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9'],
          'axes.xmargin': 0,
          'axes.ymargin': 0,
          'polaraxes.grid': True,

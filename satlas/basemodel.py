@@ -130,11 +130,26 @@ class BaseModel(object):
         for k in boundaryDict.keys():
             self._constraints[k] = copy.deepcopy(boundaryDict[k])
 
+    def _check_variation(self, par):
+        # Make sure the variations in the params are set correctly.
+        for key in self._vary.keys():
+            if key in par.keys():
+                par[key].vary = self._vary[key]
+
+        for key in self._constraints.keys():
+            for bound in self._constraints[key]:
+                if bound.lower() == 'min':
+                    par[key].min = self._constraints[key][bound]
+                elif bound.lower() == 'max':
+                    par[key].max = self._constraints[key][bound]
+                else:
+                    pass
+        return par
+
     def get_chisquare_mapping(self):
         return np.array([self._chisquare_mapping[k](self._params[k].value) for k in self._chisquare_mapping.keys()])
 
     def get_lnprior_mapping(self):
-        # Implementation uses the 'fail early' paradigm to speed up calculations.
         # Check if the parameter values are within the acceptable range.
         for key in self._params.keys():
             par = self._params[key]
@@ -150,10 +165,8 @@ class BaseModel(object):
                     return -np.inf
         # If defined, calculate the lnprior for each seperate parameter
         return_value = 1.0
-        try:
-            return_value += sum([self._lnprior_mapping[k](self._params[k].value) for k in self._lnprior_mapping.keys()])
-        except:
-            pass
+        for key in self._lnprior_mapping.keys():
+            return_value += self._lnprior_mapping[key](self.params[key].value)
         return return_value
 
     def display_mle_fit(self, **kwargs):
