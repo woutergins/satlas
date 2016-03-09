@@ -159,7 +159,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     def iter_cb(params, iter, resid, *args, **kwargs):
         if verbose:
             progress.update(1)
-            progress.set_description('Chisquare fitting in progress (' + str(resid.sum()) + ')')
+            progress.set_description('Chisquare fitting in progress (' + str((resid**2).sum()) + ')')
         else:
             pass
 
@@ -461,7 +461,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
 # UNCERTAINTY CALCULATIONS #
 ############################
 
-def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, fit_kws={}):
+def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', filter=None, fit_kws={}):
     """Calculates the analytical errors on the parameters, by changing the value for
     a parameter and finding the point where the chisquare for the refitted parameters
     is one greater. For MLE, an increase of 0.5 is sought. The corresponding series
@@ -536,6 +536,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
     fit_kws['verbose'] = False
 
     func(f, x, y, **fit_kws)
+
 
     orig_value = getattr(f, attr)
     orig_params = copy.deepcopy(f.params)
@@ -618,6 +619,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare', filter=None, f
         ranges[param_names[i]]['uncertainty'] = max(right, left)
         ranges[param_names[i]]['value'] = orig_params[param_names[i]].value
 
+        f.params = copy.deepcopy(orig_params)
     # First, clear all uncertainty estimates
     for p in orig_params:
         orig_params[p].stderr = None
