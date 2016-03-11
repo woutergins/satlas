@@ -761,11 +761,11 @@ class HFSModel(BaseModel):
             if not model:
                 try:
                     ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']],
-                                xerr=xerr, fmt='o', label=data_legend)
+                                xerr=xerr, fmt='o', label=data_legend, color=color_points)
                 except:
-                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend, color=color_points)
             else:
-                ax.plot(x, y, 'o')
+                ax.plot(x, y, 'o', color=color_points)
         if model:
             range = (self.locations.min(), self.locations.max())
             max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
