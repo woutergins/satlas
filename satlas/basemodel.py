@@ -18,8 +18,7 @@ __all__ = ['Model']
 
 class BaseModel(object):
 
-    """Abstract baseclass for all models, such as :class:`.HFSModel`,
-    :class:`.CombinedModel` and :class:`.MultiModel`. For input, see these
+    """Abstract baseclass for all models. For input, see these
     classes."""
 
     def __init__(self):
@@ -199,9 +198,9 @@ class BaseModel(object):
         else:
             print('Spectrum has not yet been fitted with this method!')
 
-    def vars(self, selection='any'):
+    def get_result(self, selection='any'):
         """Return the variable names, values and estimated error bars for the
-        parameters.
+        parameters as seperate lists.
 
         Parameters
         ----------

@@ -1,8 +1,3 @@
-.. satlas documentation master file, created by
-   sphinx-quickstart on Tue Jan 27 16:50:51 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 *************************************************************
 SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
 *************************************************************
@@ -44,15 +39,18 @@ This Python package has been created with the goal of creating an easier interfa
 
 Dependencies
 ============
-This package makes use of the following packages:
+This package depends on the following packages:
 
     * `NumPy <http://www.numpy.org/>`_
     * `SciPy <http://www.scipy.org/>`_
-    * `LMFIT <http://lmfit.github.io/lmfit-py/index.html>`_
     * `Matplotlib <http://matplotlib.org/>`_
-    * `emcee <http://dan.iel.fm/emcee/current/>`_
     * `sympy <http://www.sympy.org/>`_
     * `h5py <http://docs.h5py.org/en/latest/index.html>`_
+
+The following packages are distributed as part of SATLAS:
+
+    * `emcee <http://dan.iel.fm/emcee/current/>`_
+    * `LMFIT <http://lmfit.github.io/lmfit-py/index.html>`_
     * `tqdm <https://github.com/tqdm/tqdm>`_
 
 Code can be downloaded `here <https://github.com/woutergins/satlas>`_. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al. :cite:`Foreman-Mackey2014`, for the correlation plot code.

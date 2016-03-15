@@ -679,25 +679,28 @@ class HFSModel(BaseModel):
             If provided, plots on this axis.
         show: boolean
             If True, the plot will be shown at the end.
-        legend: string, optional
-            If given, an entry in the legend will be made for the spectrum.
-        data_legend: string, optional
-            If given, an entry in the legend will be made for the experimental
-            data.
-        xlabel: string, optional
-            If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
-        ylabel: string, optional
-            If given, sets the ylabel to this string. Defaults to 'Counts'.
-        model: boolean, optional
-            If given, the region around the fitted line will be shaded, with
-            the luminosity indicating the pmf of the Poisson
-            distribution characterized by the value of the fit. Note that
-            the argument *yerr* is ignored if *model* is True.
-        normalized: boolean, optional
-            If True, the data and fit are plotted normalized such that the highest
-            data point is one.
-        background: boolean, optional
-            If True, the background is used, otherwise the pure spectrum is plotted.
+        plot_kws: dictionary
+            A dictionary possibly containing the following entries:
+
+            legend: string, optional
+                If given, an entry in the legend will be made for the spectrum.
+            data_legend: string, optional
+                If given, an entry in the legend will be made for the experimental
+                data.
+            xlabel: string, optional
+                If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
+            ylabel: string, optional
+                If given, sets the ylabel to this string. Defaults to 'Counts'.
+            model: boolean, optional
+                If given, the region around the fitted line will be shaded, with
+                the luminosity indicating the pmf of the Poisson
+                distribution characterized by the value of the fit. Note that
+                the argument *yerr* is ignored if *model* is True.
+            normalized: boolean, optional
+                If True, the data and fit are plotted normalized such that the highest
+                data point is one.
+            background: boolean, optional
+                If True, the background is used, otherwise the pure spectrum is plotted.
 
         Returns
         -------
@@ -731,7 +734,7 @@ class HFSModel(BaseModel):
             for pos in self.locations:
                 r = np.linspace(pos - distance * fwhm,
                                 pos + distance * fwhm,
-                                2 * 10**2)
+                                2 * 10**2*0+50)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
         else:
@@ -748,15 +751,6 @@ class HFSModel(BaseModel):
         else:
             norm = 1
 
-            # for (p, l) in zip(self.locations, self.ftof):
-            #     height = self(p)
-            #     lab = l.split('__')
-            #     lableft = '/'.join(lab[0].split('_'))
-            #     labright = '/'.join(lab[1].split('_'))
-            #     lab = '$' + lableft + '\\rightarrow' + labright + '$'
-            #     ax.annotate(lab, xy=(p, height), rotation=90,
-            #                 weight='bold', size=14, ha='center', va='bottom')
-            #     ax.axvline(p, linewidth=1.5, linestyle='--', color=color_lines)
         if x is not None and y is not None:
             if not model:
                 try:
@@ -767,6 +761,7 @@ class HFSModel(BaseModel):
             else:
                 ax.plot(x, y, 'o', color=color_points)
         if model:
+            superx = np.linspace(superx.min(), superx.max(), len(superx))
             range = (self.locations.min(), self.locations.max())
             max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
             min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
@@ -774,11 +769,12 @@ class HFSModel(BaseModel):
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
             from scipy import stats
-            z = stats.poisson(self(x) / norm).pmf(y)
+            z = stats.poisson(self(x)).pmf(y)
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
             line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5, color=color_lines)
+            # print(superx)
         else:
             if background:
                 y = self(superx)

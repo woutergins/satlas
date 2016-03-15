@@ -18,15 +18,24 @@ class PolynomialModel(BaseModel):
 
     r"""Constructs a polynomial response."""
 
-    def __init__(self, *args):
+    def __init__(self, args):
+        """:class:`.PolynomialModel` creates a general polynomial
+        of the order given by *len(args)-1*. The given coefficients
+        are ordered lowest to highest order.
+
+        Parameters
+        ----------
+        args: iterable of values
+            Iterable containing all the values for the
+            coefficients. Polynomial order is determined
+            by the length. args[0] is the coefficient
+            of order 0, etc..."""
         super(PolynomialModel, self).__init__()
         self.lnprior_mapping = {}
-        self._populate_params(*args)
+        self._populate_params(args)
 
     @property
     def params(self):
-        """Instance of lmfit.Parameters object characterizing the
-        shape of the HFS."""
         self._params = self._check_variation(self._params)
         return self._params
 
@@ -38,7 +47,7 @@ class PolynomialModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, *args):
+    def _populate_params(self, args):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         for i, val in reversed(list(enumerate(args))):
@@ -95,12 +104,32 @@ class MiscModel(BaseModel):
     Call signature is
 
     def func(x, par):
+
         a = par[0]
+
         b = par[1]
+
         ...
+
         return y"""
 
     def __init__(self, func, args, name_list=None):
+        """The :class:`.MiscModel` takes a supplied function *func* and list of starting
+        argument parameters *args* to contruct an object that responds with the
+        given function for the parameter values. A list of names can also
+        be supplied to customize the parameter names.
+
+        Parameters
+        ----------
+        func: callable
+            A callable function with call signature *func(x, args)*.
+        args: list of values
+            List of starting values for the parameters. The number of parameters is based
+            on the length of the list of arguments.
+        name_list: list of strings, optional
+            List of names to be supplied to the parameters. The order of the names
+            and the order of the parameters is the same, so *name_list[0]* corresponds
+            to *args[0]*."""
         super(MiscModel, self).__init__()
         self.func = func
         self.lnprior_mapping = {}
@@ -108,8 +137,6 @@ class MiscModel(BaseModel):
 
     @property
     def params(self):
-        """Instance of lmfit.Parameters object characterizing the
-        shape of the HFS."""
         self._params = self._check_variation(self._params)
         return self._params
 
@@ -154,7 +181,7 @@ class MiscModel(BaseModel):
 
         Parameters
         ----------
-        other: HFSModel
+        other: BaseModel
             Other spectrum to add.
 
         Returns

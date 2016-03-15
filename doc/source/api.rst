@@ -10,6 +10,8 @@ Note that the CombinedModel and MultiModel are still available for use, but are 
 Models
 ------
 
+General Models
+~~~~~~~~~~~~~~
 .. note::
 
     The abstract baseclass :class:`.BaseModel` defines a few methods for retrieving information about the current state of the fit. These methods are not documented in the child classes, but will be regularly used.
@@ -18,13 +20,22 @@ Models
     :toctree: generated/
 
     satlas.basemodel.BaseModel
-    satlas.hfsmodel.HFSModel
-    satlas.transformmodel.TransformHFSModel
     satlas.summodel.SumModel
     satlas.linkedmodel.LinkedModel
+    satlas.models.MiscModel
+
+Specialized Models
+~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree: generated/
+
+    satlas.hfsmodel.HFSModel
+    satlas.transformmodel.TransformHFSModel
+    satlas.models.PolynomialModel
 
 Fitting routines
 ----------------
+.. automodule:: satlas.fitting
 
 .. autosummary::
       :toctree: fitting/
@@ -38,6 +49,19 @@ Fitting routines
       satlas.fitting.likelihood_x_err
       satlas.fitting.likelihood_lnprob
       satlas.fitting.likelihood_loglikelihood
+
+Likelihood calculations
+-----------------------
+
+.. automodule:: satlas.loglikelihood
+
+.. autosummary::
+      :toctree: loglikelihood/
+
+      satlas.loglikelihood.poisson_llh
+      satlas.loglikelihood.gaussian_llh
+      satlas.loglikelihood.create_gaussian_llh
+      satlas.loglikelihood.create_gaussian_priormap
 
 Lineshapes
 ----------

@@ -12,12 +12,15 @@ satlas.basemodel.BaseModel
       :toctree: basemodel/
 
       ~BaseModel.__init__
+      ~BaseModel.set_literature_values
+      ~BaseModel.set_lnprior_mapping
+      ~BaseModel.set_chisquare_mapping
+      ~BaseModel.set_value
+      ~BaseModel.set_expr
+      ~BaseModel.set_variation
+      ~BaseModel.set_boundaries
       ~BaseModel.display_chisquare_fit
       ~BaseModel.display_mle_fit
       ~BaseModel.get_result_frame
+      ~BaseModel.get_result
       ~BaseModel.save
-      ~BaseModel.set_boundaries
-      ~BaseModel.set_expr
-      ~BaseModel.set_value
-      ~BaseModel.set_variation
-      ~BaseModel.vars

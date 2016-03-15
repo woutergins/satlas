@@ -312,7 +312,8 @@ class Crystalball(Profile):
 
     def __init__(self, fwhm=None, mu=None, amp=None, alpha=None, n=None, ampIsArea=False):
         """Creates a callable object storing the fwhm, amplitude and location
-        of a Crystalball lineshape.
+        of a Crystalball lineshape. For more information, see :cite:`Gaiser`
+        and :cite:`skwarnicki`
 
         Parameters
         ----------
