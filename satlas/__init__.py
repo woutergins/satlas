@@ -152,6 +152,6 @@ style = {'backend': 'qt4agg',
          'savefig.pad_inches': 0.1,
          'savefig.jpeg_quality': 95,
          'savefig.directory': '',
-         'savefig.transparent': True}
+         'savefig.transparent': False}
 for key in style:
     mpl.rcParams[key] = style[key]

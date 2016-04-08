@@ -24,4 +24,5 @@ setup(
                'Programming Language :: Python :: 2',
                'Programming Language :: Python :: 3',
                'Topic :: Scientific/Engineering :: Physics'],
+    packages=['satlas', 'satlas.lmfit', 'satlas.emcee', 'satlas.tqdm']
 )

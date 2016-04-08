@@ -217,14 +217,14 @@ class HFSModel(BaseModel):
     def roi(self, value):
         self._roi = (value[0], value[1])
 
-    def get_lnprior_mapping(self):
+    def get_lnprior_mapping(self, params):
         # Implementation uses the 'fail early' paradigm to speed up calculations.
         # First, the easiest checks to fail are made, followed by slower ones.
         # If a check is failed, -np.inf is returned immediately.
         # Check if at least one of the peaks lies within the region of interest
         if not any((self.roi[0] < self.locations) & (self.locations < self.roi[1])):
             return -np.inf
-        return super(HFSModel, self).get_lnprior_mapping()
+        return super(HFSModel, self).get_lnprior_mapping(params)
 
     @property
     def params(self):
@@ -844,7 +844,7 @@ class HFSModel(BaseModel):
         return self.plot(**kwargs)
 
 
-    def plot_scheme(self, show=True, upper_color='r', lower_color='k', arrow_color='b', distance=5):
+    def plot_scheme(self, show=True, upper_color='#D55E00', lower_color='#009E73', arrow_color='#0072B2', distance=5):
         """Create a figure where both the splitting of the upper and lower state is drawn,
         and the hfs associated with this.
 
@@ -887,8 +887,12 @@ class HFSModel(BaseModel):
                               np.ones(self.num_upper) * self._params['Cu'].value)
         energies = self.C * A + self.D * B + self.E * C
         #energies -= energies.min()
-        energies_upper = energies[self.num_lower:] / np.abs(energies[self.num_lower:]).max() * 0.1
-        energies_lower = energies[:self.num_lower] / np.abs(energies[:self.num_lower]).max() * 0.1
+        energies_upper = energies[self.num_lower:]
+        energies_upper_norm = np.abs(energies_upper.max()) if not energies_upper.max()==0 else 1
+        energies_upper = energies_upper / energies_upper_norm * 0.1
+        energies_lower = energies[:self.num_lower]
+        energies_lower_norm = np.abs(energies_lower.max()) if not energies_lower.max()==0 else 1
+        energies_lower = energies_lower / energies_lower_norm * 0.1
         energies = np.append(energies_lower, energies_upper)
 
         ax2 = fig.add_axes([0, 0, 1, 1], axisbg=[1, 1, 1, 0])

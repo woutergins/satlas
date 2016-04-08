@@ -148,10 +148,10 @@ class BaseModel(object):
     def get_chisquare_mapping(self):
         return np.array([self._chisquare_mapping[k](self._params[k].value) for k in self._chisquare_mapping.keys()])
 
-    def get_lnprior_mapping(self):
+    def get_lnprior_mapping(self, params):
         # Check if the parameter values are within the acceptable range.
-        for key in self._params.keys():
-            par = self._params[key]
+        for key in params.keys():
+            par = params[key]
             if par.vary:
                 try:
                     leftbound, rightbound = (par.priormin,
@@ -165,7 +165,7 @@ class BaseModel(object):
         # If defined, calculate the lnprior for each seperate parameter
         return_value = 1.0
         for key in self._lnprior_mapping.keys():
-            return_value += self._lnprior_mapping[key](self.params[key].value)
+            return_value += self._lnprior_mapping[key](params[key].value)
         return return_value
 
     def display_mle_fit(self, **kwargs):

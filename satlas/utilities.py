@@ -440,7 +440,7 @@ def _diaconis_rule(data, minimum, maximum):
     else:
         return np.ceil((maximum - minimum) / bin_size)
 
-def generate_correlation_plot(filename, filter=None, bins=None):
+def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 100)):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
     3 sigma contours on the off-diagonal. The 1-sigma limits based on the
@@ -472,16 +472,18 @@ def generate_correlation_plot(filename, filter=None, bins=None):
             metadata = {}
             if not isinstance(bins, list):
                 bins = [bins for _ in filter]
+            dataset_length = store['data'].shape[0]
+            first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
             for i, val in enumerate(filter):
                 pbar.set_description(val)
                 ax = axes[i, i]
                 bin_index = i
                 i = columns.index(val)
-                x = store['data'][:, i]
+                x = store['data'][first:last, i]
                 if bins[bin_index] is None:
                     # When the diaconis rule is properly implemented, this will be used (uses too many bins)
-                    # bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
-                    bins[bin_index] = 50
+                    bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
+                    # bins[bin_index] = 50
                 try:
                     ax.hist(x, int(bins[bin_index]))
                 except ValueError:
@@ -512,8 +514,8 @@ def generate_correlation_plot(filename, filter=None, bins=None):
                     ax.set_xlabel(filter[j])
                 j = columns.index(x_name)
                 i = columns.index(y_name)
-                x = store['data'][:, j]
-                y = store['data'][:, i]
+                x = store['data'][first:last, j]
+                y = store['data'][first:last, i]
                 x_min, x_max, x_bins = metadata[x_name]['min'], metadata[x_name]['max'], metadata[x_name]['bins']
                 y_min, y_max, y_bins = metadata[y_name]['min'], metadata[y_name]['max'], metadata[y_name]['bins']
                 X = np.linspace(x_min, x_max, x_bins + 1)
@@ -537,7 +539,7 @@ def generate_correlation_plot(filename, filter=None, bins=None):
                     except:
                         V[i] = Hflat[0]
 
-                bounds = np.concatenate([[H.max()], V])[::-1]
+                bounds = np.unique(np.concatenate([[H.max()], V])[::-1])
                 norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
 
                 contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
