@@ -2,7 +2,7 @@ from setuptools import setup
 exec(open('satlas/version.py').read())
 setup(
   name='satlas',
-  packages=['satlas'],
+  packages=['satlas', 'satlas.lmfit', 'satlas.lmfit.ui', 'satlas.lmfit.uncertainties', 'satlas.emcee', 'satlas.tqdm'],
   version=__release__,
   description='This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both chi2-fitting and Maximum Likelihood Estimation routines, are present.',
   author='Wouter Gins',
@@ -24,5 +24,4 @@ setup(
                'Programming Language :: Python :: 2',
                'Programming Language :: Python :: 3',
                'Topic :: Scientific/Engineering :: Physics'],
-    packages=['satlas', 'satlas.lmfit', 'satlas.emcee', 'satlas.tqdm']
 )

@@ -411,7 +411,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                 pbar.update(1)
         # pbar.finish()
         Z = -Z
-        bounds = [-3, -2, -1, 1]
+        bounds = [-11.8, -6.17, -2.3, 1]
         if method.lower() == 'mle':
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
