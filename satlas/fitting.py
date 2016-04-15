@@ -323,13 +323,11 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     immediately returning -np.inf."""
     try:
         lp = f.get_lnprior_mapping(params)
-    except:
-        raise
-        f.params = params
+    except AttributeError:
         lp = f.lnprior()
+        f.params = params
     if not np.isfinite(lp):
         return -np.inf
-    f.params = params
     res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
     return res
 
@@ -689,10 +687,6 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     def lnprobList(fvars, groupParams, f, x, y, xerr, func):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
-        if np.isnan(likelihood_lnprob(groupParams, f, x, y, xerr, func)):
-            print(var_names)
-            for val, n in zip(fvars, var_names):
-                print(n, val)
         return likelihood_lnprob(groupParams, f, x, y, xerr, func)
 
     groupParams = lm.Parameters()

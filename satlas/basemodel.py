@@ -156,7 +156,7 @@ class BaseModel(object):
                 try:
                     leftbound, rightbound = (par.priormin,
                                              par.priormax)
-                except:
+                except AttributeError:
                     leftbound, rightbound = par.min, par.max
                 leftbound = -np.inf if leftbound is None else leftbound
                 rightbound = np.inf if rightbound is None else rightbound
