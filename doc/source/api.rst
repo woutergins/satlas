@@ -5,9 +5,13 @@ API reference
 
 .. currentmodule:: satlas
 
-BaseModel creation
-------------------
+Note that the CombinedModel and MultiModel are still available for use, but are deprecated and will be removed in a future release. Please upgrade your code to use :class:`.LinkedModel` and :class:`.SumModel` instead.
 
+Models
+------
+
+General Models
+~~~~~~~~~~~~~~
 .. note::
 
     The abstract baseclass :class:`.BaseModel` defines a few methods for retrieving information about the current state of the fit. These methods are not documented in the child classes, but will be regularly used.
@@ -16,16 +20,27 @@ BaseModel creation
     :toctree: generated/
 
     satlas.basemodel.BaseModel
+    satlas.summodel.SumModel
+    satlas.linkedmodel.LinkedModel
+    satlas.models.MiscModel
+
+Specialized Models
+~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree: generated/
+
     satlas.hfsmodel.HFSModel
-    satlas.multimodel.MultiModel
-    satlas.combinedmodel.CombinedModel
+    satlas.transformmodel.TransformHFSModel
+    satlas.models.PolynomialModel
 
 Fitting routines
 ----------------
+.. automodule:: satlas.fitting
 
 .. autosummary::
       :toctree: fitting/
 
+      satlas.fitting.calculate_analytical_uncertainty
       satlas.fitting.chisquare_fit
       satlas.fitting.chisquare_model
       satlas.fitting.chisquare_spectroscopic_fit
@@ -35,6 +50,19 @@ Fitting routines
       satlas.fitting.likelihood_lnprob
       satlas.fitting.likelihood_loglikelihood
 
+Likelihood calculations
+-----------------------
+
+.. automodule:: satlas.loglikelihood
+
+.. autosummary::
+      :toctree: loglikelihood/
+
+      satlas.loglikelihood.poisson_llh
+      satlas.loglikelihood.gaussian_llh
+      satlas.loglikelihood.create_gaussian_llh
+      satlas.loglikelihood.create_gaussian_priormap
+
 Lineshapes
 ----------
 
@@ -43,6 +71,7 @@ Lineshapes
    .. autosummary::
       :toctree: profiles/
 
+      satlas.profiles.Crystalball
       satlas.profiles.Gaussian
       satlas.profiles.Lorentzian
       satlas.profiles.Voigt
@@ -56,9 +85,9 @@ Utilities
    .. autosummary::
       :toctree: utilities/
 
-      satlas.utilities.concat_results
       satlas.utilities.generate_correlation_plot
       satlas.utilities.generate_correlation_map
       satlas.utilities.generate_spectrum
+      satlas.utilities.load_model
       satlas.utilities.poisson_interval
       satlas.utilities.weighted_average

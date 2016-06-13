@@ -1,0 +1,283 @@
+"""
+Implementation of a class for the analysis of hyperfine structure spectra with isomeric presence.
+
+.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+"""
+import copy
+
+from . import lmfit as lm
+from .basemodel import BaseModel
+from .utilities import poisson_interval
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+__all__ = ['SumModel']
+
+
+class SumModel(BaseModel):
+
+    """Create a model that sums all the underlying models for a single input variable."""
+
+    def __init__(self, models):
+        """Initializes the HFS by providing a list of :class:`.HFSModel`
+        objects.
+
+        Parameters
+        ----------
+        models: list of :class:`.HFSModel` instances
+            A list containing the models."""
+        super(SumModel, self).__init__()
+        self.models = models
+        self.shared = []
+
+    def get_chisquare_mapping(self):
+        return np.hstack([f.get_chisquare_mapping() for f in self.models])
+
+    def get_lnprior_mapping(self, params):
+        return sum([f.get_lnprior_mapping(params) for f in self.models])
+
+    @property
+    def shared(self):
+        """Contains all parameters which share the same value among all models."""
+        return self._shared
+
+    @shared.setter
+    def shared(self, value):
+        self._shared = value
+
+    @property
+    def params(self):
+        """Instance of lmfit.Parameters object characterizing the
+        shape of the HFS."""
+        params = lm.Parameters()
+        for i, s in enumerate(self.models):
+            p = copy.deepcopy(s.params)
+            keys = list(p.keys())
+            for old_key in keys:
+                new_key = 's' + str(i) + '_' + old_key
+                p[new_key] = p.pop(old_key)
+                if p[new_key].expr is not None:
+                    for o_key in keys:
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if any([shared in old_key for shared in self.shared]) and i > 0:
+                    p[new_key].expr = 's0_' + old_key
+                    p[new_key].vary = False
+                if i > 0 and 'Background' in new_key:
+                    p[new_key].value = 0
+                    p[new_key].vary = False
+                    p[new_key].expr = None
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
+            params += p
+        return params
+
+    @params.setter
+    def params(self, params):
+        for i, spec in enumerate(self.models):
+            par = lm.Parameters()
+            for key in params:
+                if key.startswith('s'+str(i)+'_'):
+                    new_key = key[len('s'+str(i)+'_'):]
+                    expr = params[key].expr
+                    if expr is not None:
+                        for k in params:
+                            nk = k[len('s'+str(i)+'_'):]
+                            expr = expr.replace(k, nk)
+                    par[new_key] = lm.Parameter(new_key,
+                                                value=params[key].value,
+                                                min=params[key].min,
+                                                max=params[key].max,
+                                                vary=params[key].vary,
+                                                expr=expr)
+                    par[new_key].stderr = params[key].stderr
+            spec.params = par
+
+    def seperate_response(self, x, background=False):
+        """Get the response for each seperate spectrum for the values *x*,
+        without background.
+
+        Parameters
+        ----------
+        x : float or array_like
+            Frequency in MHz.
+
+        Other parameters
+        ----------------
+        background: boolean
+            If True, each spectrum has the same background. If False,
+            the background of each spectrum is assumed to be 0.
+
+        Returns
+        -------
+        list of floats or NumPy arrays
+            Seperate responses of models to the input *x*."""
+        background_vals = [np.polyval([s.params[par_name].value for par_name in s.params if par_name.startswith('Background')], x) for s in self.models]
+        back = self.models[0].params['Background'].value if background else 0
+        return [s(x) - b + back for s, b in zip(self.models, background_vals)]
+
+    ###############################
+    #      PLOTTING ROUTINES      #
+    ###############################
+
+    def plot(self, x=None, y=None, yerr=None, ax=None,
+             plot_kws={}, plot_seperate=True, show=True,
+             legend=None, data_legend=None, xlabel='Frequency (MHz)',
+             ylabel='Counts'):
+        """Routine that plots the hfs of all the models,
+        possibly on top of experimental data.
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        plot_seperate: boolean, optional
+            Controls if the underlying models are drawn as well, or only
+            the sum. Defaults to False.
+        no_of_points: int
+            Number of points to use for the plot of the hfs if
+            experimental data is given.
+        ax: matplotlib axes object
+            If provided, plots on this axis.
+        show: boolean
+            If True, the plot will be shown at the end.
+        legend: string, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: string, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
+        xlabel: string, optional
+            If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
+        ylabel: string, optional
+            If given, sets the ylabel to this string. Defaults to 'Counts'.
+        indicate: boolean, optional
+            If set to True, dashed lines are drawn to indicate the location of the
+            transitions, and the labels are attached. Defaults to False.
+        model: boolean, optional
+            If given, the region around the fitted line will be shaded, with
+            the luminosity indicating the pmf of the Poisson
+            distribution characterized by the value of the fit. Note that
+            the argument *yerr* is ignored if *model* is True.
+        normalized: Boolean
+            If True, the data and fit are plotted normalized such that the highest
+            data point is one.
+        distance: float, optional
+            Controls how many FWHM deviations are used to generate the plot.
+            Defaults to 4.
+
+        Returns
+        -------
+        fig, ax: matplotlib figure and axes"""
+        if ax is None:
+            fig, ax = plt.subplots(1, 1)
+        else:
+            fig = ax.get_figure()
+        toReturn = fig, ax
+
+        if x is not None and y is not None:
+            try:
+                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+            except:
+                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+
+        plot_kws['background'] = False
+        x_points = np.array([])
+        line_counter = 1
+        for m in self.models:
+            # plot_kws['legend'] = 'I=' + str(m.I)
+            color = ax.lines[-1].get_color()
+            m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_kws)
+            # plot_kws['indicate'] = False
+            x_points = np.append(x_points, ax.lines[-1].get_xdata())
+            if not plot_seperate:
+                ax.lines.pop(-1)
+            if x is not None:
+                ax.lines.pop(-1 - plot_seperate)
+            while not next(ax._get_lines.prop_cycler)['color'] == color:
+                pass
+            if plot_seperate:
+                c = next(ax._get_lines.prop_cycler)['color']
+                for l in ax.lines[line_counter:]:
+                    l.set_color(c)
+                while not next(ax._get_lines.prop_cycler)['color'] == c:
+                    pass
+            line_counter = len(ax.lines)
+        x = np.sort(x_points)
+        ax.plot(x, self(x))
+
+        # ax.set_xlabel(xlabel)
+        # ax.set_ylabel(ylabel)
+
+        if show:
+            plt.show()
+        return toReturn
+
+    def plot_spectroscopic(self, x=None, y=None, plot_kws={}, **kwargs):
+        """Routine that plots the hfs of all the models, possibly on
+        top of experimental data. It assumes that the y data is drawn from
+        a Poisson distribution (e.g. counting data).
+
+        Parameters
+        ----------
+        x: list of arrays
+            Experimental x-data. If list of Nones, a suitable region around
+            the peaks is chosen to plot the hfs.
+        y: list of arrays
+            Experimental y-data.
+        yerr: list of arrays
+            Experimental errors on y.
+        no_of_points: int
+            Number of points to use for the plot of the hfs.
+        ax: matplotlib axes object
+            If provided, plots on this axis
+        show: Boolean
+            if True, the plot will be shown at the end.
+
+        Returns
+        -------
+        fig, ax: matplotlib figure and axes"""
+
+        if y is not None:
+            ylow, yhigh = poisson_interval(y)
+            yerr = {'low': ylow, 'high': yhigh}
+        else:
+            yerr = None
+        return self.plot(x=x, y=y, yerr=yerr, plot_kws=plot_kws, **kwargs)
+
+    def __add__(self, other):
+        """Adding an SumModel results in a new SumModel
+        with the new spectrum added.
+
+        Returns
+        -------
+        SumModel"""
+        if isinstance(other, SumModel):
+            models = self.models + other.models
+            return SumModel(models)
+        else:
+            try:
+                return other.__add__(self)
+            except:
+                raise TypeError('unsupported operand type(s)')
+
+    def __call__(self, x):
+        """Get the response for frequency *x* (in MHz) of the spectrum.
+
+        Parameters
+        ----------
+        x : float or array_like
+            Frequency in MHz
+
+        Returns
+        -------
+        float or NumPy array
+            Response of the spectrum for each value of *x*."""
+        return np.sum([s(x) for s in self.models], axis=0)

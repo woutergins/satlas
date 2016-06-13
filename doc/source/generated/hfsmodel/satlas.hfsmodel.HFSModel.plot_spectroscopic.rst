@@ -1,5 +1,5 @@
 satlas.hfsmodel.HFSModel.plot_spectroscopic
-=======================================================
+===========================================
 
 .. currentmodule:: satlas.hfsmodel
 

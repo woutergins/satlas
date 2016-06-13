@@ -1,21 +1,38 @@
+from .version import __version__, __release__
 import matplotlib as mpl
 from . import hfsmodel
 from .hfsmodel import *
-from . import combinedmodel
-from .combinedmodel import *
-from . import multimodel
-from .multimodel import *
+from . import transformmodel
+from .transformmodel import *
+from . import models
+from .models import *
+from . import linkedmodel
+from .linkedmodel import *
+from . import summodel
+from .summodel import *
 from . import utilities
 from .utilities import *
 from . import fitting
 from .fitting import *
+from . import loglikelihood
+from .loglikelihood import *
+
+from . import combinedmodel
+from .combinedmodel import *
+from . import multimodel
+from .multimodel import *
+
 __all__ = []
 
 __all__.extend(hfsmodel.__all__)
-__all__.extend(combinedmodel.__all__)
-__all__.extend(multimodel.__all__)
+__all__.extend(transformmodel.__all__)
+__all__.extend(models.__all__)
+__all__.extend(linkedmodel.__all__)
+__all__.extend(summodel.__all__)
 __all__.extend(utilities.__all__)
 __all__.extend(fitting.__all__)
+__all__.extend(combinedmodel.__all__)
+__all__.extend(summodel.__all__)
 
 style = {'backend': 'qt4agg',
          'lines.linewidth': 3,
@@ -61,7 +78,7 @@ style = {'backend': 'qt4agg',
          'axes.formatter.use_mathtext': True,
          'axes.formatter.useoffset': False,
          'axes.unicode_minus': True,
-         'axes.color_cycle': ['0072B2', '009E73', 'D55E00', 'CC79A7', 'F0E442', '56B4E9'],
+         'axes.color_cycle': ['#0072B2', '#009E73', '#D55E00', '#CC79A7', '#F0E442', '#56B4E9'],
          'axes.xmargin': 0,
          'axes.ymargin': 0,
          'polaraxes.grid': True,
@@ -135,6 +152,6 @@ style = {'backend': 'qt4agg',
          'savefig.pad_inches': 0.1,
          'savefig.jpeg_quality': 95,
          'savefig.directory': '',
-         'savefig.transparent': True}
+         'savefig.transparent': False}
 for key in style:
     mpl.rcParams[key] = style[key]

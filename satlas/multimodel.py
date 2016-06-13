@@ -4,14 +4,18 @@ Implementation of a class for the analysis of hyperfine structure spectra with i
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import numpy as np
-import matplotlib.pyplot as plt
+import copy
+import warnings
+
+from . import lmfit as lm
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-import lmfit
-import copy
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 __all__ = ['MultiModel']
+warn_msg = """Use of the class MultiModel has been deprecated and will be removed in further updates. Please use the SumModel class in the future."""
 
 
 class MultiModel(BaseModel):
@@ -27,15 +31,16 @@ class MultiModel(BaseModel):
         ----------
         models: list of :class:`.HFSModel` instances
             A list containing the models."""
+        warnings.warn(warn_msg)
         super(MultiModel, self).__init__()
         self.models = models
         self.shared = []
 
-    def lnprior(self, params):
-        return_value = 0
-        for i, spec in enumerate(self.models):
-            return_value += spec.lnprior()
-        return return_value
+    def get_chisquare_mapping(self):
+        return np.hstack([f.get_chisquare_mapping() for f in self.models])
+
+    def get_lnprior_mapping(self):
+        return sum([f.get_lnprior_mapping() for f in self.models])
 
     @property
     def shared(self):
@@ -50,17 +55,18 @@ class MultiModel(BaseModel):
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        params = lmfit.Parameters()
+        params = lm.Parameters()
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
                 p[new_key] = p.pop(old_key)
-                for o_key in keys:
-                    if p[new_key].expr is not None:
-                        n_key = 's' + str(i) + '_' + o_key
-                        p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                if p[new_key].expr is not None:
+                    for o_key in keys:
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
@@ -68,13 +74,15 @@ class MultiModel(BaseModel):
                     p[new_key].value = 0
                     p[new_key].vary = False
                     p[new_key].expr = None
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
             params += p
         return params
 
     @params.setter
     def params(self, params):
         for i, spec in enumerate(self.models):
-            par = lmfit.Parameters()
+            par = lm.Parameters()
             for key in params:
                 if key.startswith('s'+str(i)+'_'):
                     new_key = key[len('s'+str(i)+'_'):]
@@ -83,9 +91,13 @@ class MultiModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = params[key].__class__()
-                    par[new_key].__setstate__(params[key].__getstate__())
-                    par[new_key].expr = expr
+                    par[new_key] = lm.Parameter(new_key,
+                                                value=params[key].value,
+                                                min=params[key].min,
+                                                max=params[key].max,
+                                                vary=params[key].vary,
+                                                expr=expr)
+                    par[new_key].stderr = params[key].stderr
             spec.params = par
 
     def seperate_response(self, x, background=False):
@@ -107,18 +119,19 @@ class MultiModel(BaseModel):
         -------
         list of floats or NumPy arrays
             Seperate responses of models to the input *x*."""
+        background_vals = [np.polyval([s.params[par_name].value for par_name in s.params if par_name.startswith('Background')], x) for s in self.models]
         back = self.models[0].params['Background'].value if background else 0
-        return [s(x) - s.params['Background'].value + back  for s in self.models]
+        return [s(x) - b + back for s, b in zip(self.models, background_vals)]
 
     ###############################
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None,
-             show=True, xlabel='Frequency (MHz)',
-             ylabel='Counts', data_legend='Data',
-             indicate=False):
+    def plot(self, x=None, y=None, yerr=None, ax=None,
+             plot_seperate=True, no_of_points=10**3, show=True,
+             legend=None, data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
+             indicate=False, model=False, colormap='bone_r',
+             normalized=False, distance=4):
         """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 
@@ -131,21 +144,39 @@ class MultiModel(BaseModel):
             Experimental y-data.
         yerr: list of arrays
             Experimental errors on y.
+        plot_seperate: boolean, optional
+            Controls if the underlying models are drawn as well, or only
+            the sum. Defaults to False.
         no_of_points: int
-            Number of points to use for the plot of the hfs.
+            Number of points to use for the plot of the hfs if
+            experimental data is given.
         ax: matplotlib axes object
-            If provided, plots on this axis
+            If provided, plots on this axis.
         show: boolean
             If True, the plot will be shown at the end.
-        xlabel: string
-            String to display on the x-axis.
-        ylabel: string
-            String to display on the y-axis.
-        data_legend: string
-            String to use as the legend for the data.
-        indicate: boolean
-            If True, the peaks will be marked with
-            the transition.
+        legend: string, optional
+            If given, an entry in the legend will be made for the spectrum.
+        data_legend: string, optional
+            If given, an entry in the legend will be made for the experimental
+            data.
+        xlabel: string, optional
+            If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
+        ylabel: string, optional
+            If given, sets the ylabel to this string. Defaults to 'Counts'.
+        indicate: boolean, optional
+            If set to True, dashed lines are drawn to indicate the location of the
+            transitions, and the labels are attached. Defaults to False.
+        model: boolean, optional
+            If given, the region around the fitted line will be shaded, with
+            the luminosity indicating the pmf of the Poisson
+            distribution characterized by the value of the fit. Note that
+            the argument *yerr* is ignored if *model* is True.
+        normalized: Boolean
+            If True, the data and fit are plotted normalized such that the highest
+            data point is one.
+        distance: float, optional
+            Controls how many FWHM deviations are used to generate the plot.
+            Defaults to 4.
 
         Returns
         -------
@@ -162,8 +193,8 @@ class MultiModel(BaseModel):
             fwhm = max([p.fwhm for s in self.models for p in s.parts])
 
             for pos in [l for spectrum in self.models for l in spectrum.locations]:
-                r = np.linspace(pos - 4 * fwhm,
-                                pos + 4 * fwhm,
+                r = np.linspace(pos - distance * fwhm,
+                                pos + distance * fwhm,
                                 2 * 10**2)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
@@ -171,29 +202,59 @@ class MultiModel(BaseModel):
         else:
             superx = np.linspace(x.min(), x.max(), no_of_points)
 
+        if normalized:
+            norm = np.max(y)
+        else:
+            norm = 1
+
         if x is not None and y is not None:
-            try:
-                ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
-            except:
-                ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+            if not model:
+                try:
+                    ax.errorbar(x, y, yerr=[y - yerr['low'], yerr['high'] - y], fmt='o', label=data_legend)
+                except:
+                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+            else:
+                ax.plot(x, y, 'o')
         resp = self.seperate_response(superx)
 
-        for i, r in enumerate(resp):
-            line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
-            if indicate:
-                for l, lab in zip(self.models[i].locations, self.models[i].ftof):
-                    lab = lab.split('__')
-                    lab = lab[0] + '$\\rightarrow$' + lab[1]
-                    ax.annotate(lab, xy=(l, self.models[i](l)), rotation=90, color=line.get_color(),
-                                weight='bold', size=14, ha='center')
-        ax.plot(superx, self(superx), label='Total')
+        if plot_seperate:
+            for i, r in enumerate(resp):
+                line, = ax.plot(superx, r, label='I=' + str(self.models[i].I))
+                if indicate:
+                    for l, lab in zip(self.models[i].locations, self.models[i].ftof):
+                        lab = lab.split('__')
+                        lab = lab[0] + '$\\rightarrow$' + lab[1]
+                        ax.annotate(lab, xy=(l, self.models[i](l)/norm), rotation=90, color=line.get_color(),
+                                    weight='bold', size=14, ha='center')
+        if model:
+            range = (self.locations.min(), self.locations.max())
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
+            min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
+            min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
+            y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
+            x, y = np.meshgrid(superx, y)
+            from scipy import stats
+            z = stats.poisson(self(x) / norm).pmf(y)
 
+            z = z / z.sum(axis=0)
+            ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
+            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5)
+        else:
+            line, = ax.plot(superx, self(superx)/norm, label=legend)
+        if indicate:
+            for (p, l) in zip(self.locations, self.ftof):
+                height = self(p)
+                lab = l.split('__')
+                lableft = '/'.join(lab[0].split('_'))
+                labright = '/'.join(lab[1].split('_'))
+                lab = '$' + lableft + '\\rightarrow' + labright + '$'
+                ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
+                            weight='bold', size=14, ha='center', va='bottom')
+                ax.axvline(p, linewidth=0.5, linestyle='--')
+        ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
 
-        ax.legend(loc=0)
-
-        plt.tight_layout()
         if show:
             plt.show()
         return toReturn

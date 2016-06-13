@@ -1,5 +1,5 @@
 satlas.hfsmodel.HFSModel.fix_ratio
-==============================================
+==================================
 
 .. currentmodule:: satlas.hfsmodel
 

@@ -20,3 +20,5 @@ def test_combinedmodel():
             return False
     except:
         return False
+
+print(test_combinedmodel())

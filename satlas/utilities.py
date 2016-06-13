@@ -3,33 +3,39 @@ Implementation of various functions that ease the work, but do not belong in one
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 """
-import emcee as mcmc
-import lmfit as lm
+import copy
+
+from . import emcee as mcmc
+from . import lmfit as lm
+from . import tqdm
+import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from scipy.stats import chi2
 from scipy import optimize
-import h5py
-import copy
-import progressbar
-import dask.array as da
+from scipy.stats import chi2
+
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
 
 cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
+cmap.set_over('#A6CEE3')
+cmap.set_under('#B2DF8A')
 invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
+invcmap.set_under('#A6CEE3')
+invcmap.set_over('#B2DF8A')
 
 __all__ = ['weighted_average',
            'generate_correlation_map',
            'generate_correlation_plot',
            'generate_spectrum',
-           'concat_results',
-           'poisson_interval']
+           'poisson_interval',
+           'load_model',
+           'beta',
+           'dopplerfactor']
 
 def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated
@@ -173,7 +179,7 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}):
+def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}, distance=3, npar=1):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -204,10 +210,14 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
     resolution_map: int
         Number of points along each dimension for the meshgrids.
     fit_kws: dictionary
-        Dictionary of keywords to pass on to the fitting routine."""
+        Dictionary of keywords to pass on to the fitting routine.
+    npar: int
+        Number of parameters for which simultaneous predictions need to be made.
+        Influences the uncertainty estimates from the parabola."""
     from . import fitting
 
     def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
+        params = copy.deepcopy(params)
         try:
             if all(value == orig_value):
                 return 0
@@ -226,24 +236,38 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             success, message = func(f, x, y, **fit_kws)
             counter += 1
             if counter > 10:
-                success = True
-                print('Fitting did not converge, carrying on...')
+                return np.nan
         return_value = getattr(f, attr) - orig_value
+        try:
+            try:
+                params_name = ' '.join(params_name)
+            except:
+                pass
+            pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
+            pbar.update(1)
+        except:
+            pass
         return return_value
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
+    mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
+               'chisquare': (fitting.chisquare_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
     title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    fit_kws['verbose'] = False
 
-    func(f, x_data, y_data, **fit_kws)
+    to_save = {'mle': ('mle_fit', 'mle_result')}
+    to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof', 'redchi'))
+    saved = [copy.deepcopy(getattr(f, attr)) for attr in to_save]
 
     orig_value = getattr(f, attr)
     orig_params = copy.deepcopy(f.params)
 
     ranges = {}
 
+    chifunc = lambda x: chi2.cdf(x, npar) - 0.682689492 # Calculate 1 sigma boundary
+    boundary = optimize.root(chifunc, npar).x[0] * 0.5 if method.lower() == 'mle' else optimize.root(chifunc, npar).x[0]
     # Select all variable parameters, generate the figure
     param_names = []
     no_params = 0
@@ -256,16 +280,16 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
     # Make the plots on the diagonal: plot the chisquare/likelihood
     # for the best fitting values while setting one parameter to
     # a fixed value.
+    saved_params = copy.deepcopy(f.params)
     for i in range(no_params):
+        params = copy.deepcopy(saved_params)
         ranges[param_names[i]] = {}
-        # Initialize the progressbar and set the y-ticklabels.
-        widgets = [param_names[i]+': ',
-                   progressbar.Percentage(),
-                   ' ',
-                   progressbar.Bar(marker=progressbar.RotatingMarker()),
-                   ' ',
-                   progressbar.AdaptiveETA()]
-        params = f.params
+
+        # orig_value = getattr(f, attr)
+        # orig_params = copy.deepcopy(f.params)
+        # res = fit_new_value(f.params[param_names[i]].value, f, f.params, param_names[i], x_data, y_data, orig_value, func)
+        # orig_value += res
+        # Set the y-ticklabels.
         ax = axes[i, i]
         ax.set_title(param_names[i])
         plt.setp(ax.get_yticklabels(), visible=True)
@@ -275,36 +299,58 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
         # Select starting point to determine error widths.
-        value = orig_params[param_names[i]].value
-        stderr = orig_params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else 0.1 * value
-        stderr = stderr if stderr != 0 else 0.1 * value
+        value = params[param_names[i]].value
+        stderr = params[param_names[i]].stderr
+        stderr = stderr if stderr is not None else np.abs(0.01 * value)
+        stderr = stderr if stderr != 0 else np.abs(0.01 * value)
         # Search for a value to the right which gives an increase greater than 1.
         search_value = value
-        while True:
-            search_value += 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-            print(search_value, new_value)
-            if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                print('Found value on the right: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                ranges[param_names[i]]['right'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), value, search_value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
-                print('Found optimal right value: {:.2f}'.format(ranges[param_names[i]]['right']))
-                break
+        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:
+            while True:
+                search_value += 0.5*stderr
+                if search_value > orig_params[param_names[i]].max:
+                    pbar.set_description(param_names[i] + ' (right limit reached)')
+                    pbar.update(1)
+                    search_value = orig_params[param_names[i]].max
+                    ranges[param_names[i]]['right'] = search_value
+                    break
+                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func) - boundary
+                pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
+                pbar.update(1)
+                if new_value > 0:
+                    pbar.set_description(param_names[i] + ' (finding root)')
+                    pbar.update(1)
+                    result = optimize.ridder(lambda *args: fit_new_value(*args) - boundary,
+                                             value, search_value,
+                                             args=(f, params, param_names[i], x_data, y_data, orig_value, func))
+                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
+                    pbar.update(1)
+                    ranges[param_names[i]]['right'] = result
+                    break
         search_value = value
+
         # Do the same for the left
-        while True:
-            search_value -= 0.5*stderr
-            new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-            print(search_value, new_value)
-            if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                print('Found value on the left: {:.2f}, gives a value of {:.2f}'.format(search_value, new_value))
-                ranges[param_names[i]]['left'] = optimize.brentq(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')), search_value, value,
-                                                                  args=(f, params, param_names[i], x_data,
-                                                                        y_data, orig_value, func))
-                print('Found optimal left value: {:.2f}'.format(ranges[param_names[i]]['left']))
-                break
+        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching left)', mininterval=0) as pbar:
+            while True:
+                search_value -= 0.5*stderr
+                if search_value < orig_params[param_names[i]].min:
+                    pbar.set_description(param_names[i] + ' (left limit reached)')
+                    pbar.update(1)
+                    search_value = orig_params[param_names[i]].min
+                    ranges[param_names[i]]['left'] = search_value
+                    break
+                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+                pbar.set_description(param_names[i] + ' (searching left: ' + str(new_value) + ')')
+                if new_value > boundary:
+                    pbar.set_description(param_names[i] + ' (searching root)')
+                    pbar.update(1)
+                    result = optimize.ridder(lambda *args: fit_new_value(*args) - boundary,
+                                           value, search_value,
+                                           args=(f, params, param_names[i], x_data, y_data, orig_value, func))
+                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
+                    pbar.update(1)
+                    ranges[param_names[i]]['left'] = result
+                    break
 
         # Keep the parameter fixed, and let it vary (with given number of points)
         # in a deviation of 4 sigma in both directions.
@@ -313,33 +359,31 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
         left = np.abs(ranges[param_names[i]]['left'] - value)
         params[param_names[i]].vary = False
 
-        value_range = np.linspace(value - 4 * left, value + 4 * right, resolution_diag)
+        left_val, right_val = max(value - distance * left, orig_params[param_names[i]].min), min(value + distance * right, orig_params[param_names[i]].max)
+        ranges[param_names[i]]['right_val'] = right_val
+        ranges[param_names[i]]['left_val'] = left_val
+        value_range = np.linspace(left_val, right_val, resolution_diag)
         chisquare = np.zeros(len(value_range))
-        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(value_range)).start()
         # Calculate the new value, and store it in the array. Update the progressbar.
-        for j, v in enumerate(value_range):
-            chisquare[j] = fit_new_value(v, f, params, param_names[i],
-                                         x_data, y_data, orig_value, func)
-            pbar += 1
-        pbar.finish()
+        with tqdm.tqdm(value_range, desc=param_names[i], leave=True) as pbar:
+            for j, v in enumerate(value_range):
+                chisquare[j] = fit_new_value(v, f, params, param_names[i],
+                                             x_data, y_data, orig_value, func)
+                pbar.update(1)
         # Plot the result
         ax.plot(value_range, chisquare)
 
         # For chisquare, an increase of 1 corresponds to 1 sigma errorbars.
         # For the loglikelihood, this need to be reduced by a factor of 2.
-        ax.axhline(1 - 0.5*(method.lower()=='mle'), ls="dashed")
+        ax.axhline(boundary, ls="dashed")
         # Indicate the used interval.
         ax.axvline(value + right)
         ax.axvline(value - left)
         ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
         f.params = copy.deepcopy(orig_params)
-        func(f, x_data, y_data, **fit_kws)
 
     for i, j in zip(*np.tril_indices_from(axes, -1)):
-        widgets = [param_names[j]+' ' + param_names[i]+': ', progressbar.Percentage(), ' ',
-                   progressbar.Bar(marker=progressbar.RotatingMarker()),
-                   ' ', progressbar.AdaptiveETA()]
         params = copy.deepcopy(orig_params)
         ax = axes[i, j]
         x_name = param_names[j]
@@ -348,59 +392,66 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare', filter=None,
             ax.set_ylabel(y_name)
         if i == no_params - 1:
             ax.set_xlabel(x_name)
-        # middle = (ranges[x_name]['left'] + ranges[x_name]['right']) * 0.5
-        value = params[x_name].value
-        right = np.abs(ranges[x_name]['right'] - value)
-        left = np.abs(ranges[x_name]['left'] - value)
+        right = ranges[x_name]['right_val']
+        left = ranges[x_name]['left_val']
         params[x_name].vary = False
-        x_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+        x_range = np.linspace(left, right, resolution_map)
 
-        value = params[y_name].value
-        right = np.abs(ranges[y_name]['right'] - value)
-        left = np.abs(ranges[y_name]['left'] - value)
+        right = ranges[y_name]['right_val']
+        left = ranges[y_name]['left_val']
         params[y_name].vary = False
-        y_range = np.linspace(value - 4 * left, value + 4 * right, resolution_map)
+        y_range = np.linspace(left, right, resolution_map)
+
+        # ori_value = orig_value + fit_new_value([params[x_name].value, params[y_name].value], f, params, [x_name, y_name], x_data, y_data, orig_value, func)
 
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
         i_indices, j_indices = np.indices(Z.shape)
-        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(Z.flatten())).start()
-        for k, l in zip(i_indices.flatten(), j_indices.flatten()):
-            x = X[k, l]
-            y = Y[k, l]
-            Z[k, l] = fit_new_value([x, y], f, params, [x_name, y_name],
-                                    x_data, y_data, orig_value, func)
-            pbar += 1
-        pbar.finish()
+        with tqdm.tqdm(i_indices.flatten(), desc=param_names[j]+' ' + param_names[i], leave=True) as pbar:
+            for k, l in zip(i_indices.flatten(), j_indices.flatten()):
+                x = X[k, l]
+                y = Y[k, l]
+                Z[k, l] = fit_new_value([x, y], f, params, [x_name, y_name],
+                                        x_data, y_data, orig_value, func)
+                pbar.update(1)
+        # pbar.finish()
         Z = -Z
-        bounds = [-9, -6, -2, 0]
+        npar = 2
+        bounds = []
+        for bound in [0.997300204, 0.954499736, 0.682689492]:
+            chifunc = lambda x: chi2.cdf(x, npar) - bound # Calculate 1 sigma boundary
+            bounds.append(-optimize.root(chifunc, npar).x[0])
+        bounds.append(1)
         if method.lower() == 'mle':
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
         contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
-        f.params = orig_params
-        func(f, x_data, y_data, **fit_kws)
+        f.params = copy.deepcopy(orig_params)
+    if method.lower() == 'mle':
+        f.mle_fit = copy.deepcopy(orig_params)
+    else:
+        f.chisq_res_par
     try:
         cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
         cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
         cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     except:
         pass
-
+    setattr(f, attr, orig_value)
+    for attr, value in zip(to_save, saved):
+        setattr(f, attr, copy.deepcopy(value))
     return fig, axes, cbar
 
-def _diaconis_rule(data, min, max):
+def _diaconis_rule(data, minimum, maximum):
     iqr = np.subtract(*np.percentile(data, [75, 25]))
-    print('iqr', iqr)
-    # iqr = np.subtract(*np.percentile(data, [75, 25]))
     bin_size = 2 * iqr * data.shape[0]**(-1/3)
-    print('binsize', bin_size)
-    if bin_size == 0:
-        return np.sqrt(data)
+    bin_size = 0.01 * (maximum - minimum)
+    if bin_size == 0 or bin_size < 0.01 * (maximum - minimum):
+        return np.ceil(np.sqrt(maximum - minimum))
     else:
-        return np.ceil((max - min) / bin_size)
+        return np.ceil((maximum - minimum) / bin_size)
 
-def generate_correlation_plot(filename, filter=None):
+def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 100)):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
     3 sigma contours on the off-diagonal. The 1-sigma limits based on the
@@ -412,17 +463,13 @@ def generate_correlation_plot(filename, filter=None):
         Filename for the h5 file containing the data from the walk.
     filter: list of str, optional
         If supplied, only this list of columns is used for the plot.
+    bins: int or list of int, optional
+        If supplied, use this number of bins for the plotting.
 
     Returns
     -------
     figure
         Returns the MatPlotLib figure created."""
-    widgets = ['Generating plots: ',
-               progressbar.Percentage(),
-               ' ',
-               progressbar.Bar(marker=progressbar.RotatingMarker()),
-               ' ',
-               progressbar.AdaptiveETA()]
     with h5py.File(filename, 'r') as store:
         columns = store['data'].attrs['format']
         columns = [f.decode('utf-8') for f in columns]
@@ -430,79 +477,87 @@ def generate_correlation_plot(filename, filter=None):
             filter = [c for f in filter for c in columns if f in c]
         else:
             filter = columns
-        pbar = progressbar.ProgressBar(widgets=widgets, maxval=len(filter)+(len(filter)**2-len(filter))/2).start()
+        with tqdm.tqdm(total=len(filter)+(len(filter)**2-len(filter))/2, leave=True) as pbar:
+            fig, axes, cbar = _make_axes_grid(len(filter), axis_padding=0)
 
-        fig, axes, cbar = _make_axes_grid(len(filter), axis_padding=0)
-
-        metadata = {}
-        for i, val in enumerate(filter):
-            ax = axes[i, i]
-            i = columns.index(val)
-            x = store['data'][:, i]
-            bins = _diaconis_rule(x, x.min(), x.max())
-            try:
-                ax.hist(x, bins)
-            except ValueError:
-                bins = 50
-                ax.hist(x, bins)
-            metadata[val] = {'bins': bins, 'min': x.min(), 'max': x.max()}
-
-            q = [16.0, 50.0, 84.0]
-            q16, q50, q84 = np.percentile(x, q)
-
-            title = val + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
-            ax.set_title(title.format(q50, q50-q16, q84-q50))
-            qvalues = [q16, q50, q84]
-            for q in qvalues:
-                ax.axvline(q, ls="dashed")
-            ax.set_yticks([])
-            ax.set_yticklabels([])
-            pbar += 1
-
-        for i, j in zip(*np.tril_indices_from(axes, -1)):
-            x_name = filter[j]
-            y_name = filter[i]
-            ax = axes[i, j]
-            if j == 0:
-                ax.set_ylabel(filter[i])
-            if i == len(filter) - 1:
-                ax.set_xlabel(filter[j])
-            j = columns.index(x_name)
-            i = columns.index(y_name)
-            x = store['data'][:, j]
-            y = store['data'][:, i]
-            x_min, x_max, x_bins = metadata[x_name]['min'], metadata[x_name]['max'], metadata[x_name]['bins']
-            y_min, y_max, y_bins = metadata[y_name]['min'], metadata[y_name]['max'], metadata[y_name]['bins']
-            X = np.linspace(x_min, x_max, x_bins + 1)
-            Y = np.linspace(y_min, y_max, y_bins + 1)
-            H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
-                                     weights=None)
-            X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
-            X, Y = X[:-1], Y[:-1]
-            H = (H - H.min()) / (H.max() - H.min())
-
-            Hflat = H.flatten()
-            inds = np.argsort(Hflat)[::-1]
-            Hflat = Hflat[inds]
-            sm = np.cumsum(Hflat)
-            sm /= sm[-1]
-            levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
-            V = np.empty(len(levels))
-            for i, v0 in enumerate(levels):
+            metadata = {}
+            if not isinstance(bins, list):
+                bins = [bins for _ in filter]
+            dataset_length = store['data'].shape[0]
+            first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
+            for i, val in enumerate(filter):
+                pbar.set_description(val)
+                ax = axes[i, i]
+                bin_index = i
+                i = columns.index(val)
+                x = store['data'][first:last, i]
+                if bins[bin_index] is None:
+                    # When the diaconis rule is properly implemented, this will be used (uses too many bins)
+                    bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
+                    # bins[bin_index] = 50
                 try:
-                    V[i] = Hflat[sm <= v0][-1]
-                except:
-                    V[i] = Hflat[0]
+                    ax.hist(x, int(bins[bin_index]))
+                except ValueError:
+                    bins = 50
+                    ax.hist(x, bins)
+                metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
-            bounds = np.concatenate([[H.max()], V])[::-1]
-            norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+                q = [16.0, 50.0, 84.0]
+                q16, q50, q84 = np.percentile(x, q)
 
-            contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
-            pbar += 1
-        cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
-        cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
-        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
-        pbar.finish()
+                title = val + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+                ax.set_title(title.format(q50, q50-q16, q84-q50))
+                qvalues = [q16, q50, q84]
+                for q in qvalues:
+                    ax.axvline(q, ls="dashed")
+                ax.set_yticks([])
+                ax.set_yticklabels([])
+                pbar.update(1)
+
+            for i, j in zip(*np.tril_indices_from(axes, -1)):
+                x_name = filter[j]
+                y_name = filter[i]
+                pbar.set_description(x_name + ' ' + y_name)
+                ax = axes[i, j]
+                if j == 0:
+                    ax.set_ylabel(filter[i])
+                if i == len(filter) - 1:
+                    ax.set_xlabel(filter[j])
+                j = columns.index(x_name)
+                i = columns.index(y_name)
+                x = store['data'][first:last, j]
+                y = store['data'][first:last, i]
+                x_min, x_max, x_bins = metadata[x_name]['min'], metadata[x_name]['max'], metadata[x_name]['bins']
+                y_min, y_max, y_bins = metadata[y_name]['min'], metadata[y_name]['max'], metadata[y_name]['bins']
+                X = np.linspace(x_min, x_max, x_bins + 1)
+                Y = np.linspace(y_min, y_max, y_bins + 1)
+                H, X, Y = np.histogram2d(x.flatten(), y.flatten(), bins=(X, Y),
+                                         weights=None)
+                X1, Y1 = 0.5 * (X[1:] + X[:-1]), 0.5 * (Y[1:] + Y[:-1])
+                X, Y = X[:-1], Y[:-1]
+                H = (H - H.min()) / (H.max() - H.min())
+
+                Hflat = H.flatten()
+                inds = np.argsort(Hflat)[::-1]
+                Hflat = Hflat[inds]
+                sm = np.cumsum(Hflat)
+                sm /= sm[-1]
+                levels = 1.0 - np.exp(-0.5 * np.arange(1, 3.1, 1) ** 2)
+                V = np.empty(len(levels))
+                for i, v0 in enumerate(levels):
+                    try:
+                        V[i] = Hflat[sm <= v0][-1]
+                    except:
+                        V[i] = Hflat[0]
+
+                bounds = np.unique(np.concatenate([[H.max()], V])[::-1])
+                norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
+
+                contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
+                pbar.update(1)
+            cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
+            cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+            cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     return fig, axes, cbar
 
 def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
@@ -553,26 +608,6 @@ def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
     y, _ = np.histogram(samples, bins)
     return y
 
-def concat_results(list_of_results, index=None):
-    """Given a list of DataFrames, use the supplied index
-    to concatenate the DataFrames.
-
-    Parameters
-    ----------
-    list_of_results: list of pandas Dataframes
-        List of DataFrames to be concatenated.
-    index: list
-        List of keys to use as row-indices.
-
-    Returns
-    -------
-    concatenated_frames: DataFrame
-        Concatenated DataFrame"""
-    if index is None:
-        index = range(1, len(list_of_results) + 1)
-    concatenated_frames = pd.concat(list_of_results, keys=index)
-    return concatenated_frames
-
 def poisson_interval(data, alpha=0.32):
     """Calculates the confidence interval
     for the mean of a Poisson distribution.
@@ -594,3 +629,66 @@ def poisson_interval(data, alpha=0.32):
                  chi2.ppf(1 - a / 2, 2 * data + 2) / 2)
     low = np.nan_to_num(low)
     return low, high
+
+def load_model(path):
+    """Loads the saved BaseModel and returns the reconstructed object.
+
+    Parameters
+    ----------
+    path: string
+        Location of the saved model.
+
+    Returns
+    -------
+    model: BaseModel
+        Saved BaseModel/child class instance."""
+    import pickle
+    with open(path, 'rb') as f:
+        return pickle.load(f)
+
+def beta(mass, V):
+    """Calculates the beta-factor for a mass in amu
+    and applied voltage in Volt.
+
+    Parameters
+    ----------
+    mass : float
+        Mass in amu.
+    V : float
+        voltage in volt.
+
+    Returns
+    -------
+    float
+        Relativistic beta-factor.
+    """
+    c = 299792458.0
+    q = 1.60217657 * (10 ** (-19))
+    AMU2KG = 1.66053892 * 10 ** (-27)
+    mass = mass * AMU2KG
+    top = mass ** 2 * c ** 4
+    bottom = (mass * c ** 2 + q * V) ** 2
+    beta = np.sqrt(1 - top / bottom)
+    return beta
+
+def dopplerfactor(mass, V):
+    """Calculates the Doppler shift of the laser frequency for a
+    given mass in amu and voltage in V. Transforms from the lab frame
+    to the particle frame. To invert, divide instead of multiply with
+    this factor.
+
+    Parameters
+    ----------
+    mass : float
+        Mass in amu.
+    V : float
+        Voltage in volt.
+
+    Returns
+    -------
+    float
+        Doppler factor.
+    """
+    betaFactor = beta(mass, V)
+    dopplerFactor = np.sqrt((1.0 - betaFactor) / (1.0 + betaFactor))
+    return dopplerFactor

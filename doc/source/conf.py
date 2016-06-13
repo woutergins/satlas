@@ -15,6 +15,7 @@
 
 import sys
 import os
+import satlas
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -62,9 +63,9 @@ copyright = '2015, Wouter Gins'
 # built documents.
 #
 # The short X.Y version.
-version = '0.0.1'
+version = satlas.__version__
 # The full version, including alpha/beta/rc tags.
-release = '0.0.1b4'
+release = satlas.__release__
 
 autosummary_generate = True
 

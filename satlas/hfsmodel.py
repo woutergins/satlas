@@ -4,19 +4,22 @@ Implementation of a class for the analysis of hyperfine structure spectra.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
+import copy
+from fractions import Fraction
+
+from . import lmfit as lm
+from .basemodel import BaseModel
+from .lineid_plot import plot_line_ids
+from .loglikelihood import poisson_llh
+from .summodel import SumModel
+from .utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import satlas.profiles as p
 import scipy.optimize as optimize
-from fractions import Fraction
 from sympy.physics.wigner import wigner_6j, wigner_3j
 
-from .multimodel import MultiModel
-from .basemodel import BaseModel
-from .utilities import poisson_interval
-from .loglikelihood import poisson_llh
 W6J = wigner_6j
 W3J = wigner_3j
 
@@ -31,11 +34,14 @@ class HFSModel(BaseModel):
 
     __shapes__ = {'gaussian': p.Gaussian,
                   'lorentzian': p.Lorentzian,
-                  'voigt': p.Voigt}
+                  'crystalball': p.Crystalball,
+                  'voigt': p.Voigt,
+                  'pseudovoigt': p.PseudoVoigt}
 
-    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0,
-                 background=0.1, shape='voigt', use_racah=False, use_saturation=True, saturation=0,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0):
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001],
+                 shape='voigt', use_racah=False, use_saturation=False, saturation=0.001,
+                 shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalball_params={'Taillocation': 1, 'Tailamplitude': 1},
+                 pseudovoigt_params={'Eta': 0.5, 'A': 0}):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -60,8 +66,10 @@ class HFSModel(BaseModel):
         scale: float, optional
             Sets the strength of the spectrum, defaults to 1.0. Comparable to the
             amplitude of the spectrum.
-        background: float, optional
-            Sets the constant background to the supplied value. Defaults to 0.1.
+        background_params: list of float, optional
+            Sets the coefficients of the polynomial background to the given values.
+            Order of polynomial is equal to the number of parameters given minus one.
+            Highest order coefficient is the first element, etc.
         shape : string, optional
             Sets the transition shape. String is converted to lowercase. For
             possible values, see *HFSModel__shapes__*.keys()`.
@@ -70,6 +78,8 @@ class HFSModel(BaseModel):
             If True, fixes the relative peak intensities to the Racah intensities.
             Otherwise, gives them equal intensities and allows them to vary during
             fitting.
+        use_saturation: boolean, optional
+            If True, uses the saturation parameter to calculate relative intensities.
         saturation: float, optional
             If different than 0, calculate the saturation effect on the intensity of
             transition intensity. This is done by an exponential transition between
@@ -85,6 +95,10 @@ class HFSModel(BaseModel):
             other sidepeaks is calculated from the Poisson-factor.
         offset: float, optional
             Sets the distance (in MHz) of each sidepeak in the spectrum.
+        tailamp: float, optional
+            Sets the relative amplitude of the tail for the Crystalball shape function.
+        tailloc: float, optional
+            Sets the location of the tail for the Crystalball shape function.
 
         Note
         ----
@@ -151,8 +165,11 @@ class HFSModel(BaseModel):
 
         self._roi = (-np.inf, np.inf)
 
-        self._populate_params(ABC, fwhm, scale, background, n,
-                              poisson, offset, centroid, saturation)
+        self._populate_params(ABC, centroid, fwhm, scale, saturation,
+                              background_params,
+                              sidepeak_params,
+                              crystalball_params,
+                              pseudovoigt_params)
 
     @property
     def locations(self):
@@ -161,7 +178,7 @@ class HFSModel(BaseModel):
 
     @locations.setter
     def locations(self, locations):
-        self._locations = locations
+        self._locations = np.array(locations)
         for p, l in zip(self.parts, locations):
             p.mu = l
 
@@ -187,6 +204,7 @@ class HFSModel(BaseModel):
     @use_saturation.setter
     def use_saturation(self, value):
         self._use_saturation = value
+        self.params['Saturation'].vary = value
         self.params['Scale'].vary = self._use_racah or self._use_saturation
         for label in self.ftof:
             self.params['Amp' + label].vary = not (self._use_racah or self._use_saturation)
@@ -203,35 +221,14 @@ class HFSModel(BaseModel):
     def roi(self, value):
         self._roi = (value[0], value[1])
 
-    def lnprior(self):
+    def get_lnprior_mapping(self, params):
         # Implementation uses the 'fail early' paradigm to speed up calculations.
         # First, the easiest checks to fail are made, followed by slower ones.
         # If a check is failed, -np.inf is returned immediately.
         # Check if at least one of the peaks lies within the region of interest
         if not any((self.roi[0] < self.locations) & (self.locations < self.roi[1])):
             return -np.inf
-        # Check if the parameter values are within the acceptable range.
-        for key in self._params.keys():
-            par = self._params[key]
-            if par.vary:
-                try:
-                    leftbound, rightbound = (par.priormin,
-                                             par.priormax)
-                except:
-                    leftbound, rightbound = par.min, par.max
-                leftbound = -np.inf if leftbound is None else leftbound
-                rightbound = np.inf if rightbound is None else rightbound
-                if not leftbound < par.value < rightbound:
-                    return -np.inf
-        # If defined, calculate the lnprior for each seperate parameter
-        try:
-            return_value = 1.0
-            for key in params.keys():
-                return_value += self.lnprior_mapping[key](params[key].value)
-            return return_value
-        except:
-            pass
-        return 1.0
+        return super(HFSModel, self).get_lnprior_mapping(params)
 
     @property
     def params(self):
@@ -257,6 +254,15 @@ class HFSModel(BaseModel):
             pass
         # Finally, the fwhm of each peak needs to be set
         self._set_fwhm()
+        if self.shape.lower() == 'crystalball':
+            for part in self.parts:
+                part.alpha = params['Taillocation'].value
+                part.n = params['Tailamplitude'].value
+        if self.shape.lower() == 'pseudovoigt':
+            for part in self.parts:
+                part.n = params['Eta'].value
+                part.a = params['A'].value
+
 
     def _set_transitional_amplitudes(self):
         values = self._calculate_transitional_intensities(self._params['Saturation'].value)
@@ -339,26 +345,35 @@ class HFSModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, ABC, fwhm, scale, background,
-                        n, poisson, offset, centroid, saturation):
+    def _populate_params(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalball_params, pseudovoigt_params):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
             if self.shared_fwhm:
                 par.add('FWHM', value=fwhm, vary=True, min=0)
+                if self.shape.lower() == 'pseudovoigt':
+                    Eta = pseudovoigt_params['Eta']
+                    A = pseudovoigt_params['A']
+                    par.add('Eta', value=Eta, vary=True, min=0, max=1)
+                    par.add('A', value=tailamp, vary=True)
             else:
                 if not len(fwhm) == len(self.ftof):
                     fwhm = fwhm[0]
                     fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHM' + label, value=val, vary=True, min=0)
+                    if self.shape.lower() == 'pseudovoigt':
+                        Eta = pseudovoigt_params['Eta']
+                        A = pseudovoigt_params['A']
+                        par.add('Eta' + label, value=Eta, vary=True, min=0, max=1)
+                        par.add('A' + label, value=A, vary=True)
         else:
             if self.shared_fwhm:
                 par.add('FWHMG', value=fwhm[0], vary=True, min=0)
                 par.add('FWHML', value=fwhm[1], vary=True, min=0)
                 val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
-                        expr='0.5346*FWHML+sqrt(0.2166*FWHML**2+FWHMG**2)')
+                        expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
             else:
                 fwhm = np.array(fwhm)
                 if not fwhm.shape[0] == len(self.ftof):
@@ -370,8 +385,16 @@ class HFSModel(BaseModel):
                                                     + val[0] ** 2)
                     par.add('TotalFWHM' + label, value=val, vary=False,
                             expr='0.5346*FWHML' + label +
-                                 '+sqrt(0.2166*FWHML' + label +
-                                 '**2+FWHMG' + label + '**2)')
+                                 '+(0.2166*FWHML' + label +
+                                 '**2+FWHMG' + label + '**2)**0.5')
+        if self.shape.lower() == 'crystalball':
+            taillocation = crystalball_params['Taillocation']
+            tailamplitude = crystalball_params['Tailamplitude']
+            par.add('Taillocation', value=taillocation, vary=True)
+            par.add('Tailamplitude', value=tailamplitude, vary=True)
+            for part in self.parts:
+                part.alpha = taillocation
+                part.n = tailamplitude
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
@@ -400,11 +423,13 @@ class HFSModel(BaseModel):
 
         par.add('Centroid', value=centroid, vary=True)
 
-        par.add('Background', value=background, vary=True, min=0)
+        for i, val in reversed(list(enumerate(background_params))):
+            par.add('Background' + str(i), value=background_params[i], vary=True)
+        n, poisson, offset = sidepeak_params['N'], sidepeak_params['Poisson'], sidepeak_params['Offset']
         par.add('N', value=n, vary=False)
         if n > 0:
-            par.add('Poisson', value=poisson, vary=False, min=0)
-            par.add('Offset', value=offset, vary=False, min=None, max=0)
+            par.add('Poisson', value=poisson, vary=True, min=0, max=1)
+            par.add('Offset', value=offset, vary=False, min=None, max=None)
 
         self.params = self._check_variation(par)
 
@@ -550,31 +575,6 @@ class HFSModel(BaseModel):
     ##########################
     #      USER METHODS      #
     ##########################
-
-    # def set_variation(self, varyDict):
-    #     """Sets the variation of the fitparameters as supplied in the
-    #     dictionary.
-
-    #     Parameters
-    #     ----------
-    #     varyDict: dictionary
-    #         A dictionary containing 'key: True/False' mappings"""
-    #     for k in varyDict.keys():
-    #         self._vary[k] = varyDict[k]
-
-    # def set_boundaries(self, boundaryDict):
-    #     """Sets the boundaries of the fitparameters as supplied in the
-    #     dictionary.
-
-    #     Parameters
-    #     ----------
-    #     boundaryDict: dictionary
-    #         A dictionary containing "key: {'min': value, 'max': value}" mappings.
-    #         A value of *None* or a missing key gives no boundary
-    #         in that direction."""
-    #     for k in boundaryDict.keys():
-    #         self._constraints[k] = boundaryDict[k]
-
     def fix_ratio(self, value, target='upper', parameter='A'):
         """Fixes the ratio for a given hyperfine parameter to the given value.
 
@@ -599,33 +599,6 @@ class HFSModel(BaseModel):
         if parameter.lower() == 'c':
             self.ratioC = (value, target)
         self.params = self._set_ratios(self._params)
-
-    # def set_value(self, valueDict):
-    #     """Sets the value of the selected parameter to the given value.
-
-    #     Parameters
-    #     ----------
-    #     valueDict: dictionary
-    #         Dictionary containing the values for the parameters, with the
-    #         name as the key."""
-    #     par = self.params
-    #     for key in valueDict:
-    #         par[key].value = valueDict[key]
-    #     self.params = par
-
-    # def set_expr(self, exprDict, name):
-    #     """Sets the expression of the selected parameter
-    #     to the given expression.
-
-    #     Parameters
-    #     ----------
-    #     exprDict: dictionary
-    #         Dictionary containing the expressions for the parameters,
-    #         with the paremeter name as the key."""
-    #     par = self.params
-    #     for key in exprDict:
-    #         par[n].expr = exprDict[key]
-    #     self.params = par
 
     #######################################
     #      METHODS CALLED BY FITTING      #
@@ -654,7 +627,7 @@ class HFSModel(BaseModel):
     ###########################
 
     def __add__(self, other):
-        """Add two spectra together to get an :class:`.MultiModel`.
+        """Add two spectra together to get an :class:`.SumModel`.
 
         Parameters
         ----------
@@ -663,13 +636,13 @@ class HFSModel(BaseModel):
 
         Returns
         -------
-        MultiModel
-            A MultiModel combining both spectra."""
+        SumModel
+            A SumModel combining both spectra."""
         if isinstance(other, HFSModel):
             l = [self, other]
-        elif isinstance(other, MultiModel):
-            l = [self] + other.spectra
-        return MultiModel(l)
+        elif isinstance(other, SumModel):
+            l = [self] + other.models
+        return SumModel(l)
 
     def __radd__(self, other):
         if other == 0:
@@ -692,22 +665,19 @@ class HFSModel(BaseModel):
         if self._params['N'].value > 0:
             s = np.zeros(x.shape)
             for i in range(self._params['N'].value + 1):
-                s += (self._params['Poisson'].value ** i) * sum([prof(x + i * self._params['Offset'].value)
-                                                for prof in self.parts]) \
-                    / np.math.factorial(i)
-            s = s * self._params['Scale'].value
+                s += (self._params['Poisson'].value ** i) * (sum([prof(x - i * self._params['Offset'].value)
+                                                                for prof in self.parts]) * self._params['Scale'].value) / np.math.factorial(i)
         else:
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
-        return s + self._params['Background'].value
+        background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+        return s + np.polyval(background_params, x)
 
     ###############################
     #      PLOTTING ROUTINES      #
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**3, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts',
-             indicate=False, bayesian=False, colormap='bone_r'):
+             no_of_points=10**3, ax=None, show=True, plot_kws={}):
         """Plot the hfs, possibly on top of experimental data.
 
         Parameters
@@ -726,43 +696,64 @@ class HFSModel(BaseModel):
             If provided, plots on this axis.
         show: boolean
             If True, the plot will be shown at the end.
-        legend: string, optional
-            If given, an entry in the legend will be made for the spectrum.
-        data_legend: string, optional
-            If given, an entry in the legend will be made for the experimental
-            data.
-        xlabel: string, optional
-            If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
-        ylabel: string, optional
-            If given, sets the ylabel to this string. Defaults to 'Counts'.
-        bayesian: boolean, optional
-            If given, the region around the fitted line will be shaded, with
-            the luminosity indicating the pmf of the Poisson
-            distribution characterized by the value of the fit. Note that
-            the argument *yerr* is ignored if *bayesian* is True.
+        plot_kws: dictionary
+            A dictionary possibly containing the following entries:
+
+            legend: string, optional
+                If given, an entry in the legend will be made for the spectrum.
+            data_legend: string, optional
+                If given, an entry in the legend will be made for the experimental
+                data.
+            xlabel: string, optional
+                If given, sets the xlabel to this string. Defaults to 'Frequency (MHz)'.
+            ylabel: string, optional
+                If given, sets the ylabel to this string. Defaults to 'Counts'.
+            model: boolean, optional
+                If given, the region around the fitted line will be shaded, with
+                the luminosity indicating the pmf of the Poisson
+                distribution characterized by the value of the fit. Note that
+                the argument *yerr* is ignored if *model* is True.
+            normalized: boolean, optional
+                If True, the data and fit are plotted normalized such that the highest
+                data point is one.
+            background: boolean, optional
+                If True, the background is used, otherwise the pure spectrum is plotted.
 
         Returns
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
 
+        kws = copy.deepcopy(plot_kws)
+        legend = kws.pop('legend', None,)
+        data_legend = kws.pop('data_legend', None)
+        xlabel = kws.pop('xlabel', 'Frequency (MHz)')
+        ylabel = kws.pop('ylabel', 'Counts',)
+        indicate = kws.pop('indicate', False)
+        model = kws.pop('model', False)
+        colormap = kws.pop('colormap', 'bone_r',)
+        normalized = kws.pop('normalized', False)
+        distance = kws.pop('distance', 4)
+        background = kws.pop('background', True)
+
         if ax is None:
             fig, ax = plt.subplots(1, 1)
         else:
             fig = ax.get_figure()
         toReturn = fig, ax
+        color_points = next(ax._get_lines.prop_cycler)['color']
+        color_lines = next(ax._get_lines.prop_cycler)['color']
 
         if x is None:
             ranges = []
             fwhm = self.parts[0].fwhm
 
             for pos in self.locations:
-                r = np.linspace(pos - 4 * fwhm,
-                                pos + 4 * fwhm,
-                                2 * 10**2)
+                r = np.linspace(pos - distance * fwhm,
+                                pos + distance * fwhm,
+                                2 * 10**2*0+50)
                 ranges.append(r)
             superx = np.sort(np.concatenate(ranges))
-            superx = np.linspace(superx.min(), superx.max(), 10**3)
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
@@ -771,43 +762,59 @@ class HFSModel(BaseModel):
         else:
             xerr = 0
 
+        if normalized:
+            norm = np.max(y)
+            y,yerr = y/norm,yerr/norm
+        else:
+            norm = 1
+
         if x is not None and y is not None:
-            if not bayesian:
+            if not model:
                 try:
                     ax.errorbar(x, y, yerr=[yerr['low'], yerr['high']],
-                                xerr=xerr, fmt='o', label=data_legend)
+                                xerr=xerr, fmt='o', label=data_legend, color=color_points)
                 except:
-                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
+                    ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend, color=color_points)
             else:
-                ax.plot(x, y, 'o')
-        if bayesian:
-            range = (superx.min(), superx.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True)[1])
-            min_counts = self._params['Background'].value
+                ax.plot(x, y, 'o', color=color_points)
+        if model:
+            superx = np.linspace(superx.min(), superx.max(), len(superx))
+            range = (self.locations.min(), self.locations.max())
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
+            min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
-            z = poisson_llh(self(x), y)
-            z = np.exp(z - z.max(axis=0))
+            from scipy import stats
+            z = stats.poisson(self(x)).pmf(y)
 
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
-        if bayesian:
-            line, = ax.plot(superx, self(superx), label=legend, lw=0.5)
+            line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5, color=color_lines)
         else:
-            line, = ax.plot(superx, self(superx), label=legend)
+            if background:
+                y = self(superx)
+            else:
+                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                y = self(superx) - np.polyval(background_params, superx)
+            line, = ax.plot(superx, y/norm, label=legend, color=color_lines)
+        ax.set_xlim(superx.min(), superx.max())
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         if indicate:
-            height = self(superx).min()
-            for (p, l) in zip(self.locations, self.ftof):
+            if background:
+                Y = self(self.locations)
+            else:
+                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                Y = self(self.locations) - np.polyval(background_params, self.locations)
+            labels = []
+            for l in self.ftof:
                 lab = l.split('__')
                 lableft = '/'.join(lab[0].split('_'))
                 labright = '/'.join(lab[1].split('_'))
                 lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                ax.annotate(lab, xy=(p, height), rotation=90, color=line.get_color(),
-                            weight='bold', size=14, ha='center', va='bottom')
-                ax.axvline(p, linewidth=0.5, linestyle='--')
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+                labels.append(lab)
+            plot_line_ids(self.locations, Y, self.locations, labels, ax=ax)
         if show:
             plt.show()
         return toReturn
@@ -850,3 +857,119 @@ class HFSModel(BaseModel):
             yerr = None
         kwargs['yerr'] = yerr
         return self.plot(**kwargs)
+
+
+    def plot_scheme(self, show=True, upper_color='#D55E00', lower_color='#009E73', arrow_color='#0072B2', distance=5):
+        """Create a figure where both the splitting of the upper and lower state is drawn,
+        and the hfs associated with this.
+
+        Parameters
+        ----------
+        show: boolean, optional
+            If True, immediately shows the figure. Defaults to True.
+        upper_color: matplotlib color definition
+            Sets the color of the upper state. Defaults to red.
+        lower_color: matplotlib color definition
+            Sets the color of the lower state. Defaults to black.
+        arrow_color: matplotlib color definition
+            Sets the color of the arrows indicating the transitions.
+            Defaults to blue.
+
+        Returns
+        -------
+        tuple
+            Tuple containing the figure and both axes, also in a tuple."""
+        from fractions import Fraction
+        from matplotlib import lines
+        length_plot = 0.4
+        fig = plt.figure(frameon=False)
+        ax = fig.add_axes([0.5, 0, length_plot, 0.5], axisbg=[1, 1, 1, 0])
+        self.plot(ax=ax, show=False, plot_kws={'distance': distance})
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        locations = self.locations
+        plotrange = ax.get_xlim()
+        distances = (locations - plotrange[0]) / (plotrange[1] - plotrange[0]) * length_plot
+        height = self(locations)
+        plotrange = ax.get_ylim()
+        height = (height - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
+        A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
+                              np.ones(self.num_upper) * self._params['Au'].value)
+        B = np.append(np.ones(self.num_lower) * self._params['Bl'].value,
+                              np.ones(self.num_upper) * self._params['Bu'].value)
+        C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
+                              np.ones(self.num_upper) * self._params['Cu'].value)
+        energies = self.C * A + self.D * B + self.E * C
+        #energies -= energies.min()
+        energies_upper = energies[self.num_lower:]
+        energies_upper_norm = np.abs(energies_upper.max()) if not energies_upper.max()==0 else 1
+        energies_upper = energies_upper / energies_upper_norm * 0.1
+        energies_lower = energies[:self.num_lower]
+        energies_lower_norm = np.abs(energies_lower.max()) if not energies_lower.max()==0 else 1
+        energies_lower = energies_lower / energies_lower_norm * 0.1
+        energies = np.append(energies_lower, energies_upper)
+
+        ax2 = fig.add_axes([0, 0, 1, 1], axisbg=[1, 1, 1, 0])
+        ax2.get_xaxis().set_visible(False)
+        ax2.get_yaxis().set_visible(False)
+        ax2.axis('off')
+
+        # Lower state
+        x = np.array([0, 0.3])
+        y = np.array([0.625, 0.625])
+        line = lines.Line2D(x, y, lw=2., color=lower_color)
+        ax2.add_line(line)
+
+        # Upper state
+        x = np.array([0, 0.3])
+        y = np.array([0.875, 0.875])
+        line = lines.Line2D(x, y, lw=2., color=upper_color)
+        ax2.add_line(line)
+
+        for i, F in enumerate(self.F):
+            # Level
+            F = Fraction.from_float(F)
+            x = np.array([0.5, 0.5 + length_plot])
+            if i < self.num_lower:
+                y = np.zeros(len(x)) + 0.625 + energies[i]
+                color = lower_color
+                starting = 0.625
+            else:
+                y = np.zeros(len(x)) + 0.875 + energies[i]
+                color = upper_color
+                starting = 0.875
+            line = lines.Line2D(x, y, lw=2., color=color)
+            ax2.add_line(line)
+
+            x = np.array([0.3, x.min()])
+            y = np.array([starting, y[0]])
+            line = lines.Line2D(x, y, lw=2., color=color, alpha=0.4, linestyle='dashed')
+            ax2.add_line(line)
+            ax2.text(0.5 + length_plot, y[-1], 'F=' + str(F) + ' ', fontsize=20, fontdict={'horizontalalignment': 'left', 'verticalalignment': 'center'})
+
+        for i, label in enumerate(self.ftof):
+            lower, upper = label.split('__')
+            if '_' in lower:
+                lower = lower.split('_')
+                lower = float(lower[0]) / float(lower[1])
+            else:
+                lower = float(lower)
+            if '_' in upper:
+                upper = upper.split('_')
+                upper = float(upper[0]) / float(upper[1])
+            else:
+                upper = float(upper)
+
+            x = np.array([distances[i], distances[i]]) + 0.5
+            lower = energies[np.where(self.F[:self.num_lower]==lower)[0]]
+            upper = energies[np.where(self.F[self.num_lower:]==upper)[0] + self.num_lower]
+            y = np.array([lower + 0.625, upper + 0.875]).flatten()
+            ax2.arrow(x[0], y[0], x[1] - x[0], y[1] - y[0], fc=arrow_color, ec=arrow_color, length_includes_head=True, overhang=0.5, zorder=10)
+
+        ax2.text(0.15, 0.64, 'J=' + str(Fraction.from_float(self.J[0])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, 0.89, 'J=' + str(Fraction.from_float(self.J[-1])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, 0.765, 'I=' + str(Fraction.from_float(self.I)), fontsize=20, fontdict={'horizontalalignment': 'right'})
+        if show:
+            plt.show()
+        return fig, (ax, ax2)

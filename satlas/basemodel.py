@@ -4,49 +4,105 @@ Implementation of base class for extension to models describing actual data.
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
+import copy
+
+from . import lmfit as lm
+from .loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 
 __all__ = ['Model']
 
 
 class BaseModel(object):
 
-    """Abstract baseclass for all models, such as :class:`.HFSModel`,
-    :class:`.CombinedModel` and :class:`.MultiModel`. For input, see these
+    """Abstract baseclass for all models. For input, see these
     classes."""
 
     def __init__(self):
         super(BaseModel, self).__init__()
+        self._expr = {}
+        self._vary = {}
+        self._constraints = {}
+        self._params = None
+        self._lnprior_mapping = {}
+        self._chisquare_mapping = {}
+
+    def set_literature_values(self, literatureDict):
+        """Sets the lnprior and chisquare mapping to handle the given
+        literature values and uncertainties.
+
+        Parameters
+        ----------
+        literatureDict: dictionary
+            Dictionary with the parameter names as keys. Each
+            key should correspond to a dictionary containing
+            a 'value' and 'uncertainty' key."""
+        priorDict = {}
+        chisquareDict = {}
+        for k in literatureDict:
+            v, u = literatureDict[k]['value'], literatureDict[k]['uncertainty']
+
+            prior = create_gaussian_priormap(v, u)
+            priorDict[k] = prior
+
+            chisquare = lambda value: (value - v) / u
+            chisquareDict[k] = chisquare
+        self.set_chisquare_mapping(chisquareDict)
+        self.set_lnprior_mapping(priorDict)
+
+    def set_lnprior_mapping(self, mappingDict):
+        """Sets the prior mapping for the different parameters.
+        This will affect likelihood fits.
+
+        Parameters
+        ----------
+        mappingDict: dictionary
+            Dictionary containing the functions that give the
+            prior for the given parameter value. Use the parameter
+            names as keys."""
+        for k in mappingDict.keys():
+            self._lnprior_mapping[k] = copy.deepcopy(mappingDict[k])
+
+    def set_chisquare_mapping(self, mappingDict):
+        """Sets the prior mapping for the different parameters.
+        This will affect chisquare fits.
+
+        Parameters
+        ----------
+        mappingDict: dictionary
+            Dictionary containing the functions that give the
+            prior for the given parameter value. Use the parameter
+            names as keys."""
+        for k in mappingDict.keys():
+            self._chisquare_mapping[k] = copy.deepcopy(mappingDict[k])
 
     def set_value(self, valueDict):
-        """Sets the value of the selected parameter to the given value.
+        """Sets the value of the given parameters to the given values.
 
         Parameters
         ----------
         valueDict: dictionary
-            Dictionary containing the values for the parameters, with the
-            name as the key."""
+            Dictionary containing the values for the parameters
+            with the parameter names as keys."""
         par = self.params
         for key in valueDict:
-            par[key].value = valueDict[key]
+            par[key].value = copy.deepcopy(valueDict[key])
         self.params = par
 
-    def set_expr(self, exprDict, name):
-        """Sets the expression of the selected parameter
-        to the given expression.
+    def set_expr(self, exprDict):
+        """Sets the expression of the selected parameters
+        to the given expressions.
 
         Parameters
         ----------
         exprDict: dictionary
-            Dictionary containing the expressions for the parameters,
-            with the paremeter name as the key."""
-        par = self.params
-        for key in exprDict:
-            par[n].expr = exprDict[key]
-        self.params = par
+            Dictionary containing the expressions for the parameters
+            with the parameter names as keys."""
+        for k in exprDict.keys():
+            self._expr[k] = copy.deepcopy(exprDict[k])
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
@@ -55,9 +111,10 @@ class BaseModel(object):
         Parameters
         ----------
         varyDict: dictionary
-            A dictionary containing 'key: True/False' mappings"""
+            A dictionary containing 'key: True/False' mappings with
+            the parameter names as keys."""
         for k in varyDict.keys():
-            self._vary[k] = varyDict[k]
+            self._vary[k] = copy.deepcopy(varyDict[k])
 
     def set_boundaries(self, boundaryDict):
         """Sets the boundaries of the fitparameters as supplied in the
@@ -68,9 +125,48 @@ class BaseModel(object):
         boundaryDict: dictionary
             A dictionary containing "key: {'min': value, 'max': value}" mappings.
             A value of *None* or a missing key gives no boundary
-            in that direction."""
+            in that direction. The parameter names have to be used as keys."""
         for k in boundaryDict.keys():
-            self._constraints[k] = boundaryDict[k]
+            self._constraints[k] = copy.deepcopy(boundaryDict[k])
+
+    def _check_variation(self, par):
+        # Make sure the variations in the params are set correctly.
+        for key in self._vary.keys():
+            if key in par.keys():
+                par[key].vary = self._vary[key]
+
+        for key in self._constraints.keys():
+            for bound in self._constraints[key]:
+                if bound.lower() == 'min':
+                    par[key].min = self._constraints[key][bound]
+                elif bound.lower() == 'max':
+                    par[key].max = self._constraints[key][bound]
+                else:
+                    pass
+        return par
+
+    def get_chisquare_mapping(self):
+        return np.array([self._chisquare_mapping[k](self._params[k].value) for k in self._chisquare_mapping.keys()])
+
+    def get_lnprior_mapping(self, params):
+        # Check if the parameter values are within the acceptable range.
+        for key in params.keys():
+            par = params[key]
+            if par.vary:
+                try:
+                    leftbound, rightbound = (par.priormin,
+                                             par.priormax)
+                except AttributeError:
+                    leftbound, rightbound = par.min, par.max
+                leftbound = -np.inf if leftbound is None else leftbound
+                rightbound = np.inf if rightbound is None else rightbound
+                if not leftbound < par.value < rightbound:
+                    return -np.inf
+        # If defined, calculate the lnprior for each seperate parameter
+        return_value = 1.0
+        for key in self._lnprior_mapping.keys():
+            return_value += self._lnprior_mapping[key](params[key].value)
+        return return_value
 
     def display_mle_fit(self, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.
@@ -87,7 +183,7 @@ class BaseModel(object):
         else:
             print('Model has not yet been fitted with this method!')
 
-    def display_chisquare_fit(self, **kwargs):
+    def display_chisquare_fit(self, scaled=False, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
         if this has been performed.
 
@@ -96,15 +192,26 @@ class BaseModel(object):
         kwargs: misc
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisq_res_par'):
-            print('Scaled errors estimated from covariance matrix.')
+            print('Errors estimated from Hessian matrix.')
             print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof, self.chisqr, self.redchi))
-            print(lm.fit_report(self.chisq_res_par, **kwargs))
+            if scaled:
+                print('Errors scaled with reduced chisquare.')
+            else:
+                print('Errors not scaled with reduced chisquare.')
+            if scaled:
+                par = copy.deepcopy(self.params)
+                for p in par:
+                    if par[p].stderr is not None:
+                        par[p].stderr *= (self.redchi**0.5)
+                print(lm.fit_report(par, **kwargs))
+            else:
+                print(lm.fit_report(self.chisq_res_par, **kwargs))
         else:
             print('Spectrum has not yet been fitted with this method!')
 
-    def vars(self, selection='any'):
+    def get_result(self, selection='any'):
         """Return the variable names, values and estimated error bars for the
-        parameters.
+        parameters as seperate lists.
 
         Parameters
         ----------
@@ -190,3 +297,15 @@ class BaseModel(object):
         columns = pd.MultiIndex.from_tuples(list(zip(*columns)))
         result = pd.DataFrame(data, index=columns).T
         return result
+
+    def save(self, path):
+        """Saves the current spectrum, including the results of the fitting
+        and the parameters, to the specified file.
+
+        Parameters
+        ----------
+        path: string
+            Name of the file to be created."""
+        import pickle
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)

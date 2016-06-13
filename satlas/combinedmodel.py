@@ -4,14 +4,17 @@ Implementation of a class for the simultaneous fitting of hyperfine structure sp
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
 """
-import lmfit as lm
-import matplotlib.pyplot as plt
-import numpy as np
 import copy
+import warnings
+
+from . import lmfit as lm
 from .basemodel import BaseModel
 from .utilities import poisson_interval
-__all__ = ['CombinedModel']
+import matplotlib.pyplot as plt
+import numpy as np
 
+__all__ = ['CombinedModel']
+warn_msg = """Use of the class CombinedModel has been deprecated and will be removed in further updates. Please use the LinkedModel class in the future."""
 
 class CombinedModel(BaseModel):
 
@@ -24,6 +27,7 @@ class CombinedModel(BaseModel):
         ----------
         models: list of :class:`.BaseModel` or :class:`.SingleSpectrum` objects
             A list defining the different models."""
+        warnings.warn(warn_msg)
         super(CombinedModel, self).__init__()
         self.models = models
         self.shared = ['Al',
@@ -63,12 +67,15 @@ class CombinedModel(BaseModel):
                 # If an expression is defined, replace the old names with the new ones
                 if p[new_key].expr is not None:
                     for o_key in keys:
-                        n_key = 's' + str(i) + '_' + o_key
-                        p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                        if o_key in p[new_key].expr:
+                            n_key = 's' + str(i) + '_' + o_key
+                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
                     p[new_key].expr = 's0_' + old_key
                     p[new_key].vary = False
+                if new_key in self._expr.keys():
+                    p[new_key].expr = self._expr[new_key]
             params += p
         return params
 
@@ -84,9 +91,13 @@ class CombinedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    params[key].expr = expr
-                    par[new_key] = params[key].__class__()
-                    par[new_key].__setstate__(params[key].__getstate__())
+                    par[new_key] = lm.Parameter(new_key,
+                                                value=params[key].value,
+                                                min=params[key].min,
+                                                max=params[key].max,
+                                                vary=params[key].vary,
+                                                expr=expr)
+                    par[new_key].stderr = params[key].stderr
             spec.params = par
 
     def seperate_response(self, x):
@@ -112,8 +123,7 @@ class CombinedModel(BaseModel):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             no_of_points=10**4, ax=None, show=True, legend=None,
-             data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
+             ax=None, show=True, plot_kws={}):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -125,25 +135,21 @@ class CombinedModel(BaseModel):
             Experimental y-data.
         yerr: list of arrays or dict('high': array, 'low': array)
             Experimental errors on y.
-        no_of_points: int
-            Number of points to use for the plot of the hfs if
-            experimental data is given.
         ax: matplotlib axes object
             If provided, plots on this axis.
         show: boolean
             If True, the plot will be shown at the end.
-        legend: string, optional
-            If given, an entry in the legend will be made for the spectrum.
-        data_legend: string, optional
-            If given, an entry in the legend will be made for the experimental
-            data.
+        plot_kws: dictionary
+            Dictionary containing the additional keyword arguments for the *plot*
+            method of the underlying models. Note that the keyword *ax*
+            is passed along correctly.
 
         Returns
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
         if ax is None:
-            fig, ax = plt.subplots(len(self.models), 1, sharex=True)
+            fig, ax = plt.subplots(len(self.models), 1)
             height = fig.get_figheight()
             width = fig.get_figwidth()
             fig.set_size_inches(width, len(self.models) * height, forward=True)
@@ -159,25 +165,34 @@ class CombinedModel(BaseModel):
             yerr = [None] * len(self.models)
 
         selected = int(np.floor(len(self.models)/2 - 1))
+
+        plot_kws_no_xlabel = copy.deepcopy(plot_kws)
+        plot_kws_no_xlabel['xlabel'] = ''
+
+        plot_kws_no_ylabel = copy.deepcopy(plot_kws)
+        plot_kws_no_ylabel['ylabel'] = ''
+
+        plot_kws_no_xlabel_no_ylabel = copy.deepcopy(plot_kws)
+        plot_kws_no_xlabel_no_ylabel['xlabel'] = ''
+        plot_kws_no_xlabel_no_ylabel['ylabel'] = ''
+
         for i, (X, Y, YERR, spec) in enumerate(zip(x, y, yerr,
                                                    self.models)):
             if i == selected:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False,
-                              data_legend=data_legend, legend=legend, xlabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_xlabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False,
-                              data_legend=data_legend, legend=legend, xlabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel)
             elif i == len(self.models) - 1:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, ylabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_ylabel)
             else:
                 try:
-                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                    spec.plot(x=X, y=Y, yerr=[YERR['low'], YERR['high']], ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
                 except:
-                    spec.plot(x=X, y=Y, yerr=YERR, no_of_points=no_of_points, ax=ax[i], show=False, xlabel='', ylabel='')
+                    spec.plot(x=X, y=Y, yerr=YERR, ax=ax[i], show=False, **plot_kws_no_xlabel_no_ylabel)
 
         plt.tight_layout()
         if show:

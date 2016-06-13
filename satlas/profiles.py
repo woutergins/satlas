@@ -3,13 +3,12 @@ Implementation of classes for different lineshapes, creating callables for easy 
 
 .. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
 .. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Kara Marie Lynch <kara.marie.lynch@cern.ch>
 """
 import numpy as np
 from scipy.special import wofz
 
-
-__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt',
-           'ExtendedVoigt', 'Irrational', 'HyperbolicSquared']
+__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt', 'Crystalball']
 sqrt2 = 2 ** 0.5
 sqrt2pi = (2 * np.pi) ** 0.5
 sqrt2log2t2 = 2 * np.sqrt(2 * np.log(2))
@@ -85,7 +84,6 @@ class Profile(object):
             factor = self._normFactor
         vals = vals / factor
         return self.amp * vals
-
 
 class Gaussian(Profile):
 
@@ -224,6 +222,90 @@ class Lorentzian(Profile):
         bottomPart = (x ** 2 + self.gamma ** 2) * np.pi
         return super(Lorentzian, self).__call__(topPart / bottomPart)
 
+class PseudoVoigt(Profile):
+
+    r"""A callable normalized PseudoVoigt profile.
+    Parameters
+    ----------
+    fwhm: float
+        Full Width At Half Maximum, defaults to 1.
+    mu: float
+        Location of the center, defaults to 0.
+    amp: float
+        Amplitude of the profile, defaults to 1.
+    Returns
+    -------
+    PseudoVoigt
+        Callable instance, evaluates the pseudovoigt profile in the arguments
+        supplied.
+    Note
+    ----
+    The formula used is taken from the webpage
+    http://en.wikipedia.org/wiki/Voigt_profile#Pseudo-Voigt_Approximation, and the
+    supplied FWHM is appropriately transformed for the Gaussian and Lorentzian
+    lineshapes:
+    .. math::
+        \mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
+        (x; \sigma, \mu) + (1-\eta) G(x; \sigma, \mu)
+
+    The formula is also adapted to incorporate an asymmetry in the lineshape. This
+    is done by varying the used fwhm with a sigmoid function over the frequency range."""
+
+    def __init__(self, eta=None, fwhm=None, mu=None,
+                 amp=None, **kwargs):
+        self.L = Lorentzian(**kwargs)
+        self.G = Gaussian(**kwargs)
+        self._a = 0.
+        self._n = np.abs(eta) if eta is not None else 0.5
+        if self._n > 1:
+            self._n = self._n - int(self._n)
+        super(PseudoVoigt, self).__init__(fwhm=fwhm, mu=mu,
+                                          amp=amp, **kwargs)
+
+    @property
+    def fwhm(self):
+        return self._fwhm
+
+    @fwhm.setter
+    def fwhm(self, value):
+        self._fwhm = value
+        self.L.fwhm = value
+        self.G.fwhm = value
+        if not self.ampIsArea:
+            self._normFactor = self.n * self.L(0)
+            self._normFactor += (1.0 - self.n) * self.G(0)
+
+    @property
+    def n(self):
+        return self._n
+
+    @n.setter
+    def n(self, value):
+        value = np.abs(value)
+        if value > 1:
+            value = value - int(value)
+        self._n = value
+        if not self.ampIsArea:
+            self._normFactor = self.n * self.L(0)
+            self._normFactor += (1.0 - self.n) * self.G(0)
+
+    @property
+    def a(self):
+        return self._a
+
+    @a.setter
+    def a(self, value):
+        self._a = value
+
+    def __call__(self, x):
+        x = x - self.mu
+        fwhm_scale = 2 / (1 + np.exp(self.a * x / self.fwhm))
+        self.L.fwhm = self.fwhm*fwhm_scale
+        self.G.fwhm = self.fwhm*fwhm_scale
+
+        val = self.n * self.L(x) + (1.0 - self.n) * self.G(x)
+
+        return super(PseudoVoigt, self).__call__(val)
 
 class Voigt(Profile):
 
@@ -307,162 +389,68 @@ class Voigt(Profile):
         top = wofz(z).real / (self.sigma * sqrt2pi)
         return super(Voigt, self).__call__(top)
 
+class Crystalball(Profile):
 
-class Irrational(Profile):
+    r"""A callable Crystalball profile."""
 
-    r"""A callable normalized Irrational profile.
+    def __init__(self, fwhm=None, mu=None, amp=None, alpha=None, n=None, ampIsArea=False):
+        """Creates a callable object storing the fwhm, amplitude and location
+        of a Crystalball lineshape. For more information, see :cite:`Gaiser`
+        and :cite:`skwarnicki`
 
-Parameters
-----------
-fwhm: float
-    Full Width At Half Maximum, defaults to 1.
-mu: float
-    Location of the center, defaults to 0.
-amp: float
-    Amplitude of the profile, defaults to 1.
+        Parameters
+        ----------
+        fwhm: float
+            Full Width At Half Maximum, defaults to 1.
+        mu: float
+            Location of the center, defaults to 0.
+        amp: float
+            Amplitude of the profile, defaults to 1.
+        alpha: float
+            Location of the tail.
+        n: float
+            Relative amplitude of the tail.
+        ampIsArea: boolean
+            Sets if the amplitude is the integral or the peakheight. Defaults
+            to False.
 
-Returns
--------
-Irrational
-    Callable instance, evaluates the irrational profile in the arguments
-    supplied.
+        Returns
+        -------
+        Crystalball
+            Callable instance, evaluates the Crystalball profile in the arguments supplied."""
+        super(Crystalball, self).__init__(fwhm=fwhm, mu=mu,
+                                          amp=amp, ampIsArea=ampIsArea)
+        self.alpha = alpha
+        self.n = n
 
-Note
-----
-The used formula is taken from T. Ida et al. :cite:`Ida2000`,
-code inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.
+    @property
+    def mu(self):
+        return self._mu
 
-    .. math::
-        \mathcal{I}\left(x; \mu, g\right) &= \frac{g}{2}\left[1+\left(\frac{x-
-        \mu}{g}\right)^2\right]^{-3/2}
-
-        FWHM &= \sqrt{2^{2/3}-1}g"""
-
-    def __init__(self, fwhm=None, mu=None, amp=None, **kwargs):
-        super(Irrational, self).__init__(fwhm=fwhm, mu=mu,
-                                         amp=amp, **kwargs)
+    @mu.setter
+    def mu(self, value):
+        self._mu = value
 
     @property
     def fwhm(self):
+        """FWHM of the peak."""
         return self._fwhm
 
     @fwhm.setter
     def fwhm(self, value):
         self._fwhm = value
-        self.gamma = self.fwhm / np.sqrt(np.power(2, 2.0 / 3) - 1)
+        self.sigma = self.fwhm / (sqrt2log2t2)
+
         if not self.ampIsArea:
-            self._normFactor = (1.0 ** (-1.5)) / (2 * self.gamma)
-
-    def __call__(self, x):
-        x = x - self.mu
-        val = ((1.0 + (x / self.gamma) ** 2) ** (-1.5)) / (2 * self.gamma)
-        return super(Irrational, self).__call__(val)
-
-
-class HyperbolicSquared(Profile):
-
-    r"""A callable normalized HyperbolicSquared profile.
-
-Parameters
-----------
-fwhm: float
-    Full Width At Half Maximum, defaults to 1.
-mu: float
-    Location of the center, defaults to 0.
-amp: float
-    Amplitude of the profile, defaults to 1.
-
-Returns
--------
-Hyperbolic
-    Callable instance, evaluates the hyperbolic profile in the arguments
-    supplied.
-
-Note
-----
-The used formula is taken from T. Ida et al. :cite:`Ida2000`, code inspired by the PhD thesis of
-Deyan Yordanov :cite:`Yordanov2007`.
-
-    .. math::
-        H\left(x;\mu, g\right) &= \frac{1}{2g}\cosh^{-2}\left(\frac{x-\mu}{g}
-        \right)
-
-        FWHM &= 2g\ln\left(\sqrt{2}+1\right)"""
-
-    def __init__(self, fwhm=None, mu=None, amp=None, **kwargs):
-        super(HyperbolicSquared, self).__init__(fwhm=fwhm, mu=mu,
-                                                amp=amp, **kwargs)
+            self._normFactor = 1
 
     @property
-    def fwhm(self):
-        return self._fwhm
+    def alpha(self):
+        return self._alpha
 
-    @fwhm.setter
-    def fwhm(self, value):
-        self._fwhm = value
-        self.gamma = self.fwhm / (2 * np.log(np.sqrt(2) + 1))
-        if not self.ampIsArea:
-            self._normFactor = 1.0 / (2 * self.gamma)
-
-    def __call__(self, x):
-        x = x - self.mu
-        coshPart = (1.0 / np.cosh(x / self.gamma)) ** 2
-        simplePart = 2 * self.gamma
-        return super(HyperbolicSquared, self).__call__(coshPart / simplePart)
-
-
-class PseudoVoigt(Profile):
-
-    r"""A callable normalized PseudoVoigt profile.
-
-Parameters
-----------
-fwhm: float
-    Full Width At Half Maximum, defaults to 1.
-mu: float
-    Location of the center, defaults to 0.
-amp: float
-    Amplitude of the profile, defaults to 1.
-
-Returns
--------
-PseudoVoigt
-    Callable instance, evaluates the pseudovoigt profile in the arguments
-    supplied.
-
-Note
-----
-The formula used is taken from the webpage
-http://en.wikipedia.org/wiki/Voigt_profile#Pseudo-Voigt_Approximation, and the
-supplied FWHM is appropriately transformed for the Gaussian and Lorentzian
-lineshapes:
-
-    .. math::
-        \mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
-        (x; \gamma, \mu) + (1-\eta) G(x; \sigma, \mu)"""
-
-    def __init__(self, eta=None, fwhm=None, mu=None,
-                 amp=None, **kwargs):
-        self.L = Lorentzian(**kwargs)
-        self.G = Gaussian(**kwargs)
-        self._n = np.abs(eta) if eta is not None else 0.5
-        if self._n > 1:
-            self._n = self._n - int(self._n)
-        super(PseudoVoigt, self).__init__(fwhm=fwhm, mu=mu,
-                                          amp=amp, **kwargs)
-
-    @property
-    def fwhm(self):
-        return self._fwhm
-
-    @fwhm.setter
-    def fwhm(self, value):
-        self._fwhm = value
-        self.L.fwhm = value
-        self.G.fwhm = value
-        if not self.ampIsArea:
-            self._normFactor = self.n * self.L(0)
-            self._normFactor += (1.0 - self.n) * self.G(0)
+    @alpha.setter
+    def alpha(self, value):
+        self._alpha = value
 
     @property
     def n(self):
@@ -470,139 +458,31 @@ lineshapes:
 
     @n.setter
     def n(self, value):
-        value = np.abs(value)
-        if value > 1:
-            value = value - int(value)
         self._n = value
-        if not self.ampIsArea:
-            self._normFactor = self.n * self.L(0)
-            self._normFactor += (1.0 - self.n) * self.G(0)
+
+    def _bigger(self, x):
+        ret = np.exp(-0.5 * x * x)
+        return ret
+
+    def _smaller(self, x):
+        a = np.abs(self.alpha)
+        n = self.n
+        b = n / a - a
+        a = ((n / a)**n) * np.exp(-0.5*a*a)
+        return a / (b - x) ** n
 
     def __call__(self, x):
-        x = x - self.mu
-        val = self.n * self.L(x) + (1.0 - self.n) * self.G(x)
-        return super(PseudoVoigt, self).__call__(val)
+        r"""Evaluates the lineshape in the given values.
 
+        Parameters
+        ----------
+        vals: array_like
+            Array of values to evaluate the lineshape in.
 
-class ExtendedVoigt(Profile):
-
-    r"""A callable normalized extended Voigt profile.
-
-Parameters
-----------
-fwhm: list of 2 floats
-    Full Width At Half Maximum, defaults to 1, ordered as Gaussian and
-    Lorentzian width.
-mu: float
-    Location of the center, defaults to 0.
-amp: float
-    Amplitude of the profile, defaults to 1.
-
-Attributes
-----------
-totalfwhm: float
-    Approximation of the total width, based on the underlying widths.
-
-Returns
--------
-ExtendedVoigt
-    Callable instance, evaluates the extended Voigt profile in the arguments
-    supplied.
-
-Note
-----
-Formula taken from T. Ida et al. :cite:`Ida2000`, code
-inspired by the PhD thesis of Deyan Yordanov :cite:`Yordanov2007`.
-
-This class uses a weighted sum of the Gaussian,
-Lorentzian, Irrational and HyperbolicSquared profiles."""
-
-    def __init__(self, fwhm=None, mu=None, amp=None, **kwargs):
-        self.kwargs = kwargs
-        super(ExtendedVoigt, self).__init__(fwhm=fwhm, mu=mu,
-                                            amp=amp, **kwargs)
-
-    @property
-    def fwhm(self):
-        return self._fwhm
-
-    @fwhm.setter
-    def fwhm(self, value):
-        if isinstance(value, (list, tuple, np.ndarray)):
-            seperate = value[0:2]
-            self.fwhmG, self.fwhmL = seperate
-            self._fwhm = 0.5346 * self.fwhmL + \
-                         np.sqrt(0.2166 * self.fwhmL ** 2 + self.fwhmG ** 2)
-        else:
-            self.fwhmG, self.fwhmL = value, value
-            self._fwhm = 0.6144031129489123 * value
-        self.setParams()
-
-    def setParams(self):
-        a = np.array(
-            [-2.95553, 8.48252, -9.48291,
-             4.74052, -1.24984, 0.15021, 0.66])
-        b = np.array(
-            [3.19974, -16.50453, 29.14158,
-             -23.45651, 10.30003, -1.25693, -0.42179])
-        c = np.array(
-            [-17.80614, 57.92559, -73.61822,
-             47.06071, -15.36331,  1.43021, 1.19913])
-        d = np.array(
-            [-1.26571, 4.05475, -4.55466,
-             2.76622, -0.68688, -0.47745, 1.10186])
-        f = np.array(
-            [3.7029, -21.18862, 34.96491,
-             -24.10743, 9.3155, -1.38927, -0.30165])
-        g = np.array(
-            [9.76947, -24.12407, 22.10544,
-             -11.09215, 3.23653, -0.14107, 0.25437])
-        h = np.array(
-            [-10.02142, 32.83023, -39.71134,
-             23.59717, -9.21815, 1.50429, 1.01579])
-
-        self.rho = self.fwhmL / (self.fwhmL + self.fwhmG)
-        self.wG = np.polyval(a, self.rho)
-        self.wL = np.polyval(b, self.rho)
-        self.wI = np.polyval(c, self.rho)
-        self.wH = np.polyval(d, self.rho)
-        self.nL = np.polyval(f, self.rho)
-        self.nI = np.polyval(g, self.rho)
-        self.nH = np.polyval(h, self.rho)
-
-        self.wG = s * (1 - self.rho * self.wG)
-        self.wL = s * (1 - (1 - self.rho) * self.wL)
-        self.wI = s * self.wI
-        self.wH = s * self.wH
-        self.nL = self.rho * (1 + (1 - self.rho) * self.nL)
-        self.nI = self.rho * (1 - self.rho) * self.nI
-        self.nH = self.rho * (1 - self.rho) * self.nH
-
-        self.G = Gaussian(fwhm=self.wG, **self.kwargs)
-        self.L = Lorentzian(fwhm=self.wL, **self.kwargs)
-        self.I = Irrational(fwhm=self.wI, **self.kwargs)
-        self.H = HyperbolicSquared(fwhm=self.wH, **self.kwargs)
-
-        self.fwhmV = (self.fwhmG ** 5 +
-                      2.69269 * (self.fwhmG ** 4) * self.fwhmL +
-                      2.42843 * (self.fwhmG ** 3) * (self.fwhmL ** 2) +
-                      4.47163 * (self.fwhmG ** 2) * (self.fwhmL ** 3) +
-                      0.07842 * self.fwhmG * (self.fwhmL ** 4) +
-                      self.fwhmL ** 5
-                      ) ** (1.0 / 5)
-        if not self.ampIsArea:
-            Gauss = (1 - self.nL - self.nI - self.nH) * self.G(0)
-            Lorentz = self.nL * self.L(0)
-            Irrat = self.nI * self.I(0)
-            Hyper = self.nH * self.H(0)
-            val = Gauss + Lorentz + Irrat + Hyper
-            self._normFactor = val
-
-    def __call__(self, x):
-        x = x - self.mu
-        Gauss = (1 - self.nL - self.nI - self.nH) * self.G(x)
-        Lorentz = self.nL * self.L(x)
-        Irrat = self.nI * self.I(x)
-        Hyper = self.nH * self.H(x)
-        val = Gauss + Lorentz + Irrat + Hyper
-        return super(ExtendedVoigt, self).__call__(val)
+        Returns
+        -------
+        array_like
+            Array of seperate response values of the lineshape."""
+        x = (x - self.mu) * np.sign(self.alpha) / self.sigma
+        y = np.piecewise(x, x >= -np.abs(self.alpha), [self._bigger, self._smaller])
+        return super(Crystalball, self).__call__(y)
