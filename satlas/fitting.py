@@ -6,7 +6,7 @@ Implementation of fitting routines specialised for BaseModel objects. Note that 
 """
 import copy
 import os
-import warnings
+import numdifftools as nd
 
 from . import emcee as mcmc
 from . import linkedmodel
@@ -22,7 +22,7 @@ from scipy.misc import derivative
 
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk']
+           'likelihood_fit', 'likelihood_walk', 'createBand']
 chisquare_warning_message = "The supplied dictionary for {} did not contain the necessary keys 'value' and 'uncertainty'."
 
 ###############################
@@ -108,6 +108,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     func: function, optional
         Uses the provided function on the fitvalue to calculate the
         errorbars.
+    verbose: boolean, optional
+        When set to *True*, a tqdm-progressbar in the terminal is maintained.
+        Defaults to *True*.
 
     Return
     ------
@@ -143,6 +146,9 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     func: function, optional
         Uses the provided function on the fitvalue to calculate the
         errorbars.
+    verbose: boolean, optional
+        When set to *True*, a tqdm-progressbar in the terminal is maintained.
+        Defaults to *True*.
 
     Return
     ------
@@ -156,15 +162,14 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     except:
         pass
 
-    def iter_cb(params, iter, resid, *args, **kwargs):
-        if verbose:
+    if verbose:
+        def iter_cb(params, iter, resid, *args, **kwargs):
             progress.update(1)
             progress.set_description('Chisquare fitting in progress (' + str((resid**2).sum()) + ')')
-        else:
-            pass
-
-    if verbose:
         progress = tqdm.tqdm(desc='Chisquare fitting in progress', leave=True)
+    else:
+         def iter_cb(params, iter, resid, *args, **kwargs):
+            pass
 
     result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
     f.params = copy.deepcopy(result.params)
@@ -173,7 +178,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     success = False
     counter = 0
     while not success:
-        result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
+        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
         f.params = copy.deepcopy(result.params)
         success = np.isclose(result.chisqr, f.chisqr)
         f.chisqr = copy.deepcopy(result.chisqr)
@@ -186,6 +191,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     f.chisq_res_par = copy.deepcopy(result.params)
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
+    assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.params, x, np.hstack(y), np.hstack(yerr), xerr, func)
     return success, result.message
 
 ##########################################
@@ -257,10 +263,12 @@ def likelihood_x_err(f, x, y, xerr, func):
     # If a parameter approach is desired, this needs to be changed.
     x = np.array(x)
     y = np.array(y)
-    key = hash(x.data.tobytes()) + hash(y.data.tobytes())
+    key = 0 # Dictionary gets cleared after fit anyway, key doesn't matter
     if key in _x_err_calculation_stored:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
+        # This section is messy, but works.
+        # Should be cleaned up a bit in a future update...
         if isinstance(f, linkedmodel.LinkedModel):
             x_grid = []
             y_grid, _ = np.meshgrid(y, theta_array)
@@ -321,11 +329,12 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     The prior is first evaluated for the parameters. If this is
     not finite, the values are rejected from consideration by
     immediately returning -np.inf."""
+    # Handle old-style BaseModel children by using .lnprior().
     try:
         lp = f.get_lnprior_mapping(params)
     except AttributeError:
         lp = f.lnprior()
-        f.params = params
+    f.params = params
     if not np.isfinite(lp):
         return -np.inf
     res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
@@ -357,16 +366,14 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
         Array containing the loglikelihood for each seperate datapoint."""
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
-    response = np.hstack(f(x))
-    # If a value is given to the uncertainty on the x-values, use the adapted
-    # function.
     if xerr is None or np.allclose(0, xerr):
+        response = np.hstack(f(x))
         return_value = func(y, response)
     else:
         return_value = likelihood_x_err(f, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}, verbose=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -392,8 +399,40 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         loglikelihood.
     method: str, optional
         Selects the algorithm to be used by the minimizer used by LMFIT.
-        For an overview, see the LMFIT and SciPy documentation.
-        Defaults to 'powell'.
+        Possible values:
+
+        +----------------------------+------------------------+
+        | ``method`` arg             | Fitting method         |
+        +============================+========================+
+        | ``nelder``                 | Nelder-Mead            |
+        +----------------------------+------------------------+
+        | ``powell``                 | Powell                 |
+        +----------------------------+------------------------+
+        | ``cg``                     | Conjugate Gradient     |
+        +----------------------------+------------------------+
+        | ``bfgs``                   | BFGS                   |
+        +----------------------------+------------------------+
+        | ``newton``                 | Newton-CG              |
+        +----------------------------+------------------------+
+        | ``lbfgs``                  | L-BFGS-B               |
+        +----------------------------+------------------------+
+        | ``l-bfgs``                 | L-BFGS-B               |
+        +----------------------------+------------------------+
+        | ``tnc``                    | Truncated Newton       |
+        +----------------------------+------------------------+
+        | ``cobyla``                 | COBYLA                 |
+        +----------------------------+------------------------+
+        | ``slsqp``                  | Sequential Linear      |
+        |                            | Squares Programming    |
+        +----------------------------+------------------------+
+        | ``dogleg``                 | Dogleg                 |
+        +----------------------------+------------------------+
+        | ``trust-ncg``              | trust-ncg              |
+        +----------------------------+------------------------+
+        | ``differential_evolution`` | Differential evolution |
+        +----------------------------+------------------------+
+
+        Defaults to 'tnc'.
     method_kws: dict, optional
         Dictionary containing the keywords to be passed to the
         minimizer.
@@ -404,6 +443,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     walk_kws: dictionary
         Contains the keywords for the :func:`.likelihood_walk`
         function, used if walking is set to True.
+    verbose: boolean, optional
+        When set to *True*, a tqdm-progressbar in the terminal is maintained.
+        Defaults to *True*.
 
     Returns
     -------
@@ -423,7 +465,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
             pass
 
     y = np.hstack(y)
-    params = f.params
+    params = copy.deepcopy(f.params)
     # Eliminate the estimated uncertainties
     for p in params:
         params[p].stderr = None
@@ -432,20 +474,20 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
 
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
     result.scalar_minimize(method=method, **method_kws)
-    f.params = result.params
+    f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
     success = False
     counter = 0
     while not success:
-        result = lm.Minimizer(negativeloglikelihood, f.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
+        result = lm.Minimizer(negativeloglikelihood, result.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
         result.scalar_minimize(method=method, **method_kws)
         counter += 1
-        f.params = result.params
+        f.params = copy.deepcopy(result.params)
         new_val = negativeloglikelihood(f.params, f, x, y, xerr, func)
         success = np.isclose(val, new_val)
         val = new_val
-        # if not success and counter > 10:
-        #     break
+        if not success and counter > 10:
+            break
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
@@ -453,13 +495,170 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
 
+    assignHessianEstimate(likelihood_lnprob, f, result.params, x, y, xerr, func, likelihood=True)
+
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
+    _x_err_calculation_stored.clear()
     return success, result.message
 
 ############################
 # UNCERTAINTY CALCULATIONS #
 ############################
+
+def _parameterCostfunction(f, params, func, *args, likelihood=False):
+    # Creates a costfunction for the given model and arguments/data for the different methods.
+    # Is used for calculation the derivative of the cost function for the different parameters.
+    var_names = []
+    vars = []
+    for key in params.keys():
+        if params[key].vary:
+            var_names.append(key)
+            vars.append(params[key].value)
+    if vars == []:
+        return
+    groupParams = lm.Parameters()
+    for key in params.keys():
+        groupParams[key] = PriorParameter(key,
+                                          value=params[key].value,
+                                          vary=params[key].vary,
+                                          expr=params[key].expr,
+                                          priormin=params[key].min,
+                                          priormax=params[key].max)
+    def listfunc(fvars):
+        for val, n in zip(fvars, var_names):
+            groupParams[n].value = val
+        return func(groupParams, f, *args)
+    return listfunc
+
+def assignHessianEstimate(func, f, params, *args, likelihood=False):
+    """Calculates the Hessian of the model at the given parameters,
+    and associates uncertainty estimates based on the inverted Hessian matrix.
+    Note that, for estimation for chisquare methods, the inverted matrix is
+    multiplied by 2.
+
+    Parameters
+    ----------
+    func: function
+        Function used as cost function. Use :func:`.chisquare_model` for chisquare estimates,
+        and :func:`.likelihood_lnprob` for likelihood estimates.
+    f: :class:`.BaseModel`
+        Model for which the estimates need to be made.
+    params: Parameters
+        LMFIT parameters for which the Hessian estimate needs to be made.
+    *args: args for func
+        Arguments for the defined cost function *func*.
+    likelihood: boolean
+        Set to *True* if a likelihood approach is used.
+
+    Returns
+    -------
+    None"""
+    var_names = []
+    vars = []
+    for key in params.keys():
+        if params[key].vary:
+            var_names.append(key)
+            vars.append(params[key].value)
+    if vars == []:
+        return
+
+    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=likelihood))
+    hess_vals = np.linalg.inv(Hfun(vars))
+    f.params = params
+    if likelihood:
+        hess_vals = -hess_vals
+        multiplier = 1
+    else:
+        multiplier = 2
+    for name, hess in zip(var_names, np.diag(multiplier*hess_vals)):
+        f.params[name].stderr = np.sqrt(hess)
+
+    for i, name in enumerate(var_names):
+        f.params[name].correl = {}
+        for j, name2 in enumerate(var_names):
+            if name != name2:
+                f.params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
+
+def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
+    r"""Calculates prediction or confidence bounds at the 1:math:`\sigma` level.
+    The method used is based on the Delta Method: at the requested prediction points *x*, the bound is calculated as
+
+    .. math::
+        \sqrt{G'(\beta, x).T H^{-1}(\beta) G'(\beta, x)}
+
+    with G the cost function, H the Hessian matrix and :math:`\beta` the vector of parameters.
+    The resulting bound needs to be subtracted and added to the value given by the model to get the confidence interval.
+
+    For a prediction interval, the value before taking the square root is increased by 1
+
+
+    Parameters
+    ----------
+    f: :class:`.BaseModel`
+        Model for which the bound needs to be calculated.
+    x: array_like
+        Selection of values for which a prediction needs to be made.
+    x_data: array_like
+        Experimental data for the x-axis.
+    y_data: array_like
+        Experimental data for the y-axis.
+    yerr: array_like
+        Experimental uncertainty for the y-axis.
+    xerr: array_like
+        Experimental uncertainty for the x-axis. Defaults to *None*.
+    method: {'mle', 'chisquare'}
+        Selected method for which the cost function is selected.
+    func_chi: function, optional
+        Is passed on to the chisquare methods in order to calculate the
+        experimental uncertainty from the modelvalue. Defaults to *None*,
+        which uses *yerr*.
+    func_llh: function
+        Is passed on to the likelihood fitting method to define the
+        likelihood function. Defaults to :func:`llh.poisson_llh`.
+    kind: {'prediction', 'confidence'}
+        Selects which type of bound is calculated.
+
+    Returns
+    -------
+    bound: array_like
+        Array describing the deviation from the model value as can be expected
+        for the selected parameters at the 1:math:`\sigma` level."""
+    method_mapping = {'mle': likelihood_lnprob,
+                      'chisquare': lambda *args: (chisquare_model(*args)**2).sum()}
+    if method == 'chisquare':
+        args = x_data, np.hstack(y_data), np.hstack(yerr), xerr, func_chi
+    else:
+        args = x_data, y_data, xerr, func_llh
+    func = method_mapping.pop(method)
+    var_names = []
+    vars = []
+    for key in f.params.keys():
+        if f.params[key].vary:
+            var_names.append(key)
+            vars.append(f.params[key].value)
+
+    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=method.lower()=='mle'))
+    _parameterCostfunction(f, f.params, func, *args, likelihood=method.lower()=='mle')
+    if method.lower()=='mle':
+        hess_vals = -np.linalg.inv(Hfun(vars))
+    else:
+        hess_vals = np.linalg.inv(Hfun(vars))*2
+
+    def listfunc(fvars):
+        for val, n in zip(fvars, var_names):
+            groupParams[n].value = val
+        f.params = groupParams
+        return f(x)
+    jacob = nd.Jacobian(listfunc)
+    result = np.zeros(len(x))
+    for i, row in enumerate(jacob(vars)):
+        result[i] = np.dot(row.T, np.dot(hess_vals, row))
+    f.params = params
+    if kind.lower()=='prediction':
+        return (result+1)**0.5
+    else:
+        return result**0.5
 
 def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', filter=None, fit_kws={}):
     """Calculates the analytical errors on the parameters, by changing the value for
@@ -478,9 +677,9 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
 
     Other parameters
     ----------------
-    method: {'chisquare', 'mle'}
+    method: {'chisquare_spectroscopic', 'chisquare', 'mle'}
         Select for which method the analytical uncertainty has to be calculated.
-        Defaults to 'chisquare'.
+        Defaults to 'chisquare_spectroscopic'.
     filter: list of strings, optional
         Select only a subset of the variable parameters to calculate the uncertainty for.
         Defaults to *None* (all parameters).
@@ -623,7 +822,6 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
     # First, clear all uncertainty estimates
     for p in orig_params:
         orig_params[p].stderr = None
-    # Save all MINOS estimates
     for param_name in ranges.keys():
         orig_params[param_name].stderr = ranges[param_name]['uncertainty']
         orig_params[param_name].value = ranges[param_name]['value']

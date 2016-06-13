@@ -8,7 +8,7 @@ Implementation of classes for different lineshapes, creating callables for easy 
 import numpy as np
 from scipy.special import wofz
 
-__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'Crystalball']
+__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt', 'Crystalball']
 sqrt2 = 2 ** 0.5
 sqrt2pi = (2 * np.pi) ** 0.5
 sqrt2log2t2 = 2 * np.sqrt(2 * np.log(2))
@@ -84,7 +84,6 @@ class Profile(object):
             factor = self._normFactor
         vals = vals / factor
         return self.amp * vals
-
 
 class Gaussian(Profile):
 
@@ -223,6 +222,90 @@ class Lorentzian(Profile):
         bottomPart = (x ** 2 + self.gamma ** 2) * np.pi
         return super(Lorentzian, self).__call__(topPart / bottomPart)
 
+class PseudoVoigt(Profile):
+
+    r"""A callable normalized PseudoVoigt profile.
+    Parameters
+    ----------
+    fwhm: float
+        Full Width At Half Maximum, defaults to 1.
+    mu: float
+        Location of the center, defaults to 0.
+    amp: float
+        Amplitude of the profile, defaults to 1.
+    Returns
+    -------
+    PseudoVoigt
+        Callable instance, evaluates the pseudovoigt profile in the arguments
+        supplied.
+    Note
+    ----
+    The formula used is taken from the webpage
+    http://en.wikipedia.org/wiki/Voigt_profile#Pseudo-Voigt_Approximation, and the
+    supplied FWHM is appropriately transformed for the Gaussian and Lorentzian
+    lineshapes:
+    .. math::
+        \mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
+        (x; \sigma, \mu) + (1-\eta) G(x; \sigma, \mu)
+
+    The formula is also adapted to incorporate an asymmetry in the lineshape. This
+    is done by varying the used fwhm with a sigmoid function over the frequency range."""
+
+    def __init__(self, eta=None, fwhm=None, mu=None,
+                 amp=None, **kwargs):
+        self.L = Lorentzian(**kwargs)
+        self.G = Gaussian(**kwargs)
+        self._a = 0.
+        self._n = np.abs(eta) if eta is not None else 0.5
+        if self._n > 1:
+            self._n = self._n - int(self._n)
+        super(PseudoVoigt, self).__init__(fwhm=fwhm, mu=mu,
+                                          amp=amp, **kwargs)
+
+    @property
+    def fwhm(self):
+        return self._fwhm
+
+    @fwhm.setter
+    def fwhm(self, value):
+        self._fwhm = value
+        self.L.fwhm = value
+        self.G.fwhm = value
+        if not self.ampIsArea:
+            self._normFactor = self.n * self.L(0)
+            self._normFactor += (1.0 - self.n) * self.G(0)
+
+    @property
+    def n(self):
+        return self._n
+
+    @n.setter
+    def n(self, value):
+        value = np.abs(value)
+        if value > 1:
+            value = value - int(value)
+        self._n = value
+        if not self.ampIsArea:
+            self._normFactor = self.n * self.L(0)
+            self._normFactor += (1.0 - self.n) * self.G(0)
+
+    @property
+    def a(self):
+        return self._a
+
+    @a.setter
+    def a(self, value):
+        self._a = value
+
+    def __call__(self, x):
+        x = x - self.mu
+        fwhm_scale = 2 / (1 + np.exp(self.a * x / self.fwhm))
+        self.L.fwhm = self.fwhm*fwhm_scale
+        self.G.fwhm = self.fwhm*fwhm_scale
+
+        val = self.n * self.L(x) + (1.0 - self.n) * self.G(x)
+
+        return super(PseudoVoigt, self).__call__(val)
 
 class Voigt(Profile):
 
@@ -337,6 +420,8 @@ class Crystalball(Profile):
             Callable instance, evaluates the Crystalball profile in the arguments supplied."""
         super(Crystalball, self).__init__(fwhm=fwhm, mu=mu,
                                           amp=amp, ampIsArea=ampIsArea)
+        self.alpha = alpha
+        self.n = n
 
     @property
     def mu(self):

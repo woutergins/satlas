@@ -35,11 +35,13 @@ class HFSModel(BaseModel):
     __shapes__ = {'gaussian': p.Gaussian,
                   'lorentzian': p.Lorentzian,
                   'crystalball': p.Crystalball,
-                  'voigt': p.Voigt}
+                  'voigt': p.Voigt,
+                  'pseudovoigt': p.PseudoVoigt}
 
     def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001],
                  shape='voigt', use_racah=False, use_saturation=False, saturation=0.001,
-                 shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1):
+                 shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalball_params={'Taillocation': 1, 'Tailamplitude': 1},
+                 pseudovoigt_params={'Eta': 0.5, 'A': 0}):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -163,9 +165,11 @@ class HFSModel(BaseModel):
 
         self._roi = (-np.inf, np.inf)
 
-        self._populate_params(ABC, fwhm, scale, n,
-                              poisson, offset, centroid, saturation,
-                              tailamp, tailloc, background_params)
+        self._populate_params(ABC, centroid, fwhm, scale, saturation,
+                              background_params,
+                              sidepeak_params,
+                              crystalball_params,
+                              pseudovoigt_params)
 
     @property
     def locations(self):
@@ -254,6 +258,10 @@ class HFSModel(BaseModel):
             for part in self.parts:
                 part.alpha = params['Taillocation'].value
                 part.n = params['Tailamplitude'].value
+        if self.shape.lower() == 'pseudovoigt':
+            for part in self.parts:
+                part.n = params['Eta'].value
+                part.a = params['A'].value
 
 
     def _set_transitional_amplitudes(self):
@@ -337,24 +345,32 @@ class HFSModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, ABC, fwhm, scale,
-                         n, poisson, offset, centroid, saturation,
-                         tailamp, tailloc, background_params):
+    def _populate_params(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalball_params, pseudovoigt_params):
         # Prepares the params attribute with the initial values
         par = lm.Parameters()
         if not self.shape.lower() == 'voigt':
             if self.shared_fwhm:
-                par.add('FWHM', value=fwhm, vary=True, min=0.0001)
+                par.add('FWHM', value=fwhm, vary=True, min=0)
+                if self.shape.lower() == 'pseudovoigt':
+                    Eta = pseudovoigt_params['Eta']
+                    A = pseudovoigt_params['A']
+                    par.add('Eta', value=Eta, vary=True, min=0, max=1)
+                    par.add('A', value=tailamp, vary=True)
             else:
                 if not len(fwhm) == len(self.ftof):
                     fwhm = fwhm[0]
                     fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHM' + label, value=val, vary=True, min=0.0001)
+                    par.add('FWHM' + label, value=val, vary=True, min=0)
+                    if self.shape.lower() == 'pseudovoigt':
+                        Eta = pseudovoigt_params['Eta']
+                        A = pseudovoigt_params['A']
+                        par.add('Eta' + label, value=Eta, vary=True, min=0, max=1)
+                        par.add('A' + label, value=A, vary=True)
         else:
             if self.shared_fwhm:
-                par.add('FWHMG', value=fwhm[0], vary=True, min=0.0001)
-                par.add('FWHML', value=fwhm[1], vary=True, min=0.0001)
+                par.add('FWHMG', value=fwhm[0], vary=True, min=0)
+                par.add('FWHML', value=fwhm[1], vary=True, min=0)
                 val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
                         expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
@@ -363,8 +379,8 @@ class HFSModel(BaseModel):
                 if not fwhm.shape[0] == len(self.ftof):
                     fwhm = np.array([[fwhm[0], fwhm[1]] for _ in range(len(self.ftof))])
                 for label, val in zip(self.ftof, fwhm):
-                    par.add('FWHMG' + label, value=val[0], vary=True, min=0.0001)
-                    par.add('FWHML' + label, value=val[1], vary=True, min=0.0001)
+                    par.add('FWHMG' + label, value=val[0], vary=True, min=0)
+                    par.add('FWHML' + label, value=val[1], vary=True, min=0)
                     val = 0.5346 * val[1] + np.sqrt(0.2166 * val[1] ** 2
                                                     + val[0] ** 2)
                     par.add('TotalFWHM' + label, value=val, vary=False,
@@ -372,11 +388,13 @@ class HFSModel(BaseModel):
                                  '+(0.2166*FWHML' + label +
                                  '**2+FWHMG' + label + '**2)**0.5')
         if self.shape.lower() == 'crystalball':
-            par.add('Taillocation', value=tailloc, vary=True)
-            par.add('Tailamplitude', value=tailamp, vary=True)
+            taillocation = crystalball_params['Taillocation']
+            tailamplitude = crystalball_params['Tailamplitude']
+            par.add('Taillocation', value=taillocation, vary=True)
+            par.add('Tailamplitude', value=tailamplitude, vary=True)
             for part in self.parts:
-                part.alpha = tailloc
-                part.n = tailamp
+                part.alpha = taillocation
+                part.n = tailamplitude
 
         par.add('Scale', value=scale, vary=self.use_racah or self.use_saturation, min=0)
         par.add('Saturation', value=saturation * self.use_saturation, vary=self.use_saturation, min=0)
@@ -407,10 +425,11 @@ class HFSModel(BaseModel):
 
         for i, val in reversed(list(enumerate(background_params))):
             par.add('Background' + str(i), value=background_params[i], vary=True)
+        n, poisson, offset = sidepeak_params['N'], sidepeak_params['Poisson'], sidepeak_params['Offset']
         par.add('N', value=n, vary=False)
         if n > 0:
             par.add('Poisson', value=poisson, vary=True, min=0, max=1)
-            par.add('Offset', value=offset, vary=False, min=None, max=0)
+            par.add('Offset', value=offset, vary=False, min=None, max=None)
 
         self.params = self._check_variation(par)
 
@@ -646,10 +665,8 @@ class HFSModel(BaseModel):
         if self._params['N'].value > 0:
             s = np.zeros(x.shape)
             for i in range(self._params['N'].value + 1):
-                # print(i, i * self._params['Offset'].value, self._params['Poisson'].value, (self._params['Poisson'].value ** i) / np.math.factorial(i))
                 s += (self._params['Poisson'].value ** i) * (sum([prof(x - i * self._params['Offset'].value)
                                                                 for prof in self.parts]) * self._params['Scale'].value) / np.math.factorial(i)
-            s = s * self._params['Scale'].value
         else:
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
         background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
@@ -774,7 +791,6 @@ class HFSModel(BaseModel):
             z = z / z.sum(axis=0)
             ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
             line, = ax.plot(superx, self(superx) / norm, label=legend, lw=0.5, color=color_lines)
-            # print(superx)
         else:
             if background:
                 y = self(superx)
@@ -791,7 +807,6 @@ class HFSModel(BaseModel):
             else:
                 background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
                 Y = self(self.locations) - np.polyval(background_params, self.locations)
-            # Y = self(self.locations)
             labels = []
             for l in self.ftof:
                 lab = l.split('__')

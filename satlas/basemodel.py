@@ -183,7 +183,7 @@ class BaseModel(object):
         else:
             print('Model has not yet been fitted with this method!')
 
-    def display_chisquare_fit(self, **kwargs):
+    def display_chisquare_fit(self, scaled=False, **kwargs):
         """Display all relevent info of the least-squares fitting routine,
         if this has been performed.
 
@@ -192,9 +192,20 @@ class BaseModel(object):
         kwargs: misc
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisq_res_par'):
-            print('Scaled errors estimated from covariance matrix.')
+            print('Errors estimated from Hessian matrix.')
             print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof, self.chisqr, self.redchi))
-            print(lm.fit_report(self.chisq_res_par, **kwargs))
+            if scaled:
+                print('Errors scaled with reduced chisquare.')
+            else:
+                print('Errors not scaled with reduced chisquare.')
+            if scaled:
+                par = copy.deepcopy(self.params)
+                for p in par:
+                    if par[p].stderr is not None:
+                        par[p].stderr *= (self.redchi**0.5)
+                print(lm.fit_report(par, **kwargs))
+            else:
+                print(lm.fit_report(self.chisq_res_par, **kwargs))
         else:
             print('Spectrum has not yet been fitted with this method!')
 

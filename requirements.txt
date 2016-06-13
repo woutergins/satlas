@@ -4,3 +4,4 @@ sympy
 matplotlib
 pandas
 h5py
+numdifftools

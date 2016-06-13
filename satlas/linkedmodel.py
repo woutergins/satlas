@@ -39,8 +39,8 @@ class LinkedModel(BaseModel):
     def get_chisquare_mapping(self):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
 
-    # def get_lnprior_mapping(self, params):
-    #     return sum([f.get_lnprior_mapping(params) for f in self.models])
+    def get_lnprior_mapping(self, params):
+        return sum([f.get_lnprior_mapping(params) for f in self.models])
 
     @property
     def shared(self):

@@ -89,7 +89,7 @@ def fit_report(inpars, modelpars=None, show_correl=True, min_correl=0.1,
     if hasattr(inpars, 'params'):
         result = inpars
         params = inpars.params
-    
+
     if sort_pars:
         if callable(sort_pars):
             key = sort_pars
