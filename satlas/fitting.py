@@ -122,7 +122,7 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     yerr[np.isclose(yerr, 0.0)] = 1.0
     return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose)
 
-def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
+def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -149,6 +149,9 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
+        is calculated, otherwise the LMFIT version is used. Defaults to *False*.
 
     Return
     ------
@@ -188,10 +191,20 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
         progress.set_description('Chisquare fitting done')
         progress.close()
 
-    f.chisq_res_par = copy.deepcopy(result.params)
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
-    assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.params, x, np.hstack(y), np.hstack(yerr), xerr, func)
+    if hessian:
+        if verbose:
+            progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True)
+        else:
+            progress = None
+        assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.chisq_res_par, x, np.hstack(y), np.hstack(yerr), xerr, func, progress=progress)
+    else:
+        for key in f.params.keys():
+            if f.params[key].stderr is not None:
+                f.params[key].stderr /= f.redchi**0.5
+    f.chisq_res_par = copy.deepcopy(f.params)
+
     return success, result.message
 
 ##########################################
@@ -373,7 +386,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
         return_value = likelihood_x_err(f, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -446,6 +459,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the Hessian estimate of the uncertainty will be
+        calculated.
 
     Returns
     -------
@@ -495,7 +511,13 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
 
-    assignHessianEstimate(likelihood_lnprob, f, result.params, x, y, xerr, func, likelihood=True)
+    if hessian:
+        if verbose:
+            progress = tqdm.tqdm(leave=True, desc='Starting Hessian calculation')
+        else:
+            progress = None
+
+        assignHessianEstimate(likelihood_lnprob, f, result.params, x, y, xerr, func, likelihood=True, progress=progress)
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
@@ -531,7 +553,7 @@ def _parameterCostfunction(f, params, func, *args, likelihood=False):
         return func(groupParams, f, *args)
     return listfunc
 
-def assignHessianEstimate(func, f, params, *args, likelihood=False):
+def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=None):
     """Calculates the Hessian of the model at the given parameters,
     and associates uncertainty estimates based on the inverted Hessian matrix.
     Note that, for estimation for chisquare methods, the inverted matrix is
@@ -550,10 +572,15 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False):
         Arguments for the defined cost function *func*.
     likelihood: boolean
         Set to *True* if a likelihood approach is used.
+    progress: progressbar
+        TQDM progressbar instance to update.
 
     Returns
     -------
     None"""
+    if progress is not None:
+        progress.set_description('Parsing parameters')
+
     var_names = []
     vars = []
     for key in params.keys():
@@ -561,24 +588,41 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False):
             var_names.append(key)
             vars.append(params[key].value)
     if vars == []:
+        if progress is not None:
+            progress.set_description('No parameters to vary')
+            progress.close()
         return
 
+    if progress is not None:
+        progress.set_description('Creating Hessian function')
     Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=likelihood))
-    hess_vals = np.linalg.inv(Hfun(vars))
+    if progress is not None:
+        progress.set_description('Calculating Hessian matrix')
+    hess_vals = Hfun(vars)
+    if progress is not None:
+        progress.set_description('Inverting matrix')
+    hess_vals = np.linalg.inv(hess_vals)
     f.params = params
     if likelihood:
         hess_vals = -hess_vals
         multiplier = 1
     else:
         multiplier = 2
+    if progress is not None:
+        progress.set_description('Assigning uncertainties')
     for name, hess in zip(var_names, np.diag(multiplier*hess_vals)):
         f.params[name].stderr = np.sqrt(hess)
 
+    if progress is not None:
+        progress.set_description('Assigning correlations')
     for i, name in enumerate(var_names):
         f.params[name].correl = {}
         for j, name2 in enumerate(var_names):
             if name != name2:
                 f.params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
+    if progress is not None:
+        progress.set_description('Finished Hessian calculation')
+        progress.close()
 
 def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
     r"""Calculates prediction or confidence bounds at the 1:math:`\sigma` level.

@@ -259,6 +259,7 @@ class HFSModel(BaseModel):
                 part.alpha = params['Taillocation'].value
                 part.n = params['Tailamplitude'].value
         if self.shape.lower() == 'pseudovoigt':
+            for label, part in zip(self.ftof, self.parts):
                 if self.shared_fwhm:
                     part.n = params['Eta'].value
                     part.a = params['A'].value
