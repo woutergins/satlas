@@ -682,13 +682,20 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
             var_names.append(key)
             vars.append(f.params[key].value)
 
-    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=method.lower()=='mle'))
-    _parameterCostfunction(f, f.params, func, *args, likelihood=method.lower()=='mle')
+    backup = copy.deepcopy(f.params)
+    Hfun = nd.Hessian(_parameterCostfunction(f, f.params, func, *args, likelihood=method.lower()=='mle'))
     if method.lower()=='mle':
         hess_vals = -np.linalg.inv(Hfun(vars))
     else:
         hess_vals = np.linalg.inv(Hfun(vars))*2
-
+    groupParams = lm.Parameters()
+    for key in f.params.keys():
+        groupParams[key] = PriorParameter(key,
+                                          value=f.params[key].value,
+                                          vary=f.params[key].vary,
+                                          expr=f.params[key].expr,
+                                          priormin=f.params[key].min,
+                                          priormax=f.params[key].max)
     def listfunc(fvars):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
@@ -698,7 +705,7 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
     result = np.zeros(len(x))
     for i, row in enumerate(jacob(vars)):
         result[i] = np.dot(row.T, np.dot(hess_vals, row))
-    f.params = params
+    f.params = backup
     if kind.lower()=='prediction':
         return (result+1)**0.5
     else:
