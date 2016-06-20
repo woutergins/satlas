@@ -87,7 +87,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True, hessian=False):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -111,6 +111,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
+        is calculated, otherwise the LMFIT version is used. Defaults to *False*.
 
     Return
     ------
@@ -120,7 +123,7 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose)
+    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian)
 
 def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
