@@ -170,8 +170,8 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
 
     if verbose:
         def iter_cb(params, iter, resid, *args, **kwargs):
-            progress.update(1)
             progress.set_description('Chisquare fitting in progress (' + str((resid**2).sum()) + ')')
+            progress.update(1)
         progress = tqdm.tqdm(desc='Chisquare fitting in progress', leave=True)
     else:
          def iter_cb(params, iter, resid, *args, **kwargs):
@@ -196,9 +196,10 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
 
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
+    f.chisq_res_par = copy.deepcopy(f.params)
     if hessian:
         if verbose:
-            progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True)
+            progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True, miniters=1)
         else:
             progress = None
         assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.chisq_res_par, x, np.hstack(y), np.hstack(yerr), xerr, func, progress=progress)
@@ -206,7 +207,6 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
         for key in f.params.keys():
             if f.params[key].stderr is not None:
                 f.params[key].stderr /= f.redchi**0.5
-    f.chisq_res_par = copy.deepcopy(f.params)
 
     return success, result.message
 
@@ -583,6 +583,7 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
     None"""
     if progress is not None:
         progress.set_description('Parsing parameters')
+        progress.update(1)
 
     var_names = []
     vars = []
@@ -593,17 +594,21 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
     if vars == []:
         if progress is not None:
             progress.set_description('No parameters to vary')
+            progress.update(1)
             progress.close()
         return
 
     if progress is not None:
         progress.set_description('Creating Hessian function')
+        progress.update(1)
     Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=likelihood))
     if progress is not None:
         progress.set_description('Calculating Hessian matrix')
+        progress.update(1)
     hess_vals = Hfun(vars)
     if progress is not None:
         progress.set_description('Inverting matrix')
+        progress.update(1)
     hess_vals = np.linalg.inv(hess_vals)
     f.params = params
     if likelihood:
@@ -613,11 +618,13 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
         multiplier = 2
     if progress is not None:
         progress.set_description('Assigning uncertainties')
+        progress.update(1)
     for name, hess in zip(var_names, np.diag(multiplier*hess_vals)):
         f.params[name].stderr = np.sqrt(hess)
 
     if progress is not None:
         progress.set_description('Assigning correlations')
+        progress.update(1)
     for i, name in enumerate(var_names):
         f.params[name].correl = {}
         for j, name2 in enumerate(var_names):
@@ -625,6 +632,7 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
                 f.params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
     if progress is not None:
         progress.set_description('Finished Hessian calculation')
+        progress.update(1)
         progress.close()
 
 def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):

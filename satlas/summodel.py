@@ -193,7 +193,10 @@ class SumModel(BaseModel):
         line_counter = 1
         for m in self.models:
             # plot_kws['legend'] = 'I=' + str(m.I)
-            color = ax.lines[-1].get_color()
+            try:
+                color = ax.lines[-1].get_color()
+            except IndexError:
+                color = next(ax._get_lines.prop_cycler)['color']
             m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_kws)
             # plot_kws['indicate'] = False
             x_points = np.append(x_points, ax.lines[-1].get_xdata())
