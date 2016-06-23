@@ -503,17 +503,17 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                     bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
                     # bins[bin_index] = 50
                 try:
-                    ax.hist(x, int(bins[bin_index]))
+                    ax.hist(x, int(bins[bin_index]), histtype='step')
                 except ValueError:
                     bins = 50
-                    ax.hist(x, bins)
+                    ax.hist(x, bins, histtype='step')
                 metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
                 q = [16.0, 50.0, 84.0]
                 q16, q50, q84 = np.percentile(x, q)
 
-                title = val + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
-                ax.set_title(title.format(q50, q50-q16, q84-q50))
+                title = title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+                ax.set_title(title.format(val, q50, q50-q16, q84-q50))
                 qvalues = [q16, q50, q84]
                 for q in qvalues:
                     ax.axvline(q, ls="dashed")

@@ -600,55 +600,9 @@ class HFSModel(BaseModel):
             self.ratioC = (value, target)
         self.params = self._set_ratios(self._params)
 
-    #######################################
-    #      METHODS CALLED BY FITTING      #
-    #######################################
-
-    def _sanitize_input(self, x, y, yerr=None):
-        return x, y, yerr
-
-    def seperate_response(self, x):
-        """Wraps the output of the :meth:`__call__` in a list, for
-        ease of coding in the fitting routines.
-
-        Parameters
-        ----------
-        x : float or array_like
-            Frequency in MHz.
-
-        Returns
-        -------
-        list of floats or NumPy arrays
-            Seperate responses of spectra to the input *x*."""
-        return [self(x)]
-
     ###########################
     #      MAGIC METHODS      #
     ###########################
-
-    def __add__(self, other):
-        """Add two spectra together to get an :class:`.SumModel`.
-
-        Parameters
-        ----------
-        other: HFSModel
-            Other spectrum to add.
-
-        Returns
-        -------
-        SumModel
-            A SumModel combining both spectra."""
-        if isinstance(other, HFSModel):
-            l = [self, other]
-        elif isinstance(other, SumModel):
-            l = [self] + other.models
-        return SumModel(l)
-
-    def __radd__(self, other):
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
     def __call__(self, x):
         """Get the response for frequency *x* (in MHz) of the spectrum.

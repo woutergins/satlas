@@ -35,7 +35,7 @@ __all__.extend(combinedmodel.__all__)
 __all__.extend(summodel.__all__)
 
 style = {'backend': 'qt4agg',
-         'lines.linewidth': 3,
+         'lines.linewidth': 1.5,
          'lines.linestyle': '-',
          'lines.marker': None,
          'lines.markeredgewidth': 0,

@@ -87,7 +87,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True, hessian=False):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, hessian=False):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -105,9 +105,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True, hes
     ----------------
     xerr: array_like, optional
         Error bars on *x*.
-    func: function, optional
-        Uses the provided function on the fitvalue to calculate the
-        errorbars.
+    model: boolean, optional
+        When set to *True*, use the square root of the model function as uncertainty. *False*
+        uses the square root of the datapoints. Defaults to *True*.
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
@@ -123,6 +123,8 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True, hes
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
+    if model:
+        func = np.sqrt
     return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian)
 
 def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
@@ -279,7 +281,7 @@ def likelihood_x_err(f, x, y, xerr, func):
     # If a parameter approach is desired, this needs to be changed.
     x = np.array(x)
     y = np.array(y)
-    key = 0 # Dictionary gets cleared after fit anyway, key doesn't matter
+    key = id(f)
     if key in _x_err_calculation_stored:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
@@ -510,9 +512,14 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
-    f.mle_fit = result.params
+    f.mle_fit = copy.deepcopy(result.params)
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
+    f.mle_chisqr = (-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func)).sum()
+    try:
+        f.mle_redchi = f.mle_chisqr / f.ndof
+    except:
+        f.mle_redchi = f.mle_chisqr / (len(y) - len([p for p in f.params if f.params[p].vary]))
 
     if hessian:
         if verbose:
@@ -520,7 +527,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
         else:
             progress = None
 
-        assignHessianEstimate(likelihood_lnprob, f, result.params, x, y, xerr, func, likelihood=True, progress=progress)
+        assignHessianEstimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)

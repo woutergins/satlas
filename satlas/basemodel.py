@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-
 __all__ = ['Model']
 
 
@@ -168,7 +167,7 @@ class BaseModel(object):
             return_value += self._lnprior_mapping[key](params[key].value)
         return return_value
 
-    def display_mle_fit(self, **kwargs):
+    def display_mle_fit(self, scaled=False, **kwargs):
         """Give a readable overview of the result of the MLE fitting routine.
 
         Warning
@@ -179,7 +178,17 @@ class BaseModel(object):
         if hasattr(self, 'mle_fit'):
             if 'show_correl' not in kwargs:
                 kwargs['show_correl'] = False
-            print(lm.fit_report(self.mle_fit, **kwargs))
+            print('Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.mle_chisqr, self.mle_redchi))
+            if scaled:
+                print('Errors scaled with reduced chisquare.')
+                par = copy.deepcopy(self.mle_fit)
+                for p in par:
+                    if par[p].stderr is not None:
+                        par[p].stderr *= (self.mle_redchi**0.5)
+                print(lm.fit_report(par, **kwargs))
+            else:
+                print('Errors not scaled with reduced chisquare.')
+                print(lm.fit_report(self.mle_fit, **kwargs))
         else:
             print('Model has not yet been fitted with this method!')
 
@@ -192,7 +201,6 @@ class BaseModel(object):
         kwargs: misc
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisq_res_par'):
-            print('Errors estimated from Hessian matrix.')
             print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof, self.chisqr, self.redchi))
             if scaled:
                 print('Errors scaled with reduced chisquare.')
@@ -337,3 +345,43 @@ class BaseModel(object):
         import pickle
         with open(path, 'wb') as f:
             pickle.dump(self, f)
+
+    #######################################
+    #      METHODS CALLED BY FITTING      #
+    #######################################
+
+    def _sanitize_input(self, x, y, yerr=None):
+        return x, y, yerr
+
+    def seperate_response(self, x):
+        """Wraps the output of the :meth:`__call__` in a list, for
+        ease of coding in the fitting routines."""
+        return [self(x)]
+
+    def __add__(self, other):
+        """Add two spectra together to get an :class:`.SumModel`.
+
+        Parameters
+        ----------
+        other: BaseModel
+            Other spectrum to add.
+
+        Returns
+        -------
+        SumModel
+            A SumModel combining both spectra."""
+        from .summodel import SumModel
+        if isinstance(other, SumModel):
+            l = [self] + other.models
+        else:
+            l = [self, other]
+        return SumModel(l)
+
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
+
+    def __call__(self, x):
+        raise NotImplementedError("Method has to be implemented in subclass!")
