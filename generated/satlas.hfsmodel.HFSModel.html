@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.hfsmodel.HFSModel &mdash; SATLAS 0.1.0b18 documentation</title>
+    <title>satlas.hfsmodel.HFSModel &mdash; SATLAS 0.1.0b22 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b18',
+        VERSION:     '0.1.0b22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +24,10 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b18 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b22 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.hfsmodel.HFSModel.__init__" href="hfsmodel/satlas.hfsmodel.HFSModel.__init__.html" >
-    <link rel="prev" title="satlas.models.MiscModel.__init__" href="models/satlas.models.MiscModel.__init__.html" > 
+    <link rel="prev" title="satlas.models.PolynomialModel.__init__" href="models/satlas.models.PolynomialModel.__init__.html" > 
   </head>
   <body>
 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b18 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b22 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -66,7 +66,7 @@
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="models/satlas.models.MiscModel.__init__.html" title="satlas.models.MiscModel.__init__"
+        <a href="models/satlas.models.PolynomialModel.__init__.html" title="satlas.models.PolynomialModel.__init__"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -86,7 +86,7 @@
 <h1>satlas.hfsmodel.HFSModel<a class="headerlink" href="#satlas-hfsmodel-hfsmodel" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="satlas.hfsmodel.HFSModel">
-<em class="property">class </em><code class="descclassname">satlas.hfsmodel.</code><code class="descname">HFSModel</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/hfsmodel.html#HFSModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">satlas.hfsmodel.</code><code class="descname">HFSModel</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Offset': 0, 'Poisson': 0.68}, crystalball_params={'Tailamplitude': 1, 'Taillocation': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/hfsmodel.html#HFSModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs a HFS spectrum, consisting of different
 peaks described by a certain profile. The number of peaks is governed by
 the nuclear spin and the atomic spins of the levels.</p>
@@ -103,23 +103,20 @@ the nuclear spin and the atomic spins of the levels.</p>
 <tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.__call__.html#satlas.hfsmodel.HFSModel.__call__" title="satlas.hfsmodel.HFSModel.__call__"><code class="xref py py-obj docutils literal"><span class="pre">__call__</span></code></a>(x)</td>
 <td>Get the response for frequency <em>x</em> (in MHz) of the spectrum.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.__add__.html#satlas.hfsmodel.HFSModel.__add__" title="satlas.hfsmodel.HFSModel.__add__"><code class="xref py py-obj docutils literal"><span class="pre">__add__</span></code></a>(other)</td>
-<td>Add two spectra together to get an <a class="reference internal" href="satlas.summodel.SumModel.html#satlas.summodel.SumModel" title="satlas.summodel.SumModel"><code class="xref py py-class docutils literal"><span class="pre">SumModel</span></code></a>.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.fix_ratio.html#satlas.hfsmodel.HFSModel.fix_ratio" title="satlas.hfsmodel.HFSModel.fix_ratio"><code class="xref py py-obj docutils literal"><span class="pre">fix_ratio</span></code></a>(value[,&nbsp;target,&nbsp;parameter])</td>
+<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.fix_ratio.html#satlas.hfsmodel.HFSModel.fix_ratio" title="satlas.hfsmodel.HFSModel.fix_ratio"><code class="xref py py-obj docutils literal"><span class="pre">fix_ratio</span></code></a>(value[,&nbsp;target,&nbsp;parameter])</td>
 <td>Fixes the ratio for a given hyperfine parameter to the given value.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot.html#satlas.hfsmodel.HFSModel.plot" title="satlas.hfsmodel.HFSModel.plot"><code class="xref py py-obj docutils literal"><span class="pre">plot</span></code></a>([x,&nbsp;y,&nbsp;yerr,&nbsp;no_of_points,&nbsp;ax,&nbsp;show,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot.html#satlas.hfsmodel.HFSModel.plot" title="satlas.hfsmodel.HFSModel.plot"><code class="xref py py-obj docutils literal"><span class="pre">plot</span></code></a>([x,&nbsp;y,&nbsp;yerr,&nbsp;no_of_points,&nbsp;ax,&nbsp;show,&nbsp;...])</td>
 <td>Plot the hfs, possibly on top of experimental data.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot_spectroscopic.html#satlas.hfsmodel.HFSModel.plot_spectroscopic" title="satlas.hfsmodel.HFSModel.plot_spectroscopic"><code class="xref py py-obj docutils literal"><span class="pre">plot_spectroscopic</span></code></a>(**kwargs)</td>
+<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot_spectroscopic.html#satlas.hfsmodel.HFSModel.plot_spectroscopic" title="satlas.hfsmodel.HFSModel.plot_spectroscopic"><code class="xref py py-obj docutils literal"><span class="pre">plot_spectroscopic</span></code></a>(**kwargs)</td>
 <td>Plots the hfs on top of experimental data with errorbar given by the square root of the data.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot_scheme.html#satlas.hfsmodel.HFSModel.plot_scheme" title="satlas.hfsmodel.HFSModel.plot_scheme"><code class="xref py py-obj docutils literal"><span class="pre">plot_scheme</span></code></a>([show,&nbsp;upper_color,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.plot_scheme.html#satlas.hfsmodel.HFSModel.plot_scheme" title="satlas.hfsmodel.HFSModel.plot_scheme"><code class="xref py py-obj docutils literal"><span class="pre">plot_scheme</span></code></a>([show,&nbsp;upper_color,&nbsp;...])</td>
 <td>Create a figure where both the splitting of the upper and lower state is drawn, and the hfs associated with this.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.seperate_response.html#satlas.hfsmodel.HFSModel.seperate_response" title="satlas.hfsmodel.HFSModel.seperate_response"><code class="xref py py-obj docutils literal"><span class="pre">seperate_response</span></code></a>(x)</td>
-<td>Wraps the output of the <a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel.__call__.html#satlas.hfsmodel.HFSModel.__call__" title="satlas.hfsmodel.HFSModel.__call__"><code class="xref py py-meth docutils literal"><span class="pre">__call__</span></code></a> in a list, for ease of coding in the fitting routines.</td>
+<tr class="row-odd"><td><a class="reference internal" href="hfsmodel/satlas.hfsmodel.HFSModel._calculate_energies.html#satlas.hfsmodel.HFSModel._calculate_energies" title="satlas.hfsmodel.HFSModel._calculate_energies"><code class="xref py py-obj docutils literal"><span class="pre">_calculate_energies</span></code></a>()</td>
+<td>The hyperfine addition to a central frequency (attribute <em>centroid</em>) for a specific level is calculated.</td>
 </tr>
 </tbody>
 </table>
@@ -161,8 +158,8 @@ the nuclear spin and the atomic spins of the levels.</p>
       <div class="spc-rightsidebar span3">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="models/satlas.models.MiscModel.__init__.html"
-                        title="previous chapter">satlas.models.MiscModel.__init__</a></p>
+  <p class="topless"><a href="models/satlas.models.PolynomialModel.__init__.html"
+                        title="previous chapter">satlas.models.PolynomialModel.__init__</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="hfsmodel/satlas.hfsmodel.HFSModel.__init__.html"
                         title="next chapter">satlas.hfsmodel.HFSModel.__init__</a></p>

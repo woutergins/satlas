@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.utilities.generate_correlation_map &mdash; SATLAS 0.1.0b18 documentation</title>
+    <title>satlas.utilities.generate_correlation_map &mdash; SATLAS 0.1.0b22 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b18',
+        VERSION:     '0.1.0b22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b18 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b22 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.utilities.generate_spectrum" href="satlas.utilities.generate_spectrum.html" >
     <link rel="prev" title="satlas.utilities.generate_correlation_plot" href="satlas.utilities.generate_correlation_plot.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b18 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b22 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -86,7 +86,7 @@
 <h1>satlas.utilities.generate_correlation_map<a class="headerlink" href="#satlas-utilities-generate-correlation-map" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.utilities.generate_correlation_map">
-<code class="descclassname">satlas.utilities.</code><code class="descname">generate_correlation_map</code><span class="sig-paren">(</span><em>f</em>, <em>x_data</em>, <em>y_data</em>, <em>method='chisquare_spectroscopic'</em>, <em>filter=None</em>, <em>resolution_diag=20</em>, <em>resolution_map=15</em>, <em>fit_kws={}</em>, <em>distance=3</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/utilities.html#generate_correlation_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.generate_correlation_map" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">satlas.utilities.</code><code class="descname">generate_correlation_map</code><span class="sig-paren">(</span><em>f</em>, <em>x_data</em>, <em>y_data</em>, <em>method='chisquare_spectroscopic'</em>, <em>filter=None</em>, <em>resolution_diag=20</em>, <em>resolution_map=15</em>, <em>fit_kws={}</em>, <em>distance=3</em>, <em>npar=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/utilities.html#generate_correlation_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.utilities.generate_correlation_map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a correlation map for either the chisquare or the MLE method.
 On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
 Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -119,6 +119,9 @@ Number of points for the line plot on each diagonal.</li>
 Number of points along each dimension for the meshgrids.</li>
 <li><strong>fit_kws</strong> (<em>dictionary</em>) &#8211;
 Dictionary of keywords to pass on to the fitting routine.</li>
+<li><strong>npar</strong> (<em>int</em>) &#8211;
+Number of parameters for which simultaneous predictions need to be made.
+Influences the uncertainty estimates from the parabola.</li>
 </ul>
 </td>
 </tr>

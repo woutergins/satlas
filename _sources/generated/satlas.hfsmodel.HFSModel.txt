@@ -13,12 +13,12 @@ satlas.hfsmodel.HFSModel
 
       ~HFSModel.__init__
       ~HFSModel.__call__
-      ~HFSModel.__add__
       ~HFSModel.fix_ratio
       ~HFSModel.plot
       ~HFSModel.plot_spectroscopic
       ~HFSModel.plot_scheme
       ~HFSModel.seperate_response
+      ~HFSModel._calculate_energies
 
    .. rubric:: Attributes
 

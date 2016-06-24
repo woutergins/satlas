@@ -31,8 +31,8 @@ Purpose
 =======
 .. sidebar:: Contributors
 
-    * Wouter Gins (wouter.gins@fys.kuleuven.be)
-    * Ruben de Groote (ruben.degroote@fys.kuleuven.be)
+    * Wouter Gins (wouter.gins@kuleuven.be)
+    * Ruben de Groote (ruben.degroote@kuleuven.be)
     * Kara Marie Lynch (kara.marie.lynch@cern.ch)
 
 This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both :math:`\chi^2`-fitting and Maximum Likelihood Estimation routines, are present.
@@ -46,6 +46,7 @@ This package depends on the following packages:
     * `Matplotlib <http://matplotlib.org/>`_
     * `sympy <http://www.sympy.org/>`_
     * `h5py <http://docs.h5py.org/en/latest/index.html>`_
+    * `numdifftools <http://numdifftools.readthedocs.io/en/latest/>`_
 
 The following packages are distributed as part of SATLAS:
 

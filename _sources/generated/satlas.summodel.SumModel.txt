@@ -13,7 +13,6 @@ satlas.summodel.SumModel
 
       ~SumModel.__init__
       ~SumModel.__call__
-      ~SumModel.__add__
       ~SumModel.plot
       ~SumModel.plot_spectroscopic
       ~SumModel.seperate_response

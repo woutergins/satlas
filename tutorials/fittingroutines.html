@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>Fitting routines &mdash; SATLAS 0.1.0b18 documentation</title>
+    <title>Fitting routines &mdash; SATLAS 0.1.0b22 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b18',
+        VERSION:     '0.1.0b22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b18 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b22 documentation" href="../index.html" >
     <link rel="up" title="Tutorials" href="../tutorial.html" >
     <link rel="next" title="Plotting routines" href="plottingroutines.html" >
     <link rel="prev" title="BaseModelCreation and evaluation" href="spectrumcreation.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b18 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b22 documentation</a></li>
 	
           <li class="active"><a href="../tutorial.html" accesskey="U">Tutorials</a></li> 
     </ul>
@@ -110,97 +110,122 @@ Gaussian distribution for the uncertainty calculation.</p>
 <p>In order to demonstrate the fit functions, toy data is needed. This is
 created by assuming some parameters for the basemodel, calculating the
 response, and then adding random noise.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">satlas</span> <span class="kn">as</span> <span class="nn">s</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1">#Ensure the same random numbers each time</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span>%matplotlib inline
 
-<span class="n">I</span> <span class="o">=</span> <span class="mf">1.0</span>
-<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
+import satlas as s
+import numpy as np
+s.set()
+np.random.seed(0)  #Ensure the same random numbers each time
 
-<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
-<span class="n">centroid</span> <span class="o">=</span> <span class="mi">500</span>
-<span class="n">scale</span> <span class="o">=</span> <span class="mi">100</span>
+I = 1.0
+J = [1.0, 2.0]
 
-<span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ABC = [100, 200, 100, 200, 0, 0]
+fwhm = [10, 10]
+centroid = 500
+scale = 100
 
-<span class="n">frequency_range</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">basemodel</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">-</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">basemodel</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
-<span class="n">frequency_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequency_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">200</span><span class="p">)</span>
+basemodel = s.HFSModel(I, J, ABC, centroid, fwhm=fwhm, scale=scale, background_params=[10], use_racah=True)
 
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">basemodel</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span> <span class="o">+</span> <span class="n">basemodel</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)))</span>
+frequency_range = (min(basemodel.locations) - 100, max(basemodel.locations) + 100)
+frequency_range = np.linspace(frequency_range[0], frequency_range[1], 200)
 
-<span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-<span class="n">basemodel</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+data = np.floor(basemodel(frequency_range) + basemodel(frequency_range)**0.5 * np.random.randn(len(frequency_range)))
+
+success, message = s.chisquare_spectroscopic_fit(basemodel, frequency_range, data)
+print(success)
+print(message)
+basemodel.display_chisquare_fit(show_correl=False)
+basemodel.plot(x=frequency_range, y=data)
 </pre></div>
 </div>
 <pre class="literal-block">
-C:UsersMyStuffAnaconda3libsite-packagesIPythonhtml.py:14: ShimWarning: The <cite>IPython.html</cite> package has been deprecated. You should import from <cite>notebook</cite> instead. <cite>IPython.html.widgets</cite> has moved to <cite>ipywidgets</cite>.
+C:Anaconda3libsite-packagesIPythonhtml.py:14: ShimWarning: The <cite>IPython.html</cite> package has been deprecated. You should import from <cite>notebook</cite> instead. <cite>IPython.html.widgets</cite> has moved to <cite>ipywidgets</cite>.
   &quot;<cite>IPython.html.widgets</cite> has moved to <cite>ipywidgets</cite>.&quot;, ShimWarning)
-C:UsersMyStuffAnaconda3libsite-packagesmatplotlib__init__.py:872: UserWarning: axes.color_cycle is deprecated and replaced with axes.prop_cycle; please use the latter.
-  warnings.warn(self.msg_depr % (key, alt_key))
+Chisquare fitting done: 126it [00:00, 807.65it/s]
 </pre>
-<div class="highlight-python"><div class="highlight"><pre>True
+<div class="highlight-python"><div class="highlight"><pre><span></span>True
 Tolerance seems to be too small.
-Scaled errors estimated from covariance matrix.
-NDoF: 191, Chisquare: 243.70943, Reduced Chisquare: 1.2759656
+NDoF: 191, Chisquare: 204.74572, Reduced Chisquare: 1.0719671
+Errors not scaled with reduced chisquare.
 [[Variables]]
-    Al:            99.0223550 +/- 1.029561 (1.04%) (init= 99.02318)
+    FWHMG:         11.4052934 +/- 2.725367 (23.90%) (init= 11.40556)
+    FWHML:         8.04020593 +/- 2.450075 (30.47%) (init= 8.040088)
+    TotalFWHM:     16.3017438 +/- 1.350493 (8.28%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+    Scale:         97.0923207 +/- 6.671103 (6.87%) (init= 97.09158)
+    Saturation:    0 (fixed)
     Amp0__1:       0.2380726 (fixed)
     Amp1__1:       0.1786341 (fixed)
     Amp1__2:       0.535743 (fixed)
     Amp2__1:       0.01191064 (fixed)
     Amp2__2:       0.1786448 (fixed)
     Amp2__3:       1 (fixed)
-    Au:            199.356040 +/- 0.629877 (0.32%) (init= 199.3564)
-    Background0:   8.73587717 +/- 0.307256 (3.52%) (init= 8.735893)
-    Bl:            101.393727 +/- 0.692640 (0.68%) (init= 101.3934)
-    Bu:            200.771492 +/- 1.111849 (0.55%) (init= 200.7717)
-    Centroid:      499.690041 +/- 0.505937 (0.10%) (init= 499.6901)
+    Al:            98.4456970 +/- 0.927711 (0.94%) (init= 98.44472)
+    Au:            199.024103 +/- 0.568696 (0.29%) (init= 199.0234)
+    Bl:            101.250852 +/- 0.636955 (0.63%) (init= 101.2501)
+    Bu:            200.908034 +/- 0.963296 (0.48%) (init= 200.9071)
     Cl:            0 (fixed)
     Cu:            0 (fixed)
-    FWHMG:         12.2505549 +/- 2.776466 (22.66%) (init= 12.25163)
-    FWHML:         7.54444285 +/- 2.544660 (33.73%) (init= 7.543783)
+    Centroid:      499.893420 +/- 0.473148 (0.09%) (init= 499.8938)
+    Background0:   10.5068608 +/- 0.311596 (2.97%) (init= 10.50687)
     N:             0 (fixed)
-    Saturation:    0 (fixed)
-    Scale:         96.8951274 +/- 6.935488 (7.16%) (init= 96.89334)
-    TotalFWHM:     16.7770682 +/- 1.394659 (8.31%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+</pre></div>
+</div>
+<pre class="literal-block">
+C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure includes Axes that are not compatible with tight_layout, so its results might be incorrect.
+  warnings.warn(&quot;This figure includes Axes that are not &quot;
+</pre>
+<img alt="../_images/output_1_3.png" src="../_images/output_1_3.png" />
+<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xbd83710&gt;,
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0xbdaad30&gt;)
 </pre></div>
 </div>
 <p>If <em>func=np.sqrt</em> is given to the fitfunction, the result is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 <span class="n">basemodel</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency_range</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre>True
+<div class="highlight-python"><div class="highlight"><pre><span></span>Chisquare fitting in progress (204.745716227): 169it [00:00, 842.93it/s]
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>True
 Tolerance seems to be too small.
-Scaled errors estimated from covariance matrix.
 NDoF: 191, Chisquare: 204.74572, Reduced Chisquare: 1.0719671
+Errors not scaled with reduced chisquare.
 [[Variables]]
-    Al:            98.4445335 +/- 0.927717 (0.94%) (init= 98.44561)
+    FWHMG:         11.4046727 +/- 2.725470 (23.90%) (init= 11.40435)
+    FWHML:         8.04079698 +/- 2.450016 (30.47%) (init= 8.040947)
+    TotalFWHM:     16.3015558 +/- 1.350555 (8.28%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+    Scale:         97.0921180 +/- 6.671372 (6.87%) (init= 97.09294)
+    Saturation:    0 (fixed)
     Amp0__1:       0.2380726 (fixed)
     Amp1__1:       0.1786341 (fixed)
     Amp1__2:       0.535743 (fixed)
     Amp2__1:       0.01191064 (fixed)
     Amp2__2:       0.1786448 (fixed)
     Amp2__3:       1 (fixed)
-    Au:            199.023678 +/- 0.568704 (0.29%) (init= 199.0244)
-    Background0:   10.5068522 +/- 0.311595 (2.97%) (init= 10.50684)
-    Bl:            101.251169 +/- 0.636961 (0.63%) (init= 101.252)
-    Bu:            200.907481 +/- 0.963299 (0.48%) (init= 200.9086)
-    Centroid:      499.893322 +/- 0.473148 (0.09%) (init= 499.8928)
+    Al:            98.4445375 +/- 0.927717 (0.94%) (init= 98.4456)
+    Au:            199.023681 +/- 0.568704 (0.29%) (init= 199.0244)
+    Bl:            101.251172 +/- 0.636961 (0.63%) (init= 101.252)
+    Bu:            200.907484 +/- 0.963299 (0.48%) (init= 200.9086)
     Cl:            0 (fixed)
     Cu:            0 (fixed)
-    FWHMG:         11.4046738 +/- 2.725470 (23.90%) (init= 11.40436)
-    FWHML:         8.04079635 +/- 2.450016 (30.47%) (init= 8.040946)
+    Centroid:      499.893321 +/- 0.473148 (0.09%) (init= 499.8928)
+    Background0:   10.5068522 +/- 0.311595 (2.97%) (init= 10.50684)
     N:             0 (fixed)
-    Saturation:    0 (fixed)
-    Scale:         97.0921149 +/- 6.671372 (6.87%) (init= 97.09294)
-    TotalFWHM:     16.3015564 +/- 1.350555 (8.28%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+</pre></div>
+</div>
+<pre class="literal-block">
+C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure includes Axes that are not compatible with tight_layout, so its results might be incorrect.
+  warnings.warn(&quot;This figure includes Axes that are not &quot;
+</pre>
+<img alt="../_images/output_3_3.png" src="../_images/output_3_3.png" />
+<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xc63d5f8&gt;,
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0xc7c5160&gt;)
 </pre></div>
 </div>
 <p>which is slightly different.</p>
@@ -218,67 +243,63 @@ calculated as</p>
 </div><p>For the function <em>logp</em>, the standard choice is the loglikelihood
 derived from the Poisson distribution.</p>
 <p>To use this method, the fitting routine code has to be changed to</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 <span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency_range</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre>True
-Optimization terminated successfully.
+<div class="highlight-python"><div class="highlight"><pre><span></span>Likelihood fitting done: 7196it [00:08, 864.65it/s]
+Finished Hessian calculation: 7it [00:02,  2.81it/s]
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span>True
+Converged (|f_n-f_(n-1)| ~= 0)
+Chisquare: 215.42358, Reduced Chisquare: 1.1278721
+Errors not scaled with reduced chisquare.
 [[Variables]]
-    Al:            98.6119935 (init= 98.63549)
+    FWHMG:         10.0256994 +/- 2.832646 (28.25%) (init= 10.02534)
+    FWHML:         9.11423613 +/- 2.316078 (25.41%) (init= 9.125287)
+    TotalFWHM:     15.7585838  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+    Scale:         99.9610437 +/- 6.736418 (6.74%) (init= 99.99098)
+    Saturation:    0 (fixed)
     Amp0__1:       0.2380726 (fixed)
     Amp1__1:       0.1786341 (fixed)
     Amp1__2:       0.535743 (fixed)
     Amp2__1:       0.01191064 (fixed)
     Amp2__2:       0.1786448 (fixed)
     Amp2__3:       1 (fixed)
-    Au:            199.114212 (init= 199.1435)
-    Background0:   9.94373112 (init= 9.936184)
-    Bl:            101.382229 (init= 101.4291)
-    Bu:            200.982154 (init= 201.0038)
-    Centroid:      499.846731 (init= 499.8283)
+    Al:            98.4627333 +/- 0.835447 (0.85%) (init= 98.46572)
+    Au:            199.006802 +/- 0.515486 (0.26%) (init= 198.9938)
+    Bl:            101.344440 +/- 0.680162 (0.67%) (init= 101.2718)
+    Bu:            200.970619 +/- 0.891733 (0.44%) (init= 200.8642)
     Cl:            0 (fixed)
     Cu:            0 (fixed)
-    FWHMG:         10.7541468 (init= 10.70806)
-    FWHML:         8.61348269 (init= 8.705107)
+    Centroid:      499.887536 +/- 0.468680 (0.09%) (init= 499.9266)
+    Background0:   9.90564578 +/- 0.290065 (2.93%) (init= 9.918109)
     N:             0 (fixed)
-    Saturation:    0 (fixed)
-    Scale:         98.1004112 (init= 98.00073)
-    TotalFWHM:     16.0817743  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+</pre></div>
+</div>
+<pre class="literal-block">
+C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure includes Axes that are not compatible with tight_layout, so its results might be incorrect.
+  warnings.warn(&quot;This figure includes Axes that are not &quot;
+</pre>
+<img alt="../_images/output_5_3.png" src="../_images/output_5_3.png" />
+<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xc791908&gt;,
+ &lt;matplotlib.axes._subplots.AxesSubplot at 0xc7ad1d0&gt;)
 </pre></div>
 </div>
 <p>The uncertainties on the parameters can be estimated using a random walk
 through parameter space, or the analytical boundaries can be calculated.
 The random walk is explained in another tutorial. To estimate the
 analytical bounds:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">s</span><span class="o">.</span><span class="n">calculate_analytical_uncertainty</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">calculate_analytical_uncertainty</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">)</span>
 <span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre>[[Variables]]
-    Al:            98.5551182 +/- 0.982856 (1.00%) (init= 98.53085)
-    Amp0__1:       0.2380726 (fixed)
-    Amp1__1:       0.1786341 (fixed)
-    Amp1__2:       0.535743 (fixed)
-    Amp2__1:       0.01191064 (fixed)
-    Amp2__2:       0.1786448 (fixed)
-    Amp2__3:       1 (fixed)
-    Au:            199.070734 +/- 0.604586 (0.30%) (init= 199.0555)
-    Background0:   9.95439023 +/- 0.298604 (3.00%) (init= 9.958722)
-    Bl:            101.352552 +/- 0.725957 (0.72%) (init= 101.3491)
-    Bu:            200.975161 +/- 0.932456 (0.46%) (init= 200.9768)
-    Centroid:      499.863041 +/- 0.476942 (0.10%) (init= 499.8666)
-    Cl:            0 (fixed)
-    Cu:            0 (fixed)
-    FWHMG:         10.9019676 +/- 3.395867 (31.15%) (init= 10.97597)
-    FWHML:         8.45277063 +/- 3.086041 (36.51%) (init= 8.384242)
-    N:             0 (fixed)
-    Saturation:    0 (fixed)
-    Scale:         98.0803022 +/- 7.158631 (7.30%) (init= 98.02322)
-    TotalFWHM:     16.1547399  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
+<div class="highlight-python"><div class="highlight"><pre><span></span>FWHMG (finding root): 4it [00:19,  4.26s/it]
 </pre></div>
 </div>
 <p>By supplying a list of names under the <em>filter</em> keyword, the uncertainty
@@ -288,6 +309,31 @@ value for a parameter, the numbers given as the best fit might change
 slightly. Convergence is also not guaranteed, so warning messages might
 be displayed for some parameters.</p>
 </div>
+</div>
+<div class="section" id="fitting-with-literature-values">
+<h1>Fitting with literature values<a class="headerlink" href="#fitting-with-literature-values" title="Permalink to this headline">¶</a></h1>
+<p>When using the <a class="reference internal" href="../generated/basemodel/satlas.basemodel.BaseModel.set_literature_values.html#satlas.basemodel.BaseModel.set_literature_values" title="satlas.basemodel.BaseModel.set_literature_values"><code class="xref py py-meth docutils literal"><span class="pre">BaseModel.set_literature_values</span></code></a> method to take
+the known literature values into account, the fitting statistic is
+adjusted in the following way:</p>
+<p>1. The chisquare calculation
+automatically adds the literature value as an extra datapoint, correctly
+incorporating this in the calculation of the degrees of freedom. The new
+chisquare formula is</p>
+<div class="math">
+<p><img src="../_images/math/566550f66799b8417dcd0e0871149be41dc3aaf5.png" alt="\chi^2 = \sum_i \left(\frac{y_i-f\left(x_i\right)}{\sigma_i}\right)^2 + \sum_{params} \left(\frac{p_{lit}-p_{fit}}{\sigma_{lit}}\right)^2"/></p>
+</div><p>2. In the likelihood calculation, a Gaussian prior for the specified
+parameters is used instead of a uniform one.</p>
+<p>These methods are equivalent in the case of Gaussian distributions on
+the datapoints for the likelihood calculation.</p>
+</div>
+<div class="section" id="likelihood-reduced-chisquare-calculation">
+<h1>Likelihood reduced chisquare calculation<a class="headerlink" href="#likelihood-reduced-chisquare-calculation" title="Permalink to this headline">¶</a></h1>
+<p>In the case of the likelihood calculations, deriving a statistic like
+the <img class="math" src="../_images/math/3259e90f8f4b091dee1e9ca38456453963731f2d.png" alt="\chi^2_{red}"/> is not as straightforward. One possibility is
+using</p>
+<div class="math">
+<p><img src="../_images/math/64e02747355dcaf6cff43840ba9ee56ed41ab696.png" alt="\chi^2_{\mathcal{L}} = -2\mathcal{L}\left(y_i, f\left(x_i\right)\right)+2\mathcal{L}\left(y_i, y_i\right)"/></p>
+</div><p>and this is also what is implemented in SATLAS</p>
 </div>
 
 
@@ -303,6 +349,8 @@ be displayed for some parameters.</p>
 <li><a class="reference internal" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#fitting-with-literature-values">Fitting with literature values</a></li>
+<li><a class="reference internal" href="#likelihood-reduced-chisquare-calculation">Likelihood reduced chisquare calculation</a></li>
 </ul>
 
   <h4>Previous topic</h4>

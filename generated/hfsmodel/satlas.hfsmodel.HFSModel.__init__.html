@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.hfsmodel.HFSModel.__init__ &mdash; SATLAS 0.1.0b18 documentation</title>
+    <title>satlas.hfsmodel.HFSModel.__init__ &mdash; SATLAS 0.1.0b22 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b18',
+        VERSION:     '0.1.0b22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b18 documentation" href="../../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b22 documentation" href="../../index.html" >
     <link rel="up" title="satlas.hfsmodel.HFSModel" href="../satlas.hfsmodel.HFSModel.html" >
     <link rel="next" title="satlas.hfsmodel.HFSModel.__call__" href="satlas.hfsmodel.HFSModel.__call__.html" >
     <link rel="prev" title="satlas.hfsmodel.HFSModel" href="../satlas.hfsmodel.HFSModel.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b18 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b22 documentation</a></li>
 	
           <li class="active"><a href="../../api.html" >API reference</a></li>
           <li class="active"><a href="../satlas.hfsmodel.HFSModel.html" accesskey="U">satlas.hfsmodel.HFSModel</a></li> 
@@ -87,7 +87,7 @@
 <h1>satlas.hfsmodel.HFSModel.__init__<a class="headerlink" href="#satlas-hfsmodel-hfsmodel-init" title="Permalink to this headline">¶</a></h1>
 <dl class="method">
 <dt id="satlas.hfsmodel.HFSModel.__init__">
-<code class="descclassname">HFSModel.</code><code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, n=0, poisson=0.68, offset=0, tailamp=1, tailloc=1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">HFSModel.</code><code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Offset': 0, 'Poisson': 0.68}, crystalball_params={'Tailamplitude': 1, 'Taillocation': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds the HFS with the given atomic and nuclear information.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -105,46 +105,80 @@ C <sub>lower</sub>].</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
-<li><strong>fwhm</strong> (<em>float or list of 2 floats, optional</em>) &#8211;
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last">
+<li><p class="first"><strong>fwhm</strong> (<em>float or list of 2 floats, optional</em>) &#8211;
 Depending on the used shape, the FWHM is defined by one or two floats.
-Defaults to [50.0, 50.0]</li>
-<li><strong>scale</strong> (<em>float, optional</em>) &#8211;
+Defaults to [50.0, 50.0]</p>
+</li>
+<li><p class="first"><strong>scale</strong> (<em>float, optional</em>) &#8211;
 Sets the strength of the spectrum, defaults to 1.0. Comparable to the
-amplitude of the spectrum.</li>
-<li><strong>background_params</strong> (<em>list of float, optional</em>) &#8211;
+amplitude of the spectrum.</p>
+</li>
+<li><p class="first"><strong>background_params</strong> (<em>list of float, optional</em>) &#8211;
 Sets the coefficients of the polynomial background to the given values.
 Order of polynomial is equal to the number of parameters given minus one.
-Highest order coefficient is the first element, etc.</li>
-<li><strong>shape</strong> (<em>string, optional</em>) &#8211;
+Highest order coefficient is the first element, etc.</p>
+</li>
+<li><p class="first"><strong>shape</strong> (<em>string, optional</em>) &#8211;
 Sets the transition shape. String is converted to lowercase. For
 possible values, see <em>HFSModel__shapes__</em>.keys()`.
-Defaults to Voigt if an incorrect value is supplied.</li>
-<li><strong>use_racah</strong> (<em>boolean, optional</em>) &#8211;
+Defaults to Voigt if an incorrect value is supplied.</p>
+</li>
+<li><p class="first"><strong>use_racah</strong> (<em>boolean, optional</em>) &#8211;
 If True, fixes the relative peak intensities to the Racah intensities.
 Otherwise, gives them equal intensities and allows them to vary during
-fitting.</li>
-<li><strong>use_saturation</strong> (<em>boolean, optional</em>) &#8211;
-If True, uses the saturation parameter to calculate relative intensities.</li>
-<li><strong>saturation</strong> (<em>float, optional</em>) &#8211;
+fitting.</p>
+</li>
+<li><p class="first"><strong>use_saturation</strong> (<em>boolean, optional</em>) &#8211;
+If True, uses the saturation parameter to calculate relative intensities.</p>
+</li>
+<li><p class="first"><strong>saturation</strong> (<em>float, optional</em>) &#8211;
 If different than 0, calculate the saturation effect on the intensity of
 transition intensity. This is done by an exponential transition between
-Racah intensities and the saturated intensities.</li>
-<li><strong>shared_fwhm</strong> (<em>boolean, optional</em>) &#8211;
+Racah intensities and the saturated intensities.</p>
+</li>
+<li><p class="first"><strong>shared_fwhm</strong> (<em>boolean, optional</em>) &#8211;
 If True, the same FWHM is used for all peaks. Otherwise, give them all
-the same initial FWHM and let them vary during the fitting.</li>
-<li><strong>n</strong> (<em>int, optional</em>) &#8211;
-Sets the number of sidepeaks that are present in the spectrum.
-Defaults to 0.</li>
-<li><strong>poisson</strong> (<em>float, optional</em>) &#8211;
-Sets the relative intensity of the first side peak. The intensity of the
-other sidepeaks is calculated from the Poisson-factor.</li>
-<li><strong>offset</strong> (<em>float, optional</em>) &#8211;
-Sets the distance (in MHz) of each sidepeak in the spectrum.</li>
-<li><strong>tailamp</strong> (<em>float, optional</em>) &#8211;
-Sets the relative amplitude of the tail for the Crystalball shape function.</li>
-<li><strong>tailloc</strong> (<em>float, optional</em>) &#8211;
-Sets the location of the tail for the Crystalball shape function.</li>
+the same initial FWHM and let them vary during the fitting.</p>
+</li>
+<li><p class="first"><strong>sidepeak_params</strong> (<em>dict</em>) &#8211;
+A dictionary with the following keys and values:</p>
+<dl class="docutils">
+<dt>n: int</dt>
+<dd><p class="first last">Sets the number of sidepeaks that are present in the spectrum.
+Defaults to 0.</p>
+</dd>
+<dt>poisson: float</dt>
+<dd><p class="first last">Sets the relative intensity of the first side peak. The intensity of the
+other sidepeaks is calculated from the Poisson-factor.</p>
+</dd>
+<dt>offset: float</dt>
+<dd><p class="first last">Sets the distance (in MHz) of each sidepeak in the spectrum.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>crystalball_params</strong> (<em>dict</em>) &#8211;
+A dictionary with the following keys and values:</p>
+<dl class="docutils">
+<dt>tailamp: float</dt>
+<dd><p class="first last">Sets the relative amplitude of the tail for the Crystalball shape function.</p>
+</dd>
+<dt>tailloc: float</dt>
+<dd><p class="first last">Sets the location of the tail for the Crystalball shape function.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>pseudovoigt_params</strong> (<em>dict</em>) &#8211;
+A dictionary with the following keys and values:</p>
+<dl class="docutils">
+<dt>Eta: float between 0 and 1</dt>
+<dd><p class="first last">Describes the mixing percentage of the Gaussian and Lorentzian shapes</p>
+</dd>
+<dt>A: float</dt>
+<dd><p class="first last">Describes the asymmetry of the peak.</p>
+</dd>
+</dl>
+</li>
 </ul>
 </td>
 </tr>

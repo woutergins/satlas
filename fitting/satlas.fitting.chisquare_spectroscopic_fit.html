@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.fitting.chisquare_spectroscopic_fit &mdash; SATLAS 0.1.0b18 documentation</title>
+    <title>satlas.fitting.chisquare_spectroscopic_fit &mdash; SATLAS 0.1.0b22 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b18',
+        VERSION:     '0.1.0b22',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b18 documentation" href="../index.html" >
+    <link rel="top" title="SATLAS 0.1.0b22 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.fitting.likelihood_fit" href="satlas.fitting.likelihood_fit.html" >
     <link rel="prev" title="satlas.fitting.chisquare_model" href="satlas.fitting.chisquare_model.html" > 
@@ -46,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b18 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b22 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -86,7 +86,7 @@
 <h1>satlas.fitting.chisquare_spectroscopic_fit<a class="headerlink" href="#satlas-fitting-chisquare-spectroscopic-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.fitting.chisquare_spectroscopic_fit">
-<code class="descclassname">satlas.fitting.</code><code class="descname">chisquare_spectroscopic_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>func=None</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/fitting.html#chisquare_spectroscopic_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.chisquare_spectroscopic_fit" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">satlas.fitting.</code><code class="descname">chisquare_spectroscopic_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>model=True</em>, <em>func=&lt;ufunc 'sqrt'&gt;</em>, <em>verbose=True</em>, <em>hessian=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/fitting.html#chisquare_spectroscopic_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.fitting.chisquare_spectroscopic_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use the <a class="reference internal" href="satlas.fitting.chisquare_fit.html#satlas.fitting.chisquare_fit" title="satlas.fitting.chisquare_fit"><code class="xref py py-func docutils literal"><span class="pre">chisquare_fit</span></code></a> function, automatically estimating the errors
 on the counts by the square root.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -105,9 +105,19 @@ will be fitted to the given data.</li>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
 <li><strong>xerr</strong> (<em>array_like, optional</em>) &#8211;
 Error bars on <em>x</em>.</li>
+<li><strong>model</strong> (<em>boolean, optional</em>) &#8211;
+When set to <em>True</em>, use the square root of the model function as uncertainty. <em>False</em>
+uses the square root of the datapoints. A value of <em>None</em> reverts to the given function
+<em>func</em> to be applied to the model values. Defaults to <em>True</em>.</li>
 <li><strong>func</strong> (<em>function, optional</em>) &#8211;
-Uses the provided function on the fitvalue to calculate the
-errorbars.</li>
+If <em>model</em> is set to <em>None</em>, this function is applied to the model values to calculate
+the weights of the fit.</li>
+<li><strong>verbose</strong> (<em>boolean, optional</em>) &#8211;
+When set to <em>True</em>, a tqdm-progressbar in the terminal is maintained.
+Defaults to <em>True</em>.</li>
+<li><strong>hessian</strong> (<em>boolean, optional</em>) &#8211;
+When set to <em>True</em>, the SATLAS implementation of the Hessian uncertainty estimate
+is calculated, otherwise the LMFIT version is used. Defaults to <em>False</em>.</li>
 </ul>
 </td>
 </tr>
@@ -116,7 +126,7 @@ Boolean indicating the success of the convergence, and the message
 from the optimizer.</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool and string</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
 </td>
 </tr>
 </tbody>
