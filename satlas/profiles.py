@@ -1,8 +1,8 @@
 """
 Implementation of classes for different lineshapes, creating callables for easy and intuitive calculations.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 .. moduleauthor:: Kara Marie Lynch <kara.marie.lynch@cern.ch>
 """
 import numpy as np
@@ -244,6 +244,7 @@ class PseudoVoigt(Profile):
     http://en.wikipedia.org/wiki/Voigt_profile#Pseudo-Voigt_Approximation, and the
     supplied FWHM is appropriately transformed for the Gaussian and Lorentzian
     lineshapes:
+
     .. math::
         \mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
         (x; \sigma, \mu) + (1-\eta) G(x; \sigma, \mu)

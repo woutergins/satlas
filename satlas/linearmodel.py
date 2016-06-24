@@ -1,7 +1,7 @@
 """
 Implementation of a class for the analysis of linear data.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 from . import lmfit as lm
 from .basemodel import BaseModel

@@ -1,8 +1,8 @@
 """
 Implementation of a class for the analysis of hyperfine structure spectra with isomeric presence.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
 import warnings

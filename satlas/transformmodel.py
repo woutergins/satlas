@@ -2,7 +2,7 @@
 Implementation of a class that transforms the input before kicking the arguments
 to the higher class. Currently only supports HFSModel.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 import copy
 

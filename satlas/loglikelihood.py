@@ -1,7 +1,7 @@
 """
 Implementation of calculation of the loglikelihood for common distributions.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 import numpy as np
 

@@ -1,8 +1,8 @@
 """
 Implementation of a class for the simultaneous fitting of hyperfine structure spectra.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
 
@@ -232,8 +232,7 @@ class LinkedModel(BaseModel):
 
     def __add__(self, other):
         """Adding another LinkedModel adds the models therein
-        to the list of models, adding an IsomerSpectrum or SingleSpectrum
-        adds that one spectrum to the list.
+        to the list of models.
 
         Returns
         -------

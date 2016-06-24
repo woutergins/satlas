@@ -6,7 +6,7 @@ setup(
   version=__release__,
   description='This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both chi2-fitting and Maximum Likelihood Estimation routines, are present.',
   author='Wouter Gins',
-  author_email='woutergins@fys.kuleuven.be',
+  author_email='woutergins@kuleuven.be',
   url='https://woutergins.github.io/satlas/',
   license='MIT',
   download_url='https://github.com/woutergins/satlas/archive/master.zip',

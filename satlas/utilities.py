@@ -1,7 +1,7 @@
 """
 Implementation of various functions that ease the work, but do not belong in one of the other modules.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 import copy
 
@@ -257,6 +257,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
     title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
     fit_kws['verbose'] = False
+    fit_kws['hessian'] = False
 
     to_save = {'mle': ('mle_fit', 'mle_result')}
     to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof', 'redchi'))
@@ -654,8 +655,12 @@ def load_model(path):
         return pickle.load(f)
 
 def beta(mass, V):
-    """Calculates the beta-factor for a mass in amu
-    and applied voltage in Volt.
+    r"""Calculates the beta-factor for a mass in amu
+    and applied voltage in Volt. The formula used is
+
+    .. math::
+
+        \beta = \sqrt{1-\frac{m^2c^4}{\left(mc^2+eV\right)^2}}
 
     Parameters
     ----------
@@ -679,9 +684,15 @@ def beta(mass, V):
     return beta
 
 def dopplerfactor(mass, V):
-    """Calculates the Doppler shift of the laser frequency for a
+    r"""Calculates the Doppler shift of the laser frequency for a
     given mass in amu and voltage in V. Transforms from the lab frame
-    to the particle frame. To invert, divide instead of multiply with
+    to the particle frame. The formula used is
+
+    .. math::
+
+        doppler = \sqrt{\frac{1-\beta}{1+\beta}}
+
+    To invert, divide instead of multiply with
     this factor.
 
     Parameters

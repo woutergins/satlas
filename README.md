@@ -11,8 +11,8 @@ SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
 Purpose
 -------
 Contributors:
-* Wouter Gins (wouter.gins@fys.kuleuven.be)
-* Ruben de Groote (ruben.degroote@fys.kuleuven.be)
+* Wouter Gins (wouter.gins@kuleuven.be)
+* Ruben de Groote (ruben.degroote@kuleuven.be)
 * Kara Marie Lynch (kara.marie.lynch@cern.ch)
 
 This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both :math:`\chi^2`-fitting and Maximum Likelihood Estimation routines, are present.
@@ -28,6 +28,7 @@ This package makes use of the following packages:
 * [sympy](http://www.sympy.org/)
 * [h5py](http://docs.h5py.org/en/latest/index.html)
 * [tqdm](https://github.com/tqdm/tqdm)
+* [numdifftools](http://numdifftools.readthedocs.io/en/latest/)
 
 Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al., for the correlation plot code.
 
