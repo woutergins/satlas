@@ -1,8 +1,8 @@
 """
 Implementation of fitting routines specialised for BaseModel objects. Note that not all functions are loaded into the global satlas namespace.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
 import os
@@ -87,7 +87,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, hessian=False):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, verbose=True, hessian=False):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -107,7 +107,11 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, he
         Error bars on *x*.
     model: boolean, optional
         When set to *True*, use the square root of the model function as uncertainty. *False*
-        uses the square root of the datapoints. Defaults to *True*.
+        uses the square root of the datapoints. A value of *None* reverts to the given function
+        *func* to be applied to the model values. Defaults to *True*.
+    func: function, optional
+        If *model* is set to *None*, this function is applied to the model values to calculate
+        the weights of the fit.
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
@@ -117,7 +121,7 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, he
 
     Return
     ------
-    success, message: bool and string
+    success, message: tuple
         Boolean indicating the success of the convergence, and the message
         from the optimizer."""
     y = np.hstack(y)
@@ -125,6 +129,10 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, he
     yerr[np.isclose(yerr, 0.0)] = 1.0
     if model:
         func = np.sqrt
+    elif not model:
+        func = None
+    else:
+        pass
     return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian)
 
 def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
@@ -160,7 +168,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
 
     Return
     ------
-    success, message: bool and string
+    success, message: tuple
         Boolean indicating the success of the convergence, and the message
         from the optimizer."""
 
@@ -472,7 +480,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
 
     Returns
     -------
-    success, message: boolean and str
+    success, message: tuple
         Boolean indicating the success of the optimization and
         the message from the optimizer."""
 
@@ -580,7 +588,7 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
         Model for which the estimates need to be made.
     params: Parameters
         LMFIT parameters for which the Hessian estimate needs to be made.
-    *args: args for func
+    args: args for func
         Arguments for the defined cost function *func*.
     likelihood: boolean
         Set to *True* if a likelihood approach is used.

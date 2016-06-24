@@ -1,8 +1,8 @@
 """
 Implementation of a class for the simultaneous fitting of hyperfine structure spectra.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
 import warnings

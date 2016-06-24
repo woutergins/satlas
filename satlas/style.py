@@ -35,7 +35,7 @@ def set(style='standard'):
     mpl.style.use(style)
 
 def get_available_styles():
-    """"Returns the available stylesheets in the subfolder 'styles'"""
+    """Returns the available stylesheets in the subfolder 'styles'."""
     return STYLES
 
 @contextlib.contextmanager

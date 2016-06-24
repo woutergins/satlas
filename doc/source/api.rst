@@ -23,6 +23,7 @@ General Models
     satlas.summodel.SumModel
     satlas.linkedmodel.LinkedModel
     satlas.models.MiscModel
+    satlas.models.PolynomialModel
 
 Specialized Models
 ~~~~~~~~~~~~~~~~~~
@@ -31,7 +32,6 @@ Specialized Models
 
     satlas.hfsmodel.HFSModel
     satlas.transformmodel.TransformHFSModel
-    satlas.models.PolynomialModel
 
 Fitting routines
 ----------------
@@ -49,6 +49,8 @@ Fitting routines
       satlas.fitting.likelihood_x_err
       satlas.fitting.likelihood_lnprob
       satlas.fitting.likelihood_loglikelihood
+      satlas.fitting.createBand
+      satlas.fitting.assignHessianEstimate
 
 Likelihood calculations
 -----------------------
@@ -75,6 +77,7 @@ Lineshapes
       satlas.profiles.Gaussian
       satlas.profiles.Lorentzian
       satlas.profiles.Voigt
+      satlas.profiles.PseudoVoigt
 
 
 Utilities
@@ -91,3 +94,28 @@ Utilities
       satlas.utilities.load_model
       satlas.utilities.poisson_interval
       satlas.utilities.weighted_average
+      satlas.utilities.beta
+      satlas.utilities.dopplerfactor
+
+Visualisations
+--------------
+
+.. automodule:: satlas.style
+
+    .. autosummary::
+      :toctree: style/
+
+      satlas.style.set
+      satlas.style.get_available_styles
+      satlas.style.set_font
+
+.. warning::
+
+  The following routines are still in an experimental stage!
+
+.. automodule:: satlas.plotter
+
+    .. autosummary::
+      :toctree: plotter/
+
+      satlas.plotter.Plotter

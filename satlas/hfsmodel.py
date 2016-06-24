@@ -1,8 +1,8 @@
 """
 Implementation of a class for the analysis of hyperfine structure spectra.
 
-.. moduleauthor:: Wouter Gins <wouter.gins@fys.kuleuven.be>
-.. moduleauthor:: Ruben de Groote <ruben.degroote@fys.kuleuven.be>
+.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
+.. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
 from fractions import Fraction
@@ -38,10 +38,7 @@ class HFSModel(BaseModel):
                   'voigt': p.Voigt,
                   'pseudovoigt': p.PseudoVoigt}
 
-    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001],
-                 shape='voigt', use_racah=False, use_saturation=False, saturation=0.001,
-                 shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalball_params={'Taillocation': 1, 'Tailamplitude': 1},
-                 pseudovoigt_params={'Eta': 0.5, 'A': 0}):
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalball_params={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -87,18 +84,31 @@ class HFSModel(BaseModel):
         shared_fwhm: boolean, optional
             If True, the same FWHM is used for all peaks. Otherwise, give them all
             the same initial FWHM and let them vary during the fitting.
-        n: int, optional
-            Sets the number of sidepeaks that are present in the spectrum.
-            Defaults to 0.
-        poisson: float, optional
-            Sets the relative intensity of the first side peak. The intensity of the
-            other sidepeaks is calculated from the Poisson-factor.
-        offset: float, optional
-            Sets the distance (in MHz) of each sidepeak in the spectrum.
-        tailamp: float, optional
-            Sets the relative amplitude of the tail for the Crystalball shape function.
-        tailloc: float, optional
-            Sets the location of the tail for the Crystalball shape function.
+        sidepeak_params: dict
+            A dictionary with the following keys and values:
+
+            n: int
+                Sets the number of sidepeaks that are present in the spectrum.
+                Defaults to 0.
+            poisson: float
+                Sets the relative intensity of the first side peak. The intensity of the
+                other sidepeaks is calculated from the Poisson-factor.
+            offset: float
+                Sets the distance (in MHz) of each sidepeak in the spectrum.
+        crystalball_params: dict
+            A dictionary with the following keys and values:
+
+            tailamp: float
+                Sets the relative amplitude of the tail for the Crystalball shape function.
+            tailloc: float
+                Sets the location of the tail for the Crystalball shape function.
+        pseudovoigt_params: dict
+            A dictionary with the following keys and values:
+
+            Eta: float between 0 and 1
+                Describes the mixing percentage of the Gaussian and Lorentzian shapes
+            A: float
+                Describes the asymmetry of the peak.
 
         Note
         ----
