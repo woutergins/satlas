@@ -1,0 +1,6 @@
+font.size: 10.0
+
+figure.figsize: 3.5, 5
+figure.dpi: 160
+
+savefig.dpi: 320

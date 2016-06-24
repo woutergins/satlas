@@ -317,20 +317,20 @@ class BaseModel(object):
         -------
         dict
             Dictionary of the form described above."""
-        if scaled:
-            try:
-                par = copy.deepcopy(self.chisq_res_par)
-                for p in par:
-                    par[p].stderr *= self.redchi**0.5
-            except:
-                pass
         if method.lower() == 'chisquare':
             if scaled:
-                p = par
+                p = copy.deepcopy(self.chisq_res_par)
+                for par in p:
+                    p[par].stderr *= self.redchi**0.5
             else:
                 p = self.chisq_res_par
         else:
-            p = self.mle_fit
+            if scaled:
+                p = copy.deepcopy(self.mle_fit)
+                for par in p:
+                    p[par].stderr *= self.mle_redchi**0.5
+            else:
+                p = self.mle_fit
         returnDict = {P: [p[P].value, p[P].stderr] for P in p}
         return returnDict
 
