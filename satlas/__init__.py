@@ -15,6 +15,8 @@ from . import fitting
 from .fitting import *
 from . import loglikelihood
 from .loglikelihood import *
+from . import plotter
+from .plotter import *
 
 from . import style
 from .style import *
@@ -30,8 +32,9 @@ __all__.extend(hfsmodel.__all__)
 __all__.extend(transformmodel.__all__)
 __all__.extend(models.__all__)
 __all__.extend(linkedmodel.__all__)
-__all__.extend(summodel.__all__)
 __all__.extend(utilities.__all__)
 __all__.extend(fitting.__all__)
 __all__.extend(combinedmodel.__all__)
 __all__.extend(summodel.__all__)
+__all__.extend(style.__all__)
+__all__.extend(plotter.__all__)

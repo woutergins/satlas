@@ -243,7 +243,7 @@ theta_array = np.linspace(-5, 5, 2**10)
 _x_err_calculation_stored = {}
 sqrt2pi = np.sqrt(2*np.pi)
 
-def likelihood_x_err(f, x, y, xerr, func):
+def likelihood_x_err(f, x, y, xerr, func, cache=True):
     """Calculates the loglikelihood for a model given
     x and y values. Incorporates a common given error on
     the x-axis.
@@ -282,7 +282,7 @@ def likelihood_x_err(f, x, y, xerr, func):
     x = np.array(x)
     y = np.array(y)
     key = id(f)
-    if key in _x_err_calculation_stored:
+    if key in _x_err_calculation_stored and cache:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
         # This section is messy, but works.
@@ -302,11 +302,13 @@ def likelihood_x_err(f, x, y, xerr, func):
         else:
             x_grid, theta = np.meshgrid(x, theta_array)
             y_grid, _ = np.meshgrid(y, theta_array)
-            g_top = (np.exp(-theta*theta * 0.5)).T
-            g = (g_top.T / (sqrt2pi * xerr)).T
+            g_top = (np.exp(-theta*theta * 0.5))
+            xerr = np.array(xerr)
+            g = (g_top / (sqrt2pi * xerr)).T
             rfft_g = np.fft.rfft(g)
             x_grid = x_grid + xerr * theta
-        _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
+        if cache:
+            _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
     # Calculate the loglikelihoods for the grid of uncertainty.
     # Each column is a new datapoint.
     vals = func(y_grid, f(x_grid))
@@ -321,7 +323,7 @@ def likelihood_x_err(f, x, y, xerr, func):
     # shifts through the integral, and becomes an addition (due to the logarithm).
     return np.log(integral_value) + mod
 
-def likelihood_lnprob(params, f, x, y, xerr, func):
+def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
     """Calculates the logarithm of the probability that the data fits
     the model given the current parameters.
 
@@ -355,10 +357,10 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     f.params = params
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
+    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func, cache=cache))
     return res
 
-def likelihood_loglikelihood(f, x, y, xerr, func):
+def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
     """Given a parameters object, a Model object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
@@ -388,7 +390,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
         response = np.hstack(f(x))
         return_value = func(y, response)
     else:
-        return_value = likelihood_x_err(f, x, y, xerr, func)
+        return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
 def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
@@ -691,7 +693,7 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
     if method == 'chisquare':
         args = x_data, np.hstack(y_data), np.hstack(yerr), xerr, func_chi
     else:
-        args = x_data, y_data, xerr, func_llh
+        args = x_data, y_data, xerr, func_llh, False
     func = method_mapping.pop(method)
     var_names = []
     vars = []
