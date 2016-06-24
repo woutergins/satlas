@@ -84,7 +84,7 @@ def weighted_average(x, sigma, axis=None):
     Xstat = 1 / Xstat
     return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
 
-def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cbar=True):
+def _make_axes_grid(no_variables, padding=0, cbar_size=0.5, axis_padding=0.5, cbar=True):
     """Makes a triangular grid of axes, with a colorbar axis next to it.
 
     Parameters
@@ -112,21 +112,18 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
 
     # Generate the figure, convert padding to percentages.
     fig = plt.figure()
+    padding = 1
 
-    axis_size = 4
-    width = axis_size * no_variables + cbar_size + 2 * padding + no_variables * axis_padding
-    height = axis_size * no_variables + 2 * padding
-    if no_variables > 1:
-        height += (no_variables - 1) * axis_padding
-    fig.set_size_inches(width, height, forward=True)
+    axis_size_left = (fig.get_figwidth()-padding - 0*(no_variables + 1) * padding) / no_variables
+    axis_size_up = (fig.get_figheight()-padding - 0*(no_variables + 1) * padding) / no_variables
 
     cbar_size = cbar_size / fig.get_figwidth()
-    left_padding = padding / fig.get_figwidth()
+    left_padding = padding * 0.5 / fig.get_figwidth()
     left_axis_padding = axis_padding / fig.get_figwidth()
-    up_padding = padding / fig.get_figheight()
-    up_axis_padding = axis_padding / fig.get_figheight()
-    axis_size_left = axis_size / fig.get_figwidth()
-    axis_size_up = axis_size / fig.get_figheight()
+    up_padding = padding * 0.5 / fig.get_figheight()
+    up_axis_padding = 0*axis_padding / fig.get_figheight()
+    axis_size_left = axis_size_left / fig.get_figwidth()
+    axis_size_up = axis_size_up / fig.get_figheight()
 
     # Pre-allocate a 2D-array to hold the axes.
     axes = np.array([[None for _ in range(no_variables)] for _ in range(no_variables)],
@@ -156,6 +153,9 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
                 plt.setp(a.yaxis.get_majorticklabels(), rotation=45)
             else:
                 a = None
+            if i == j:
+                a.yaxis.tick_right()
+                a.yaxis.set_label_position('right')
             axes[i, j] = a
 
     axes = np.array(axes)
@@ -169,10 +169,11 @@ def _make_axes_grid(no_variables, padding=2, cbar_size=0.5, axis_padding=0.5, cb
     bottom_edge = up_padding
     width = cbar_size
 
-    height = 1 - 2 * up_padding
+    height = axis_size_up * len(axes) + up_padding * (len(axes) - 1)
 
+    cbar_width = axis_size_left * 0.1
     if cbar:
-        cbar = plt.axes([left_edge, bottom_edge, width, height])
+        cbar = plt.axes([1-cbar_width-padding*0.5/fig.get_figwidth(), padding*0.5/fig.get_figheight()+axis_size_up*1.5, cbar_width, axis_size_up*(no_variables-1)-axis_size_up*0.5])
         plt.setp(cbar.get_xticklabels(), visible=False)
         plt.setp(cbar.get_yticklabels(), visible=False)
     else:
@@ -254,7 +255,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                'chisquare': (fitting.chisquare_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
-    title = r'{} = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
     fit_kws['verbose'] = False
 
     to_save = {'mle': ('mle_fit', 'mle_result')}
@@ -275,7 +276,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         if orig_params[p].vary and (filter is None or any([f in p for f in filter])):
             no_params += 1
             param_names.append(p)
-    fig, axes, cbar = _make_axes_grid(no_params, axis_padding=2.0, cbar=no_params > 1)
+    fig, axes, cbar = _make_axes_grid(no_params, axis_padding=0, cbar=no_params > 1)
 
     # Make the plots on the diagonal: plot the chisquare/likelihood
     # for the best fitting values while setting one parameter to
@@ -293,7 +294,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         ax = axes[i, i]
         ax.set_title(param_names[i])
         plt.setp(ax.get_yticklabels(), visible=True)
-        if method.lower() == 'chisquare':
+        if method.lower().startswith('chisquare'):
             ax.set_ylabel(r'$\Delta\chi^2$')
         else:
             ax.set_ylabel(r'$\Delta\mathcal{L}$')
@@ -314,10 +315,10 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                     search_value = orig_params[param_names[i]].max
                     ranges[param_names[i]]['right'] = search_value
                     break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func) - boundary
-                pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
+                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
+                pbar.set_description(param_names[i] + ' (searching right: {:.3g}, change of {:.9f})'.format(search_value, new_value))
                 pbar.update(1)
-                if new_value > 0:
+                if new_value > boundary:
                     pbar.set_description(param_names[i] + ' (finding root)')
                     pbar.update(1)
                     result = optimize.ridder(lambda *args: fit_new_value(*args) - boundary,
@@ -340,7 +341,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                     ranges[param_names[i]]['left'] = search_value
                     break
                 new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-                pbar.set_description(param_names[i] + ' (searching left: ' + str(new_value) + ')')
+                pbar.set_description(param_names[i] + ' (searching left: {:.3g}, change of {:.9f})'.format(search_value, new_value))
                 if new_value > boundary:
                     pbar.set_description(param_names[i] + ' (searching root)')
                     pbar.update(1)
@@ -440,6 +441,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     setattr(f, attr, orig_value)
     for attr, value in zip(to_save, saved):
         setattr(f, attr, copy.deepcopy(value))
+    for a in axes.flatten():
+        if a is not None:
+            for label in a.get_xticklabels()[::2]:
+                label.set_visible(False)
+            for label in a.get_yticklabels()[::2]:
+                label.set_visible(False)
     return fig, axes, cbar
 
 def _diaconis_rule(data, minimum, maximum):
@@ -496,17 +503,17 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                     bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
                     # bins[bin_index] = 50
                 try:
-                    ax.hist(x, int(bins[bin_index]))
+                    ax.hist(x, int(bins[bin_index]), histtype='step')
                 except ValueError:
                     bins = 50
-                    ax.hist(x, bins)
+                    ax.hist(x, bins, histtype='step')
                 metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
                 q = [16.0, 50.0, 84.0]
                 q16, q50, q84 = np.percentile(x, q)
 
-                title = val + r' = ${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
-                ax.set_title(title.format(q50, q50-q16, q84-q50))
+                title = title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+                ax.set_title(title.format(val, q50, q50-q16, q84-q50))
                 qvalues = [q16, q50, q84]
                 for q in qvalues:
                     ax.axvline(q, ls="dashed")

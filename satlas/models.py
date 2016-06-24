@@ -31,7 +31,6 @@ class PolynomialModel(BaseModel):
             by the length. args[0] is the coefficient
             of order 0, etc..."""
         super(PolynomialModel, self).__init__()
-        self.lnprior_mapping = {}
         self._populate_params(args)
 
     @property
@@ -55,45 +54,9 @@ class PolynomialModel(BaseModel):
 
         self.params = self._check_variation(par)
 
-    #######################################
-    #      METHODS CALLED BY FITTING      #
-    #######################################
-
-    def _sanitize_input(self, x, y, yerr=None):
-        return x, y, yerr
-
-    def seperate_response(self, x):
-        """Wraps the output of the :meth:`__call__` in a list, for
-        ease of coding in the fitting routines."""
-        return [self(x)]
-
     ###########################
     #      MAGIC METHODS      #
     ###########################
-
-    def __add__(self, other):
-        """Add two models together to get an :class:`.SumModel`.
-
-        Parameters
-        ----------
-        other: HFSModel
-            Other spectrum to add.
-
-        Returns
-        -------
-        SumModel
-            A SumModel combining both spectra."""
-        if isinstance(other, PolynomialModel):
-            l = [self, other]
-        elif isinstance(other, SumModel):
-            l = [self] + other.models
-        return SumModel(l)
-
-    def __radd__(self, other):
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
     def __call__(self, x):
         return np.polyval([self.params[p].value for p in self.params.keys()], x)
@@ -132,7 +95,6 @@ class MiscModel(BaseModel):
             to *args[0]*."""
         super(MiscModel, self).__init__()
         self.func = func
-        self.lnprior_mapping = {}
         self._populate_params(*args, name_list=name_list)
 
     @property
@@ -160,45 +122,9 @@ class MiscModel(BaseModel):
 
         self.params = self._check_variation(par)
 
-    #######################################
-    #      METHODS CALLED BY FITTING      #
-    #######################################
-
-    def _sanitize_input(self, x, y, yerr=None):
-        return x, y, yerr
-
-    def seperate_response(self, x):
-        """Wraps the output of the :meth:`__call__` in a list, for
-        ease of coding in the fitting routines."""
-        return [self(x)]
-
     ###########################
     #      MAGIC METHODS      #
     ###########################
-
-    def __add__(self, other):
-        """Add two models together to get an :class:`.SumModel`.
-
-        Parameters
-        ----------
-        other: BaseModel
-            Other spectrum to add.
-
-        Returns
-        -------
-        SumModel
-            A SumModel combining both spectra."""
-        if isinstance(other, MiscModel):
-            l = [self, other]
-        elif isinstance(other, SumModel):
-            l = [self] + other.models
-        return SumModel(l)
-
-    def __radd__(self, other):
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
     def __call__(self, x):
         return self.func(x, [self.params[p].value for p in self.params.keys()])

@@ -240,8 +240,8 @@ class LinkedModel(BaseModel):
         LinkedModel"""
         if isinstance(other, LinkedModel):
             return_object = LinkedModel(self.models.extend(other.models))
-        elif isinstance(other, Spectrum):
-            return_object = LinkedModel(self.models.append(other))
+        else:
+            return_object = super(LinkedModel, self).__add__(other)
         return return_object
 
     def __call__(self, x):

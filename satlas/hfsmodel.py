@@ -259,10 +259,13 @@ class HFSModel(BaseModel):
                 part.alpha = params['Taillocation'].value
                 part.n = params['Tailamplitude'].value
         if self.shape.lower() == 'pseudovoigt':
-            for part in self.parts:
-                part.n = params['Eta'].value
-                part.a = params['A'].value
-
+            for label, part in zip(self.ftof, self.parts):
+                if self.shared_fwhm:
+                    part.n = params['Eta'].value
+                    part.a = params['A'].value
+                else:
+                    part.n = params['Eta'+label].value
+                    part.a = params['A'+label].value
 
     def _set_transitional_amplitudes(self):
         values = self._calculate_transitional_intensities(self._params['Saturation'].value)
@@ -357,9 +360,7 @@ class HFSModel(BaseModel):
                     par.add('Eta', value=Eta, vary=True, min=0, max=1)
                     par.add('A', value=tailamp, vary=True)
             else:
-                if not len(fwhm) == len(self.ftof):
-                    fwhm = fwhm[0]
-                    fwhm = [fwhm for _ in range(len(self.ftof))]
+                fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHM' + label, value=val, vary=True, min=0)
                     if self.shape.lower() == 'pseudovoigt':
@@ -376,8 +377,7 @@ class HFSModel(BaseModel):
                         expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
             else:
                 fwhm = np.array(fwhm)
-                if not fwhm.shape[0] == len(self.ftof):
-                    fwhm = np.array([[fwhm[0], fwhm[1]] for _ in range(len(self.ftof))])
+                fwhm = np.array([[fwhm[0], fwhm[1]] for _ in range(len(self.ftof))])
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHMG' + label, value=val[0], vary=True, min=0)
                     par.add('FWHML' + label, value=val[1], vary=True, min=0)
@@ -600,55 +600,9 @@ class HFSModel(BaseModel):
             self.ratioC = (value, target)
         self.params = self._set_ratios(self._params)
 
-    #######################################
-    #      METHODS CALLED BY FITTING      #
-    #######################################
-
-    def _sanitize_input(self, x, y, yerr=None):
-        return x, y, yerr
-
-    def seperate_response(self, x):
-        """Wraps the output of the :meth:`__call__` in a list, for
-        ease of coding in the fitting routines.
-
-        Parameters
-        ----------
-        x : float or array_like
-            Frequency in MHz.
-
-        Returns
-        -------
-        list of floats or NumPy arrays
-            Seperate responses of spectra to the input *x*."""
-        return [self(x)]
-
     ###########################
     #      MAGIC METHODS      #
     ###########################
-
-    def __add__(self, other):
-        """Add two spectra together to get an :class:`.SumModel`.
-
-        Parameters
-        ----------
-        other: HFSModel
-            Other spectrum to add.
-
-        Returns
-        -------
-        SumModel
-            A SumModel combining both spectra."""
-        if isinstance(other, HFSModel):
-            l = [self, other]
-        elif isinstance(other, SumModel):
-            l = [self] + other.models
-        return SumModel(l)
-
-    def __radd__(self, other):
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
     def __call__(self, x):
         """Get the response for frequency *x* (in MHz) of the spectrum.

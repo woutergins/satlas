@@ -87,7 +87,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, verbose=True, hessian=False):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -105,12 +105,15 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     ----------------
     xerr: array_like, optional
         Error bars on *x*.
-    func: function, optional
-        Uses the provided function on the fitvalue to calculate the
-        errorbars.
+    model: boolean, optional
+        When set to *True*, use the square root of the model function as uncertainty. *False*
+        uses the square root of the datapoints. Defaults to *True*.
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
+        is calculated, otherwise the LMFIT version is used. Defaults to *False*.
 
     Return
     ------
@@ -120,9 +123,11 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=None, verbose=True):
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose)
+    if model:
+        func = np.sqrt
+    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian)
 
-def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
+def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -149,6 +154,9 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
+        is calculated, otherwise the LMFIT version is used. Defaults to *False*.
 
     Return
     ------
@@ -164,8 +172,8 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
 
     if verbose:
         def iter_cb(params, iter, resid, *args, **kwargs):
-            progress.update(1)
             progress.set_description('Chisquare fitting in progress (' + str((resid**2).sum()) + ')')
+            progress.update(1)
         progress = tqdm.tqdm(desc='Chisquare fitting in progress', leave=True)
     else:
          def iter_cb(params, iter, resid, *args, **kwargs):
@@ -188,10 +196,20 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True):
         progress.set_description('Chisquare fitting done')
         progress.close()
 
-    f.chisq_res_par = copy.deepcopy(result.params)
     f.ndof = copy.deepcopy(result.nfree)
     f.redchi = copy.deepcopy(result.redchi)
-    assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.params, x, np.hstack(y), np.hstack(yerr), xerr, func)
+    f.chisq_res_par = copy.deepcopy(f.params)
+    if hessian:
+        if verbose:
+            progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True, miniters=1)
+        else:
+            progress = None
+        assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.chisq_res_par, x, np.hstack(y), np.hstack(yerr), xerr, func, progress=progress)
+    else:
+        for key in f.params.keys():
+            if f.params[key].stderr is not None:
+                f.params[key].stderr /= f.redchi**0.5
+
     return success, result.message
 
 ##########################################
@@ -225,7 +243,7 @@ theta_array = np.linspace(-5, 5, 2**10)
 _x_err_calculation_stored = {}
 sqrt2pi = np.sqrt(2*np.pi)
 
-def likelihood_x_err(f, x, y, xerr, func):
+def likelihood_x_err(f, x, y, xerr, func, cache=True):
     """Calculates the loglikelihood for a model given
     x and y values. Incorporates a common given error on
     the x-axis.
@@ -263,8 +281,8 @@ def likelihood_x_err(f, x, y, xerr, func):
     # If a parameter approach is desired, this needs to be changed.
     x = np.array(x)
     y = np.array(y)
-    key = 0 # Dictionary gets cleared after fit anyway, key doesn't matter
-    if key in _x_err_calculation_stored:
+    key = id(f)
+    if key in _x_err_calculation_stored and cache:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
     else:
         # This section is messy, but works.
@@ -284,11 +302,13 @@ def likelihood_x_err(f, x, y, xerr, func):
         else:
             x_grid, theta = np.meshgrid(x, theta_array)
             y_grid, _ = np.meshgrid(y, theta_array)
-            g_top = (np.exp(-theta*theta * 0.5)).T
-            g = (g_top.T / (sqrt2pi * xerr)).T
+            g_top = (np.exp(-theta*theta * 0.5))
+            xerr = np.array(xerr)
+            g = (g_top / (sqrt2pi * xerr)).T
             rfft_g = np.fft.rfft(g)
             x_grid = x_grid + xerr * theta
-        _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
+        if cache:
+            _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
     # Calculate the loglikelihoods for the grid of uncertainty.
     # Each column is a new datapoint.
     vals = func(y_grid, f(x_grid))
@@ -303,7 +323,7 @@ def likelihood_x_err(f, x, y, xerr, func):
     # shifts through the integral, and becomes an addition (due to the logarithm).
     return np.log(integral_value) + mod
 
-def likelihood_lnprob(params, f, x, y, xerr, func):
+def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
     """Calculates the logarithm of the probability that the data fits
     the model given the current parameters.
 
@@ -337,10 +357,10 @@ def likelihood_lnprob(params, f, x, y, xerr, func):
     f.params = params
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
+    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func, cache=cache))
     return res
 
-def likelihood_loglikelihood(f, x, y, xerr, func):
+def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
     """Given a parameters object, a Model object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
@@ -370,10 +390,10 @@ def likelihood_loglikelihood(f, x, y, xerr, func):
         response = np.hstack(f(x))
         return_value = func(y, response)
     else:
-        return_value = likelihood_x_err(f, x, y, xerr, func)
+        return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -446,6 +466,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
+    hessian: boolean, optional
+        When set to *True*, the Hessian estimate of the uncertainty will be
+        calculated.
 
     Returns
     -------
@@ -491,11 +514,22 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
-    f.mle_fit = result.params
+    f.mle_fit = copy.deepcopy(result.params)
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
+    f.mle_chisqr = (-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func)).sum()
+    try:
+        f.mle_redchi = f.mle_chisqr / f.ndof
+    except:
+        f.mle_redchi = f.mle_chisqr / (len(y) - len([p for p in f.params if f.params[p].vary]))
 
-    assignHessianEstimate(likelihood_lnprob, f, result.params, x, y, xerr, func, likelihood=True)
+    if hessian:
+        if verbose:
+            progress = tqdm.tqdm(leave=True, desc='Starting Hessian calculation')
+        else:
+            progress = None
+
+        assignHessianEstimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
@@ -531,7 +565,7 @@ def _parameterCostfunction(f, params, func, *args, likelihood=False):
         return func(groupParams, f, *args)
     return listfunc
 
-def assignHessianEstimate(func, f, params, *args, likelihood=False):
+def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=None):
     """Calculates the Hessian of the model at the given parameters,
     and associates uncertainty estimates based on the inverted Hessian matrix.
     Note that, for estimation for chisquare methods, the inverted matrix is
@@ -550,10 +584,16 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False):
         Arguments for the defined cost function *func*.
     likelihood: boolean
         Set to *True* if a likelihood approach is used.
+    progress: progressbar
+        TQDM progressbar instance to update.
 
     Returns
     -------
     None"""
+    if progress is not None:
+        progress.set_description('Parsing parameters')
+        progress.update(1)
+
     var_names = []
     vars = []
     for key in params.keys():
@@ -561,24 +601,48 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False):
             var_names.append(key)
             vars.append(params[key].value)
     if vars == []:
+        if progress is not None:
+            progress.set_description('No parameters to vary')
+            progress.update(1)
+            progress.close()
         return
 
+    if progress is not None:
+        progress.set_description('Creating Hessian function')
+        progress.update(1)
     Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=likelihood))
-    hess_vals = np.linalg.inv(Hfun(vars))
+    if progress is not None:
+        progress.set_description('Calculating Hessian matrix')
+        progress.update(1)
+    hess_vals = Hfun(vars)
+    if progress is not None:
+        progress.set_description('Inverting matrix')
+        progress.update(1)
+    hess_vals = np.linalg.inv(hess_vals)
     f.params = params
     if likelihood:
         hess_vals = -hess_vals
         multiplier = 1
     else:
         multiplier = 2
+    if progress is not None:
+        progress.set_description('Assigning uncertainties')
+        progress.update(1)
     for name, hess in zip(var_names, np.diag(multiplier*hess_vals)):
         f.params[name].stderr = np.sqrt(hess)
 
+    if progress is not None:
+        progress.set_description('Assigning correlations')
+        progress.update(1)
     for i, name in enumerate(var_names):
         f.params[name].correl = {}
         for j, name2 in enumerate(var_names):
             if name != name2:
                 f.params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
+    if progress is not None:
+        progress.set_description('Finished Hessian calculation')
+        progress.update(1)
+        progress.close()
 
 def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
     r"""Calculates prediction or confidence bounds at the 1:math:`\sigma` level.
@@ -629,7 +693,7 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
     if method == 'chisquare':
         args = x_data, np.hstack(y_data), np.hstack(yerr), xerr, func_chi
     else:
-        args = x_data, y_data, xerr, func_llh
+        args = x_data, y_data, xerr, func_llh, False
     func = method_mapping.pop(method)
     var_names = []
     vars = []
@@ -638,13 +702,20 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
             var_names.append(key)
             vars.append(f.params[key].value)
 
-    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=method.lower()=='mle'))
-    _parameterCostfunction(f, f.params, func, *args, likelihood=method.lower()=='mle')
+    backup = copy.deepcopy(f.params)
+    Hfun = nd.Hessian(_parameterCostfunction(f, f.params, func, *args, likelihood=method.lower()=='mle'))
     if method.lower()=='mle':
         hess_vals = -np.linalg.inv(Hfun(vars))
     else:
         hess_vals = np.linalg.inv(Hfun(vars))*2
-
+    groupParams = lm.Parameters()
+    for key in f.params.keys():
+        groupParams[key] = PriorParameter(key,
+                                          value=f.params[key].value,
+                                          vary=f.params[key].vary,
+                                          expr=f.params[key].expr,
+                                          priormin=f.params[key].min,
+                                          priormax=f.params[key].max)
     def listfunc(fvars):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
@@ -654,7 +725,7 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
     result = np.zeros(len(x))
     for i, row in enumerate(jacob(vars)):
         result[i] = np.dot(row.T, np.dot(hess_vals, row))
-    f.params = params
+    f.params = backup
     if kind.lower()=='prediction':
         return (result+1)**0.5
     else:
