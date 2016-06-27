@@ -822,7 +822,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
                 pbar.set_description(desc=param_name + ' (finding root)')
             except:
                 pass
-            result, output = optimize.ridder(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
+            result, output = optimize.brentq(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
                                              value, search_value,
                                              full_output=True)
             try:
