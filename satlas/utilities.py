@@ -180,7 +180,7 @@ def _make_axes_grid(no_variables, padding=0, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_kws={}, distance=3, npar=1):
+def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_args=tuple(), fit_kws={}, distance=3, npar=1):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -263,8 +263,11 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof', 'redchi'))
     saved = [copy.deepcopy(getattr(f, attr)) for attr in to_save]
 
+    func(f, x_data, y_data, *fit_args, **fit_kws)
+
     orig_value = getattr(f, attr)
     orig_params = copy.deepcopy(f.params)
+    state = fitting._get_state(f, method=method.lower())
 
     ranges = {}
 
@@ -283,14 +286,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     # for the best fitting values while setting one parameter to
     # a fixed value.
     saved_params = copy.deepcopy(f.params)
+    function_kws = {'method': method.lower(), 'func_args': fit_args, 'func_kwargs': fit_kws}
+    function_kws['orig_stat'] = orig_value
     for i in range(no_params):
         params = copy.deepcopy(saved_params)
         ranges[param_names[i]] = {}
 
-        # orig_value = getattr(f, attr)
-        # orig_params = copy.deepcopy(f.params)
-        # res = fit_new_value(f.params[param_names[i]].value, f, f.params, param_names[i], x_data, y_data, orig_value, func)
-        # orig_value += res
         # Set the y-ticklabels.
         ax = axes[i, i]
         ax.set_title(param_names[i])
@@ -301,62 +302,19 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
             ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
         # Select starting point to determine error widths.
-        value = params[param_names[i]].value
-        stderr = params[param_names[i]].stderr
-        stderr = stderr if stderr is not None else np.abs(0.01 * value)
-        stderr = stderr if stderr != 0 else np.abs(0.01 * value)
-        # Search for a value to the right which gives an increase greater than 1.
-        search_value = value
-        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:
-            while True:
-                search_value += 0.5*stderr
-                if search_value > orig_params[param_names[i]].max:
-                    pbar.set_description(param_names[i] + ' (right limit reached)')
-                    pbar.update(1)
-                    search_value = orig_params[param_names[i]].max
-                    ranges[param_names[i]]['right'] = search_value
-                    break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-                pbar.set_description(param_names[i] + ' (searching right: {:.3g}, change of {:.9f})'.format(search_value, new_value))
-                pbar.update(1)
-                if new_value > boundary:
-                    pbar.set_description(param_names[i] + ' (finding root)')
-                    pbar.update(1)
-                    result = optimize.ridder(lambda *args: fit_new_value(*args) - boundary,
-                                             value, search_value,
-                                             args=(f, params, param_names[i], x_data, y_data, orig_value, func))
-                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(1)
-                    ranges[param_names[i]]['right'] = result
-                    break
-        search_value = value
+        value = orig_params[param_names[i]].value
+        stderr = orig_params[param_names[i]].stderr
+        stderr = stderr if stderr is not None else 0.01 * np.abs(value)
+        stderr = stderr if stderr != 0 else 0.01 * np.abs(value)
 
-        # Do the same for the left
-        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching left)', mininterval=0) as pbar:
-            while True:
-                search_value -= 0.5*stderr
-                if search_value < orig_params[param_names[i]].min:
-                    pbar.set_description(param_names[i] + ' (left limit reached)')
-                    pbar.update(1)
-                    search_value = orig_params[param_names[i]].min
-                    ranges[param_names[i]]['left'] = search_value
-                    break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x_data, y_data, orig_value, func)
-                pbar.set_description(param_names[i] + ' (searching left: {:.3g}, change of {:.9f})'.format(search_value, new_value))
-                if new_value > boundary:
-                    pbar.set_description(param_names[i] + ' (searching root)')
-                    pbar.update(1)
-                    result = optimize.ridder(lambda *args: fit_new_value(*args) - boundary,
-                                           value, search_value,
-                                           args=(f, params, param_names[i], x_data, y_data, orig_value, func))
-                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(1)
-                    ranges[param_names[i]]['left'] = result
-                    break
+        result_left, success_left = fitting._find_boundary(stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
+        result_right, success_right = fitting._find_boundary(-stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
+        success = success_left * success_right
+        ranges[param_names[i]]['left'] = result_left
+        ranges[param_names[i]]['right'] = result_right
 
-        # Keep the parameter fixed, and let it vary (with given number of points)
-        # in a deviation of 4 sigma in both directions.
-        # middle = (ranges[param_names[i]]['left'] + ranges[param_names[i]]['right']) * 0.5
+        if not success:
+            print("Warning: boundary calculation did not fully succeed for " + param_names[i])
         right = np.abs(ranges[param_names[i]]['right'] - value)
         left = np.abs(ranges[param_names[i]]['left'] - value)
         params[param_names[i]].vary = False
@@ -369,21 +327,18 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         # Calculate the new value, and store it in the array. Update the progressbar.
         with tqdm.tqdm(value_range, desc=param_names[i], leave=True) as pbar:
             for j, v in enumerate(value_range):
-                chisquare[j] = fit_new_value(v, f, params, param_names[i],
-                                             x_data, y_data, orig_value, func)
+                chisquare[j] = fitting.calculate_updated_statistic(v, param_names[i], f, x_data, y_data, **function_kws)
                 pbar.update(1)
         # Plot the result
         ax.plot(value_range, chisquare)
 
-        # For chisquare, an increase of 1 corresponds to 1 sigma errorbars.
-        # For the loglikelihood, this need to be reduced by a factor of 2.
         ax.axhline(boundary, ls="dashed")
         # Indicate the used interval.
         ax.axvline(value + right)
         ax.axvline(value - left)
         ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
-        f.params = copy.deepcopy(orig_params)
+        fitting._set_state(f, state, method=method.lower())
 
     for i, j in zip(*np.tril_indices_from(axes, -1)):
         params = copy.deepcopy(orig_params)
@@ -396,15 +351,11 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
             ax.set_xlabel(x_name)
         right = ranges[x_name]['right_val']
         left = ranges[x_name]['left_val']
-        params[x_name].vary = False
         x_range = np.linspace(left, right, resolution_map)
 
         right = ranges[y_name]['right_val']
         left = ranges[y_name]['left_val']
-        params[y_name].vary = False
         y_range = np.linspace(left, right, resolution_map)
-
-        # ori_value = orig_value + fit_new_value([params[x_name].value, params[y_name].value], f, params, [x_name, y_name], x_data, y_data, orig_value, func)
 
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
@@ -413,10 +364,8 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
             for k, l in zip(i_indices.flatten(), j_indices.flatten()):
                 x = X[k, l]
                 y = Y[k, l]
-                Z[k, l] = fit_new_value([x, y], f, params, [x_name, y_name],
-                                        x_data, y_data, orig_value, func)
+                Z[k, l] = fitting.calculate_updated_statistic([x, y], [x_name, y_name], f, x_data, y_data, **function_kws)
                 pbar.update(1)
-        # pbar.finish()
         Z = -Z
         npar = 2
         bounds = []
