@@ -27,6 +27,20 @@ cmap.set_under('#B2DF8A')
 invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
 invcmap.set_under('#A6CEE3')
 invcmap.set_over('#B2DF8A')
+inv_color_list = ['#7acfff', '#fff466', '#00c48f', '#ff8626', '#ff9cd3', '#0093e6']
+color_list = [c for c in reversed(inv_color_list)]
+cmap = mpl.colors.ListedColormap(color_list)
+cmap.set_over(color_list[-1])
+cmap.set_under(color_list[0])
+invcmap = mpl.colors.ListedColormap(inv_color_list)
+invcmap.set_over(inv_color_list[-1])
+invcmap.set_under(inv_color_list[0])
+# cmap = mpl.colors.ListedColormap(['#0072B2', '#CC79A7', '#D55E00', '#009E73', '#F0E442', '#56B4E9'])
+# cmap.set_under('#56B4E9')
+# cmap.set_over('#0072B2')
+# invcmap = mpl.colors.ListedColormap(['#56B4E9', '#F0E442', '#009E73', '#D55E00', '#CC79A7', '#0072B2'])
+# invcmap.set_over('#56B4E9')
+# invcmap.set_under('#0072B2')
 
 __all__ = ['weighted_average',
            'generate_correlation_map',
@@ -180,7 +194,7 @@ def _make_axes_grid(no_variables, padding=0, cbar_size=0.5, axis_padding=0.5, cb
         cbar = None
     return fig, axes, cbar
 
-def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_args=tuple(), fit_kws={}, distance=3, npar=1):
+def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic', filter=None, resolution_diag=20, resolution_map=15, fit_args=tuple(), fit_kws={}, distance=5, npar=1):
     """Generates a correlation map for either the chisquare or the MLE method.
     On the diagonal, the chisquare or loglikelihood is drawn as a function of one fixed parameter.
     Refitting to the data each time gives the points on the line. A dashed line is drawn on these
@@ -217,45 +231,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         Influences the uncertainty estimates from the parabola."""
     from . import fitting
 
-    def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
-        params = copy.deepcopy(params)
-        try:
-            if all(value == orig_value):
-                return 0
-            for v, n in zip(value, params_name):
-                params[n].value = v
-                params[n].vary = False
-        except:
-            if value == orig_value:
-                return 0
-            params[params_name].value = value
-            params[params_name].vary = False
-        f.params = params
-        success = False
-        counter = 0
-        while not success:
-            success, message = func(f, x, y, **fit_kws)
-            counter += 1
-            if counter > 10:
-                return np.nan
-        return_value = getattr(f, attr) - orig_value
-        try:
-            try:
-                params_name = ' '.join(params_name)
-            except:
-                pass
-            pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
-            pbar.update(1)
-        except:
-            pass
-        return return_value
-
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
                'chisquare': (fitting.chisquare_fit, 'chisqr'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
-    title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+    title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
 
@@ -332,10 +313,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         # Plot the result
         ax.plot(value_range, chisquare)
 
-        ax.axhline(boundary, ls="dashed")
+        c = next(ax._get_lines.prop_cycler)['color']
+        # ax.axhline(boundary, ls="dashed", color=color)
         # Indicate the used interval.
-        ax.axvline(value + right)
-        ax.axvline(value - left)
+        ax.axvline(value + right, ls="dashed", color=c)
+        ax.axvline(value - left, ls="dashed", color=c)
+        ax.axvline(value, ls="dashed", color=c)
         ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
         fitting._set_state(f, state, method=method.lower())
@@ -367,16 +350,20 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                 Z[k, l] = fitting.calculate_updated_statistic([x, y], [x_name, y_name], f, x_data, y_data, **function_kws)
                 pbar.update(1)
         Z = -Z
-        npar = 2
+        npar = 1
         bounds = []
         for bound in [0.997300204, 0.954499736, 0.682689492]:
             chifunc = lambda x: chi2.cdf(x, npar) - bound # Calculate 1 sigma boundary
             bounds.append(-optimize.root(chifunc, npar).x[0])
+        # bounds = sorted([-number*number for number in np.arange(1, 9, .1)])
         bounds.append(1)
         if method.lower() == 'mle':
             bounds = [b * 0.5 for b in bounds]
         norm = mpl.colors.BoundaryNorm(bounds, invcmap.N)
         contourset = ax.contourf(X, Y, Z, bounds, cmap=invcmap, norm=norm)
+        # contourset = ax.contourf(X, Y, Z, cmap=invcmap)
+        # print(bounds)
+        # raise ValueError
         f.params = copy.deepcopy(orig_params)
     if method.lower() == 'mle':
         f.mle_fit = copy.deepcopy(orig_params)
@@ -427,6 +414,11 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
     -------
     figure
         Returns the MatPlotLib figure created."""
+    # cmap = plt.cm.get_cmap()
+    # try:
+    #     invcmap = plt.cm.get_cmap(name=cmap.name + '_r')
+    # except:
+    #     invcmap = plt.cm.get_cmap(name=cmap.name.split('_')[0])
     with h5py.File(filename, 'r') as store:
         columns = store['data'].attrs['format']
         columns = [f.decode('utf-8') for f in columns]
@@ -462,11 +454,12 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                 q = [16.0, 50.0, 84.0]
                 q16, q50, q84 = np.percentile(x, q)
 
-                title = title = '{}\n${:.2f}_{{-{:.2f}}}^{{+{:.2f}}}$'
+                title = title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
                 ax.set_title(title.format(val, q50, q50-q16, q84-q50))
                 qvalues = [q16, q50, q84]
+                c = next(ax._get_lines.prop_cycler)['color']
                 for q in qvalues:
-                    ax.axvline(q, ls="dashed")
+                    ax.axvline(q, ls="dashed", color=c)
                 ax.set_yticks([])
                 ax.set_yticklabels([])
                 pbar.update(1)
