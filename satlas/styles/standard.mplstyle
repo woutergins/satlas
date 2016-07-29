@@ -58,7 +58,8 @@ axes.formatter.use_mathtext: True
 axes.formatter.useoffset: False
 
 axes.unicode_minus: True
-axes.prop_cycle: cycler('color', ['0072B2', '009E73', 'D55E00', 'CC79A7', 'F0E442', '56B4E9'])
+#axes.prop_cycle: cycler('color', ['0072B2', '009E73', 'D55E00', 'CC79A7', 'F0E442', '56B4E9'])
+axes.prop_cycle: cycler('color', ['0093e6', '00c48f', 'ff8626', 'ff9cd3', 'fff466', '7acfff'])
 axes.xmargin: 0
 axes.ymargin: 0
 
@@ -123,7 +124,7 @@ figure.subplot.hspace: 0.2
 
 image.aspect: auto
 image.interpolation: bilinear
-image.cmap: gnuplot2_r
+image.cmap: copper
 image.lut: 256
 image.origin: lower
 image.resample: False
