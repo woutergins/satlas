@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 from scipy.misc import derivative
+from scipy.stats import chi2
 
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
@@ -217,6 +218,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
         for key in f.params.keys():
             if f.params[key].stderr is not None:
                 f.params[key].stderr /= f.redchi**0.5
+                f.chisq_res_par[key].stderr /= f.redchi**0.5
 
     return success, result.message
 
@@ -739,7 +741,120 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
     else:
         return result**0.5
 
-def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', filter=None, fit_kws={}):
+params_map = {'mle': 'mle_fit', 'chisquare_spectroscopic': 'chisq_res_par', 'chisquare': 'chisq_res_par'}
+fit_mapping = {'mle': likelihood_fit, 'chisquare_spectroscopic': chisquare_spectroscopic_fit, 'chisquare': chisquare_fit}
+attr_mapping = {'mle': 'mle_likelihood', 'chisquare_spectroscopic': 'chisqr', 'chisquare': 'chisqr'}
+
+def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare', func_args=tuple(), func_kwargs={}, pbar=None, orig_stat=0):
+    params = copy.deepcopy(f.params)
+    func = fit_mapping[method.lower()]
+    attr = attr_mapping[method.lower()]
+
+    try:
+        for v, n in zip(value, params_name):
+            params[n].value = v
+            params[n].vary = False
+    except:
+        params[params_name].value = value
+        params[params_name].vary = False
+
+    f.params = params
+    success = False
+    counter = 0
+    while not success:
+        success, message = func(f, x, y, *func_args, **func_kwargs)
+        counter += 1
+        if counter > 10:
+            return np.nan
+    return_value = getattr(f, attr) - orig_stat
+    try:
+        try:
+            params_name = ' '.join(params_name)
+        except:
+            pass
+        pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
+        pbar.update(1)
+    except:
+        pass
+    return return_value
+
+def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 'chisquare_spectroscopic'}, verbose=True):
+    method = function_kwargs['method']
+    attr = attr_mapping[method.lower()]
+    orig_stat = getattr(f, attr)
+    value = f.params[param_name].value
+    search_value = value
+    if step < 0:
+        direction = 'left'
+        boundary = f.params[param_name].min
+        boundary_test = lambda val: val < boundary
+    else:
+        direction = 'right'
+        boundary = f.params[param_name].max
+        boundary_test = lambda val: val > boundary
+    if verbose:
+        pbar = tqdm.tqdm(leave=True, desc=param_name + ' (searching ' + direction + ')', miniters=1)
+    else:
+        pbar = None
+    backup = copy.deepcopy(f.params)
+    backup_fit = params_map[method.lower()]
+    function_kwargs['pbar'] = pbar
+    function_kwargs['orig_stat'] = orig_stat
+    while True:
+        search_value += step
+        if boundary_test(search_value):
+            try:
+                pbar.update(1)
+                pbar.set_description(desc=param_name + ' (' + direction + ' limit reached)')
+            except:
+                pass
+            result = orig_params[param_name].max
+            break
+        new_value = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
+        # new_value = calculate_updated_statistic(search_value, param_name, f, x, y, method=method.lower(), func_args=fit_args, func_kwargs=fit_kws, pbar=pbar, orig_stat=orig_stat)
+        try:
+            pbar.update(1)
+            pbar.set_description(desc=param_name + ' (searching ' + direction + ':  {:.3g}, change of {:.3f})'.format(search_value, new_value))
+        except:
+            pass
+        if new_value > bound:
+            try:
+                pbar.update(1)
+                pbar.set_description(desc=param_name + ' (finding root)')
+            except:
+                pass
+            result, output = optimize.brentq(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
+                                             value, search_value,
+                                             full_output=True)
+            try:
+                pbar.update(1)
+                pbar.set_description(desc=param_name + ' (root found: {:.3g})'.format(result))
+            except:
+                pass
+            success = output.converged
+            break
+    pbar.close()
+    f.params = copy.deepcopy(backup)
+    setattr(f, attr, orig_stat)
+    return result, success
+
+def _get_state(f, method='mle'):
+    if method.lower() == 'mle':
+        return (copy.deepcopy(f.mle_fit), f.mle_result, f.mle_likelihood, f.mle_chisqr, f.mle_redchi)
+    else:
+        return (copy.deepcopy(f.chisq_res_par), f.chisqr, f.ndof, f.redchi)
+
+def _set_state(f, state, method='mle'):
+    if method.lower() == 'mle':
+        f.mle_fit = copy.deepcopy(state[0])
+        f.params = copy.deepcopy(state[0])
+        f.mle_result, f.mle_likelihood, f.mle_chisqr, f.mle_redchi = state[1:]
+    else:
+        f.chisq_res_par = copy.deepcopy(state[0])
+        f.params = copy.deepcopy(state[0])
+        f.chisqr, f.ndof, f.redchi = state[1:]
+
+def calculate_analytical_uncertainty(f, x, y, npar=1, method='chisquare_spectroscopic', filter=None, fit_args=tuple(), fit_kws={}):
     """Calculates the analytical errors on the parameters, by changing the value for
     a parameter and finding the point where the chisquare for the refitted parameters
     is one greater. For MLE, an increase of 0.5 is sought. The corresponding series
@@ -772,39 +887,6 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
     point, which is taken to be the values of the parameters as given in
     the instance. This does not do a full exploration, so the results might be
     from a local minimum!"""
-    def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
-        params = copy.deepcopy(params)
-        try:
-            if all(value == orig_value):
-                return 0
-            for v, n in zip(value, params_name):
-                params[n].value = v
-                params[n].vary = False
-        except:
-            if value == orig_value:
-                return 0
-            params[params_name].value = value
-            params[params_name].vary = False
-        f.params = params
-        success = False
-        counter = 0
-        while not success:
-            success, message = func(f, x, y, **fit_kws)
-            counter += 1
-            if counter > 10:
-                success = True
-                print('Fitting did not converge, carrying on...')
-        return_value = getattr(f, attr) - orig_value
-        try:
-            try:
-                params_name = ' '.join(params_name)
-            except:
-                pass
-            pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
-            pbar.update()
-        except:
-            pass
-        return return_value
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
@@ -812,12 +894,13 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
                'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
     func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
     fit_kws['verbose'] = False
+    fit_kws['hessian'] = False
 
-    func(f, x, y, **fit_kws)
+    func(f, x, y, *fit_args, **fit_kws)
 
-
-    orig_value = getattr(f, attr)
-    orig_params = copy.deepcopy(f.params)
+    state = _get_state(f, method=method.lower())
+    orig_params = state[0]
+    f.params = copy.deepcopy(state[0])
 
     ranges = {}
 
@@ -830,65 +913,24 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
             param_names.append(p)
 
     params = copy.deepcopy(f.params)
+    chifunc = lambda x: chi2.cdf(x, npar) - 0.682689492 # Calculate 1 sigma boundary
+    bound = optimize.root(chifunc, npar).x[0] * 0.5 if method.lower() == 'mle' else optimize.root(chifunc, npar).x[0]
     for i in range(no_params):
+        # _set_state(f, state, method=method.lower())
         ranges[param_names[i]] = {}
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
         stderr = orig_params[param_names[i]].stderr
         stderr = stderr if stderr is not None else 0.01 * np.abs(value)
         stderr = stderr if stderr != 0 else 0.01 * np.abs(value)
-        # Search for a value to the right which gives an increase greater than 1.
-        search_value = value
-        success = False
-        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching right)', mininterval=0) as pbar:
-            while True:
-                search_value += 0.5*stderr
-                if search_value > orig_params[param_names[i]].max:
-                    pbar.set_description(param_names[i] + ' (right limit reached)')
-                    pbar.update(1)
-                    search_value = orig_params[param_names[i]].max
-                    ranges[param_names[i]]['right'] = search_value
-                    break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func) - (1 - 0.5*(method.lower() == 'mle'))
-                pbar.set_description(param_names[i] + ' (searching right: ' + str(search_value) + ')')
-                pbar.update(1)
-                if new_value > 0:
-                    pbar.set_description(param_names[i] + ' (finding root)')
-                    pbar.update(1)
-                    result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                                     value, search_value,
-                                                     args=(f, params, param_names[i], x, y, orig_value, func),
-                                                     full_output=True)
-                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(1)
-                    ranges[param_names[i]]['right'] = result
-                    success = output.converged
-                    break
-        search_value = value
-        # Do the same for the left
-        with tqdm.tqdm(leave=True, desc=param_names[i] + ' (searching left)', mininterval=0) as pbar:
-            while True:
-                search_value -= 0.5*stderr
-                if search_value < orig_params[param_names[i]].min:
-                    pbar.set_description(param_names[i] + ' (left limit reached)')
-                    pbar.update(1)
-                    search_value = orig_params[param_names[i]].min
-                    ranges[param_names[i]]['left'] = search_value
-                    success = False
-                    break
-                new_value = fit_new_value(search_value, f, params, param_names[i], x, y, orig_value, func)
-                if new_value > 1 - 0.5*(method.lower() == 'mle'):
-                    pbar.set_description(param_names[i] + ' (finding root)')
-                    pbar.update(1)
-                    result, output = optimize.ridder(lambda *args: fit_new_value(*args) - (1 - 0.5*(method.lower() == 'mle')),
-                                                     value, search_value,
-                                                     args=(f, params, param_names[i], x, y, orig_value, func),
-                                                     full_output=True)
-                    pbar.set_description(param_names[i] + ' (root found: ' + str(result) + ')')
-                    pbar.update(1)
-                    ranges[param_names[i]]['left'] = result
-                    success = success * output.converged
-                    break
+
+        function_kws = {'method': method.lower(), 'func_args': fit_args, 'func_kwargs': fit_kws}
+
+        result_left, success_left = _find_boundary(stderr, param_names[i], bound, f, x, y, function_kwargs=function_kws)
+        result_right, success_right = _find_boundary(-stderr, param_names[i], bound, f, x, y, function_kwargs=function_kws)
+        success = success_left * success_right
+        ranges[param_names[i]]['left'] = result_left
+        ranges[param_names[i]]['right'] = result_right
 
         if not success:
             print("Warning: boundary calculation did not fully succeed for " + param_names[i])
@@ -897,18 +939,18 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
         ranges[param_names[i]]['uncertainty'] = max(right, left)
         ranges[param_names[i]]['value'] = orig_params[param_names[i]].value
 
-        f.params = copy.deepcopy(orig_params)
     # First, clear all uncertainty estimates
     for p in orig_params:
         orig_params[p].stderr = None
     for param_name in ranges.keys():
         orig_params[param_name].stderr = ranges[param_name]['uncertainty']
         orig_params[param_name].value = ranges[param_name]['value']
-    setattr(f, save_attr, copy.deepcopy(orig_params))
-    f.params = copy.deepcopy(orig_params)
+    state = list(state)
+    state[0] = copy.deepcopy(orig_params)
+    state = tuple(state)
+    _set_state(f, state, method=method.lower())
 
-def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20,
-                    filename=None):
+def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walkers=20, filename=None):
     """Calculates the uncertainty on MLE-optimized parameter values
     by performing a random walk through parameter space and comparing
     the resulting loglikelihood values. For more information,

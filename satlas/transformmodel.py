@@ -68,11 +68,11 @@ class TransformHFSModel(HFSModel):
         """Grants access to the :meth:`.HFSModel.plot` method, passing all
         arguments. The transformation used is temporarily changed to the
         identity transform."""
-        remember_pre = copy.deepcopy(self._pre_transform)
-        remember_post = copy.deepcopy(self._post_transform)
-        self._pre_transform = identity
+        # remember_pre = copy.deepcopy(self._pre_transform)
+        # remember_post = copy.deepcopy(self._post_transform)
+        # self._pre_transform = identity
         to_return = super(TransformHFSModel, self).plot(*args, **kwargs)
-        self._pre_transform = remember_pre
+        # self._pre_transform = remember_pre
         return to_return
 
     def __call__(self, *args, **kwargs):
