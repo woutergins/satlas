@@ -217,39 +217,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         Influences the uncertainty estimates from the parabola."""
     from . import fitting
 
-    def fit_new_value(value, f, params, params_name, x, y, orig_value, func):
-        params = copy.deepcopy(params)
-        try:
-            if all(value == orig_value):
-                return 0
-            for v, n in zip(value, params_name):
-                params[n].value = v
-                params[n].vary = False
-        except:
-            if value == orig_value:
-                return 0
-            params[params_name].value = value
-            params[params_name].vary = False
-        f.params = params
-        success = False
-        counter = 0
-        while not success:
-            success, message = func(f, x, y, **fit_kws)
-            counter += 1
-            if counter > 10:
-                return np.nan
-        return_value = getattr(f, attr) - orig_value
-        try:
-            try:
-                params_name = ' '.join(params_name)
-            except:
-                pass
-            pbar.set_description(params_name + ' (' + str(value, return_value) + ')')
-            pbar.update(1)
-        except:
-            pass
-        return return_value
-
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
                'chisquare': (fitting.chisquare_fit, 'chisqr'),
@@ -368,6 +335,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                 pbar.update(1)
         Z = -Z
         npar = 2
+        npar = 1
         bounds = []
         for bound in [0.997300204, 0.954499736, 0.682689492]:
             chifunc = lambda x: chi2.cdf(x, npar) - bound # Calculate 1 sigma boundary

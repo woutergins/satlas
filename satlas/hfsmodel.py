@@ -380,8 +380,8 @@ class HFSModel(BaseModel):
                         par.add('A' + label, value=A, vary=True)
         else:
             if self.shared_fwhm:
-                par.add('FWHMG', value=fwhm[0], vary=True, min=0)
-                par.add('FWHML', value=fwhm[1], vary=True, min=0)
+                par.add('FWHMG', value=fwhm[0], vary=True, min=1)
+                par.add('FWHML', value=fwhm[1], vary=True, min=1)
                 val = 0.5346 * fwhm[1] + np.sqrt(0.2166 * fwhm[1] ** 2 + fwhm[0] ** 2)
                 par.add('TotalFWHM', value=val, vary=False,
                         expr='0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5')
@@ -744,7 +744,10 @@ class HFSModel(BaseModel):
         if model:
             superx = np.linspace(superx.min(), superx.max(), len(superx))
             range = (self.locations.min(), self.locations.max())
-            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
+            if range[0] == range[1]:
+                max_counts = self(range[0])
+            else:
+                max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
             min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
@@ -761,7 +764,7 @@ class HFSModel(BaseModel):
             else:
                 background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
                 y = self(superx) - np.polyval(background_params, superx)
-            line, = ax.plot(superx, y/norm, label=legend, color=color_lines)
+            line, = ax.plot(superx, y, label=legend, color=color_lines)
         ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)

@@ -189,15 +189,17 @@ class SumModel(BaseModel):
                 ax.errorbar(x, y, yerr=yerr, fmt='o', label=data_legend)
 
         plot_kws['background'] = False
+        plot_copy = copy.deepcopy(plot_kws)
+        plot_copy['model'] = False
         x_points = np.array([])
         line_counter = 1
         for m in self.models:
-            # plot_kws['legend'] = 'I=' + str(m.I)
+            plot_copy['legend'] = 'I=' + str(m.I)
             try:
                 color = ax.lines[-1].get_color()
             except IndexError:
                 color = next(ax._get_lines.prop_cycler)['color']
-            m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_kws)
+            m.plot(x=x, y=y, yerr=yerr, show=False, ax=ax, plot_kws=plot_copy)
             # plot_kws['indicate'] = False
             x_points = np.append(x_points, ax.lines[-1].get_xdata())
             if not plot_seperate:
@@ -214,7 +216,27 @@ class SumModel(BaseModel):
                     pass
             line_counter = len(ax.lines)
         x = np.sort(x_points)
-        ax.plot(x, self(x))
+        model = plot_kws['model']
+        if model:
+            colormap = plot_kws.pop('colormap', 'bone_r',)
+            min_loc = [s.locations.min() for s in self.models]
+            max_loc = [s.locations.max() for s in self.models]
+            range = (min(min_loc), max(max_loc))
+            from scipy import optimize
+            max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
+            min_counts = [self.params[par_name].value for par_name in self.params if par_name.endswith('Background0')][0]
+            min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
+            y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
+            X, Y = np.meshgrid(x, y)
+            from scipy import stats
+            z = stats.poisson(self(X)).pmf(Y)
+
+            z = z / z.sum(axis=0)
+            ax.imshow(z, extent=(x.min(), x.max(), y.min(), y.max()), cmap=plt.get_cmap(colormap))
+            line, = ax.plot(x, self(x), label=legend, lw=0.5)
+        else:
+            ax.plot(x, self(x))
+        ax.legend(loc=0)
 
         # ax.set_xlabel(xlabel)
         # ax.set_ylabel(ylabel)

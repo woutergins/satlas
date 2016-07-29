@@ -218,6 +218,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
         for key in f.params.keys():
             if f.params[key].stderr is not None:
                 f.params[key].stderr /= f.redchi**0.5
+                f.chisq_res_par[key].stderr /= f.redchi**0.5
 
     return success, result.message
 
@@ -742,7 +743,7 @@ def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_c
 
 params_map = {'mle': 'mle_fit', 'chisquare_spectroscopic': 'chisq_res_par', 'chisquare': 'chisq_res_par'}
 fit_mapping = {'mle': likelihood_fit, 'chisquare_spectroscopic': chisquare_spectroscopic_fit, 'chisquare': chisquare_fit}
-attr_mapping = {'mle': 'mle_likelihood', 'chisquare_spectroscopic_fit': 'chisqr', 'chisquare': 'chisqr'}
+attr_mapping = {'mle': 'mle_likelihood', 'chisquare_spectroscopic': 'chisqr', 'chisquare': 'chisqr'}
 
 def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare', func_args=tuple(), func_kwargs={}, pbar=None, orig_stat=0):
     params = copy.deepcopy(f.params)

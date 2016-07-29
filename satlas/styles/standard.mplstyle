@@ -142,7 +142,7 @@ savefig.facecolor: w
 savefig.edgecolor: w
 savefig.format: pdf
 savefig.bbox: tight
-savefig.pad_inches: 0
+savefig.pad_inches: 0.1
 savefig.jpeg_quality: 95
 savefig.directory: ''
 savefig.transparent: False
