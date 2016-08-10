@@ -174,10 +174,6 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
         from the optimizer."""
 
     params = f.params
-    try:
-        params['sigma_x'].vary = False
-    except:
-        pass
 
     if verbose:
         def iter_cb(params, iter, resid, *args, **kwargs):
@@ -540,6 +536,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
             progress = None
 
         assignHessianEstimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
+        f.params = copy.deepcopy(f.mle_fit)
+
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
