@@ -216,7 +216,7 @@ class SumModel(BaseModel):
                     pass
             line_counter = len(ax.lines)
         x = np.sort(x_points)
-        model = plot_kws['model']
+        model = plot_kws.pop('model', False)
         if model:
             colormap = plot_kws.pop('colormap', 'bone_r',)
             min_loc = [s.locations.min() for s in self.models]

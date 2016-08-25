@@ -174,10 +174,6 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
         from the optimizer."""
 
     params = f.params
-    try:
-        params['sigma_x'].vary = False
-    except:
-        pass
 
     if verbose:
         def iter_cb(params, iter, resid, *args, **kwargs):
@@ -291,6 +287,7 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     # If a parameter approach is desired, this needs to be changed.
     x = np.array(x)
     y = np.array(y)
+    xerr = np.array(xerr)
     key = id(f)
     if key in _x_err_calculation_stored and cache:
         x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
@@ -305,15 +302,14 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
                 X_grid, theta = np.meshgrid(X, theta_array)
                 X_grid = X_grid + xerr * theta
                 x_grid.append(X_grid)
-                g_top = (np.exp(-theta*theta * 0.5)).T
+                g_top = (np.exp(-theta*theta * 0.5 / xerr**2)).T
                 g.append((g_top.T / (sqrt2pi * xerr)).T)
             g = np.vstack(g)
             rfft_g = np.fft.rfft(g)
         else:
             x_grid, theta = np.meshgrid(x, theta_array)
             y_grid, _ = np.meshgrid(y, theta_array)
-            g_top = (np.exp(-theta*theta * 0.5))
-            xerr = np.array(xerr)
+            g_top = (np.exp(-theta*theta * 0.5 / xerr**2))
             g = (g_top / (sqrt2pi * xerr)).T
             rfft_g = np.fft.rfft(g)
             x_grid = x_grid + xerr * theta
@@ -540,6 +536,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
             progress = None
 
         assignHessianEstimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
+        f.params = copy.deepcopy(f.mle_fit)
+
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
