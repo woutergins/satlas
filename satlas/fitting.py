@@ -327,7 +327,10 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     # After taking the logarithm, add the maximal values again.
     # The subtraction becomes multiplication (with an exponential) after the exponential,
     # shifts through the integral, and becomes an addition (due to the logarithm).
-    return np.log(integral_value) + mod
+    results = np.log(integral_value)
+    mask = np.isnan(results)
+    results[mask] = 0
+    return results + mod
 
 def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
     """Calculates the logarithm of the probability that the data fits
