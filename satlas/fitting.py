@@ -279,69 +279,66 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     a convolution integral. If greater accuracy is required,
     change *satlas.fitting.theta_array* to a suitable
     range and length."""
-    # Cache already calculated values:
-    # - x_grid
-    # - y_grid
-    # - FFT of x-uncertainty
-    # Note that this works only if the uncertainty remains the same.
-    # If a parameter approach is desired, this needs to be changed.
     import scipy.integrate as integrate
     return (np.log([
         integrate.quad(
             lambda theta: (np.exp(func(Y, f(X+theta * XERR))[i]) * np.exp(-theta*theta/2)/sqrt2pi),
             -np.inf, np.inf)[0] for i, (X, Y, XERR) in enumerate(zip(x, y, xerr))
         ]).sum())
+    # Cache already calculated values:
+    # - x_grid
+    # - y_grid
+    # - FFT of x-uncertainty
+    # Note that this works only if the uncertainty remains the same.
+    # If a parameter approach is desired, this needs to be changed.
     # for theta in theta_array:
     #     print(func(y, f(x+theta*xerr)))
-    x = np.array(x)
-    y = np.array(y)
-    xerr = np.array(xerr)
-    key = id(f)
-    if key in _x_err_calculation_stored and cache:
-        x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
-    else:
-        # This section is messy, but works.
-        # Should be cleaned up a bit in a future update...
-        if isinstance(f, linkedmodel.LinkedModel):
-            x_grid = []
-            y_grid, _ = np.meshgrid(y, theta_array)
-            g = []
-            for X, Y in zip(x, y):
-                X_grid, theta = np.meshgrid(X, theta_array)
-                X_grid = X_grid + xerr * theta
-                x_grid.append(X_grid)
-                g_top = (np.exp(-theta*theta * 0.5 / xerr**2)).T
-                g.append((g_top.T / (sqrt2pi * xerr)).T)
-            g = np.vstack(g)
-            rfft_g = np.fft.rfft(g)
-        else:
-            x_grid, theta = np.meshgrid(x, theta_array)
-            y_grid, _ = np.meshgrid(y, theta_array)
-            g_top = (np.exp(-theta*theta * 0.5))
-            g = (g_top / sqrt2pi).T
-            rfft_g = np.fft.rfft(g)
-            x_grid = x_grid + xerr * theta
-        if cache:
-            _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
-    # Calculate the loglikelihoods for the grid of uncertainty.
-    # Each column is a new datapoint.
-    vals = func(y_grid, f(x_grid))
-    # To avoid overflows, subtract the maximal values from each column.
-    mod = vals.max(axis=0)
-    vals_mod = vals - mod
-    p = (np.exp(vals)).T
-    # Perform the convolution.
-    integral_value = np.fft.irfft(np.fft.rfft(p) * rfft_g)[:, -1]
-    # After taking the logarithm, add the maximal values again.
-    # The subtraction becomes multiplication (with an exponential) after the exponential,
-    # shifts through the integral, and becomes an addition (due to the logarithm).
-    import scipy.signal as sp
-    print(sp.fftconvolve(np.exp(func(y, f(x))), np.exp(-theta_array*theta_array*0.5)/sqrt2pi, mode='same').sum())
-    print(((np.log(integral_value)+mod).sum()))
-    import time
-    time.sleep(1)
-    raise ValueError
-    return np.log(integral_value) + mod
+    # x = np.array(x)
+    # y = np.array(y)
+    # xerr = np.array(xerr)
+    # key = id(f)
+    # if key in _x_err_calculation_stored and cache:
+    #     x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
+    # else:
+    #     # This section is messy, but works.
+    #     # Should be cleaned up a bit in a future update...
+    #     if isinstance(f, linkedmodel.LinkedModel):
+    #         x_grid = []
+    #         y_grid, _ = np.meshgrid(y, theta_array)
+    #         g = []
+    #         for X, Y in zip(x, y):
+    #             X_grid, theta = np.meshgrid(X, theta_array)
+    #             X_grid = X_grid + xerr * theta
+    #             x_grid.append(X_grid)
+    #             g_top = (np.exp(-theta*theta * 0.5 / xerr**2)).T
+    #             g.append((g_top.T / (sqrt2pi * xerr)).T)
+    #         g = np.vstack(g)
+    #         rfft_g = np.fft.rfft(g)
+    #     else:
+    #         x_grid, theta = np.meshgrid(x, theta_array)
+    #         y_grid, _ = np.meshgrid(y, theta_array)
+    #         g_top = (np.exp(-theta*theta * 0.5))
+    #         g = (g_top / sqrt2pi).T
+    #         rfft_g = np.fft.rfft(g)
+    #         x_grid = x_grid + xerr * theta
+    #     if cache:
+    #         _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
+    # # Calculate the loglikelihoods for the grid of uncertainty.
+    # # Each column is a new datapoint.
+    # vals = func(y_grid, f(x_grid))
+    # # To avoid overflows, subtract the maximal values from each column.
+    # mod = vals.max(axis=0)
+    # vals_mod = vals - mod
+    # p = (np.exp(vals)).T
+    # # Perform the convolution.
+    # integral_value = np.fft.irfft(np.fft.rfft(p) * rfft_g)[:, -1]
+    # # After taking the logarithm, add the maximal values again.
+    # # The subtraction becomes multiplication (with an exponential) after the exponential,
+    # # shifts through the integral, and becomes an addition (due to the logarithm).
+    # results = np.log(integral_value)
+    # mask = np.isnan(results)
+    # results[mask] = 0
+    # return results + mod
 
 def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
     """Calculates the logarithm of the probability that the data fits

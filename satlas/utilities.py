@@ -388,15 +388,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                 label.set_visible(False)
     return fig, axes, cbar
 
-def _diaconis_rule(data, minimum, maximum):
-    iqr = np.subtract(*np.percentile(data, [75, 25]))
-    bin_size = 2 * iqr * data.shape[0]**(-1/3)
-    bin_size = 0.01 * (maximum - minimum)
-    if bin_size == 0 or bin_size < 0.01 * (maximum - minimum):
-        return np.ceil(np.sqrt(maximum - minimum))
-    else:
-        return np.ceil((maximum - minimum) / bin_size)
-
 def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 100)):
     """Given the random walk data, creates a triangle plot: distribution of
     a single parameter on the diagonal axes, 2D contour plots with 1, 2 and
@@ -443,9 +434,8 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                 i = columns.index(val)
                 x = store['data'][first:last, i]
                 if bins[bin_index] is None:
-                    # When the diaconis rule is properly implemented, this will be used (uses too many bins)
-                    bins[bin_index] = _diaconis_rule(x, x.min(), x.max())
-                    # bins[bin_index] = 50
+                    width = 3.5*np.std(x)/x.size**(1/3) #Scott's rule for binwidth
+                    bins[bin_index] = np.arange(x.min(), x.max()+width, width)
                 try:
                     ax.hist(x, int(bins[bin_index]), histtype='step')
                 except ValueError:
