@@ -78,7 +78,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         yerr = func(model)
     if xerr is not None:
         x = np.array(x)
-        xerr = np.hstack((derivative(f, x, dx=1E-6) * xerr))
+        xerr = np.hstack((derivative(f, x, dx=1E-5) * xerr))
         bottom = np.sqrt(yerr * yerr + xerr * xerr)
     else:
         bottom = yerr
@@ -285,6 +285,14 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     # - FFT of x-uncertainty
     # Note that this works only if the uncertainty remains the same.
     # If a parameter approach is desired, this needs to be changed.
+    import scipy.integrate as integrate
+    return (np.log([
+        integrate.quad(
+            lambda theta: (np.exp(func(Y, f(X+theta * XERR))[i]) * np.exp(-theta*theta/2)/sqrt2pi),
+            -np.inf, np.inf)[0] for i, (X, Y, XERR) in enumerate(zip(x, y, xerr))
+        ]).sum())
+    # for theta in theta_array:
+    #     print(func(y, f(x+theta*xerr)))
     x = np.array(x)
     y = np.array(y)
     xerr = np.array(xerr)
@@ -309,8 +317,8 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
         else:
             x_grid, theta = np.meshgrid(x, theta_array)
             y_grid, _ = np.meshgrid(y, theta_array)
-            g_top = (np.exp(-theta*theta * 0.5 / xerr**2))
-            g = (g_top / (sqrt2pi * xerr)).T
+            g_top = (np.exp(-theta*theta * 0.5))
+            g = (g_top / sqrt2pi).T
             rfft_g = np.fft.rfft(g)
             x_grid = x_grid + xerr * theta
         if cache:
@@ -321,12 +329,18 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     # To avoid overflows, subtract the maximal values from each column.
     mod = vals.max(axis=0)
     vals_mod = vals - mod
-    p = (np.exp(vals_mod)).T
+    p = (np.exp(vals)).T
     # Perform the convolution.
     integral_value = np.fft.irfft(np.fft.rfft(p) * rfft_g)[:, -1]
     # After taking the logarithm, add the maximal values again.
     # The subtraction becomes multiplication (with an exponential) after the exponential,
     # shifts through the integral, and becomes an addition (due to the logarithm).
+    import scipy.signal as sp
+    print(sp.fftconvolve(np.exp(func(y, f(x))), np.exp(-theta_array*theta_array*0.5)/sqrt2pi, mode='same').sum())
+    print(((np.log(integral_value)+mod).sum()))
+    import time
+    time.sleep(1)
+    raise ValueError
     return np.log(integral_value) + mod
 
 def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
@@ -399,7 +413,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
         return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True, fit=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -501,6 +515,9 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     if verbose:
         progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
 
+    if not fit:
+        f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
+        return True, None
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
     result.scalar_minimize(method=method, **method_kws)
     f.params = copy.deepcopy(result.params)
@@ -523,7 +540,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     f.mle_fit = copy.deepcopy(result.params)
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    f.mle_chisqr = (-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func)).sum()
+    f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
     try:
         f.mle_redchi = f.mle_chisqr / f.ndof
     except:
@@ -760,7 +777,7 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
     success = False
     counter = 0
     while not success:
-        success, message = func(f, x, y, *func_args, **func_kwargs)
+        success, message = func(f, x, y, *func_args, **func_kwargs, fit=True)
         counter += 1
         if counter > 10:
             return np.nan
@@ -802,35 +819,37 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
         search_value += step
         if boundary_test(search_value):
             try:
-                pbar.update(1)
                 pbar.set_description(desc=param_name + ' (' + direction + ' limit reached)')
+                pbar.update(1)
             except:
                 pass
             result = orig_params[param_name].max
             break
         new_value = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
-        # new_value = calculate_updated_statistic(search_value, param_name, f, x, y, method=method.lower(), func_args=fit_args, func_kwargs=fit_kws, pbar=pbar, orig_stat=orig_stat)
         try:
+            pbar.set_description(desc=param_name + ' (searching ' + direction + ':  {:.3g}, change of {:.3f}, at {:.3f}%)'.format(search_value, new_value, new_value/bound*100))
             pbar.update(1)
-            pbar.set_description(desc=param_name + ' (searching ' + direction + ':  {:.3g}, change of {:.3f})'.format(search_value, new_value))
         except:
             pass
         if new_value > bound:
             try:
+                pbar.set_description(desc=param_name + ' (finding root, between {:.3g} and {:.3g})'.format(value, search_value))
                 pbar.update(1)
-                pbar.set_description(desc=param_name + ' (finding root)')
             except:
                 pass
             result, output = optimize.brentq(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
-                                             value, search_value,
+                                             search_value - step, search_value,
                                              full_output=True)
             try:
-                pbar.update(1)
                 pbar.set_description(desc=param_name + ' (root found: {:.3g})'.format(result))
+                pbar.update(1)
             except:
                 pass
             success = output.converged
             break
+    result_value = calculate_updated_statistic(result, param_name, f, x, y, **function_kwargs)
+    pbar.set_description(desc=param_name + ' (root found: {:.3g}, change of {:.3f})'.format(result, result_value))
+    pbar.update(1)
     pbar.close()
     f.params = copy.deepcopy(backup)
     setattr(f, attr, orig_stat)

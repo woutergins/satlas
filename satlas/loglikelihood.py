@@ -82,7 +82,7 @@ def create_gaussian_llh(yerr=1):
         array_like
             Array with the loglikelihoods for the data."""
         deviation = (y - l) / yerr
-        return -0.5 * deviation * deviation
+        return -(0.5 * deviation * deviation)
     return func
 
 def create_gaussian_priormap(literature_value, uncertainty):
@@ -115,5 +115,5 @@ def create_gaussian_priormap(literature_value, uncertainty):
         float
             Value of the prior.""".format(literature_value, uncertainty)
         deviation = (value - literature_value) / uncertainty
-        return -0.5 * deviation * deviation
+        return -(0.5 * deviation * deviation)
     return func
