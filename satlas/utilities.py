@@ -5,9 +5,9 @@ Implementation of various functions that ease the work, but do not belong in one
 """
 import copy
 
-from . import emcee as mcmc
-from . import lmfit as lm
-from . import tqdm
+from satlas.stats import emcee as mcmc
+import lmfit as lm
+from satlas import tqdm
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt

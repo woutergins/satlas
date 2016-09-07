@@ -1,30 +1,23 @@
-from .version import __version__, __release__
-from . import hfsmodel
-from .hfsmodel import *
-from . import transformmodel
-from .transformmodel import *
-from . import models
-from .models import *
-from . import linkedmodel
-from .linkedmodel import *
-from . import summodel
-from .summodel import *
-from . import utilities
-from .utilities import *
-from . import fitting
-from .fitting import *
-from . import loglikelihood
-from .loglikelihood import *
-from . import plotter
-from .plotter import *
+from satlas.version import __version__, __release__
+from satlas import hfsmodel
+from satlas.hfsmodel import *
+from satlas import transformmodel
+from satlas.transformmodel import *
+from satlas import models
+from satlas.models import *
+from satlas import linkedmodel
+from satlas.linkedmodel import *
+from satlas import summodel
+from satlas.summodel import *
+from satlas import utilities
+from satlas.utilities import *
+from satlas.stats import fitting
+from satlas.stats.fitting import *
+from satlas import loglikelihood
+from satlas.loglikelihood import *
 
-from . import style
-from .style import *
-
-from . import combinedmodel
-from .combinedmodel import *
-from . import multimodel
-from .multimodel import *
+from satlas import style
+from satlas.style import *
 
 __all__ = []
 
@@ -34,7 +27,5 @@ __all__.extend(models.__all__)
 __all__.extend(linkedmodel.__all__)
 __all__.extend(utilities.__all__)
 __all__.extend(fitting.__all__)
-__all__.extend(combinedmodel.__all__)
 __all__.extend(summodel.__all__)
 __all__.extend(style.__all__)
-__all__.extend(plotter.__all__)

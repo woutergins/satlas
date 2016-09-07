@@ -6,8 +6,9 @@ Implementation of base class for extension to models describing actual data.
 """
 import copy
 
-from . import lmfit as lm
-from .loglikelihood import create_gaussian_priormap
+
+import lmfit as lm
+from satlas.loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

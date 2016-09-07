@@ -8,11 +8,12 @@ import copy
 import os
 import numdifftools as nd
 
-from . import emcee as mcmc
-from . import linkedmodel
-from . import lmfit as lm
-from . import loglikelihood as llh
-from . import tqdm
+from satlas.stats import emcee as mcmc
+
+import lmfit as lm
+from satlas import linkedmodel
+from satlas import loglikelihood as llh
+from satlas import tqdm
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
@@ -396,8 +397,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
     if xerr is None or np.allclose(0, xerr):
-        response = np.hstack(f(x))
-        return_value = func(y, response)
+        return_value = func(y, f, x)
     else:
         return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
