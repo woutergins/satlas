@@ -89,7 +89,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, verbose=True, hessian=False):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, verbose=True, hessian=False, method='leastsq'):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -120,6 +120,8 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, ve
     hessian: boolean, optional
         When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
         is calculated, otherwise the LMFIT version is used. Defaults to *False*.
+    method: string, optional
+        Sets the method to be used by lmfit for the fitting. See lmfit for all options.
 
     Return
     ------
@@ -135,9 +137,9 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, ve
         func = None
     else:
         pass
-    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian)
+    return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian, method=method)
 
-def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False):
+def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False, method='leastsq'):
     """Use a non-linear least squares minimization (Levenberg-Marquardt)
     algorithm to minimize the chi-square of the fit to data *x* and
     *y* with errorbars *yerr*.
@@ -167,6 +169,8 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
     hessian: boolean, optional
         When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate
         is calculated, otherwise the LMFIT version is used. Defaults to *False*.
+    method: string, optional
+        Sets the method to be used by lmfit for the fitting. See lmfit for all options.
 
     Return
     ------
@@ -185,14 +189,14 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
          def iter_cb(params, iter, resid, *args, **kwargs):
             pass
 
-    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
+    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
     f.params = copy.deepcopy(result.params)
     f.chisqr = copy.deepcopy(result.chisqr)
 
     success = False
     counter = 0
     while not success:
-        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb)
+        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
         f.params = copy.deepcopy(result.params)
         success = np.isclose(result.chisqr, f.chisqr)
         f.chisqr = copy.deepcopy(result.chisqr)

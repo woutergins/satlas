@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 sqrt2pi = np.sqrt(2*np.pi)
-__all__ = ['poisson_llh', 'gaussian_llh', 'create_gaussian_llh']
+__all__ = ['poisson_llh', 'create_gaussian_llh']
 
 
 def poisson_llh(y, f, x):
@@ -47,29 +47,32 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
 
     if func is not None:
         if xerr is not None:
-            def gaussian_llh(y, f, x):
+            def gaussian_llh(y, f, x, xerr=xerr):
                 l = np.hstack(f(x))
                 yerr = func(l)
                 xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
                 return -0.5* (y - l) / bottom
+            return gaussian_llh
         else:
             def gaussian_llh(y, f, x):
                 l = np.hstack(f(x))
                 bottom = func(l)
                 return -0.5* (y - l) / bottom
+            return gaussian_llh
     else:
         if xerr is not None:
-            def gaussian_llh(y, f, x):
-                l = np.hstack(f(x))
+            def gaussian_llh(y, f, x, xerr=xerr):
+                l = f(x)
                 xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
                 return -0.5* (y - l) / bottom
+            return gaussian_llh
         else:
             def gaussian_llh(y, f, x):
                 l = np.hstack(f(x))
                 return -0.5* (y - l) / yerr
-    return gaussian_llh
+            return gaussian_llh
 
 def create_gaussian_priormap(literature_value, uncertainty):
     """Generates a function that describes a Gaussian prior mapping around
