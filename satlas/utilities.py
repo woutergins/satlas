@@ -288,11 +288,12 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         stderr = stderr if stderr is not None else 0.01 * np.abs(value)
         stderr = stderr if stderr != 0 else 0.01 * np.abs(value)
 
-        result_left, success_left = fitting._find_boundary(stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
-        result_right, success_right = fitting._find_boundary(-stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
+        result_left, success_left = fitting._find_boundary(-stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
+        result_right, success_right = fitting._find_boundary(stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
         success = success_left * success_right
         ranges[param_names[i]]['left'] = result_left
         ranges[param_names[i]]['right'] = result_right
+        print(result_left, result_right)
 
         if not success:
             print("Warning: boundary calculation did not fully succeed for " + param_names[i])
@@ -304,6 +305,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         ranges[param_names[i]]['right_val'] = right_val
         ranges[param_names[i]]['left_val'] = left_val
         value_range = np.linspace(left_val, right_val, resolution_diag)
+        value_range = np.sort(np.append(value_range, np.array([value - left, value + right])))
         chisquare = np.zeros(len(value_range))
         # Calculate the new value, and store it in the array. Update the progressbar.
         with tqdm.tqdm(value_range, desc=param_names[i], leave=True) as pbar:
