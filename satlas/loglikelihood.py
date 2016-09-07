@@ -62,14 +62,14 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
             return gaussian_llh
     else:
         if xerr is not None:
-            def gaussian_llh(y, f, x, xerr=xerr):
+            def gaussian_llh(y, f, x, xerr=xerr, yerr=yerr):
                 l = f(x)
                 xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
                 return -0.5* (y - l) / bottom
             return gaussian_llh
         else:
-            def gaussian_llh(y, f, x):
+            def gaussian_llh(y, f, x, yerr=yerr):
                 l = np.hstack(f(x))
                 return -0.5* (y - l) / yerr
             return gaussian_llh
