@@ -414,7 +414,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
         return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True, fit=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -516,9 +516,6 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
     if verbose:
         progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
 
-    if not fit:
-        f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
-        return True, None
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
     result.scalar_minimize(method=method, **method_kws)
     f.params = copy.deepcopy(result.params)
@@ -778,7 +775,7 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
     success = False
     counter = 0
     while not success:
-        success, message = func(f, x, y, *func_args, **func_kwargs, fit=True)
+        success, message = func(f, x, y, *func_args, **func_kwargs)
         counter += 1
         if counter > 10:
             return np.nan

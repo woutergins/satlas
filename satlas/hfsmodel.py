@@ -10,7 +10,7 @@ from fractions import Fraction
 
 import lmfit as lm
 from satlas.basemodel import BaseModel
-from satlas.lineid_plot import plot_line_ids
+from satlas.utilities.plotting import plot_line_ids
 from satlas.loglikelihood import poisson_llh
 from satlas.summodel import SumModel
 from satlas.utilities import poisson_interval

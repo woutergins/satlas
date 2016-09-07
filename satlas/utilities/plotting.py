@@ -1,21 +1,13 @@
-"""
-Implementation of various functions that ease the work, but do not belong in one of the other modules.
-
-.. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
-"""
 import copy
 
-from satlas.stats import emcee as mcmc
-import lmfit as lm
 from satlas import tqdm
+from satlas.stats import fitting
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from scipy import optimize
 from scipy.stats import chi2
-
 
 c = 299792458.0
 h = 6.62606957 * (10 ** -34)
@@ -35,68 +27,422 @@ cmap.set_under(color_list[0])
 invcmap = mpl.colors.ListedColormap(inv_color_list)
 invcmap.set_over(inv_color_list[-1])
 invcmap.set_under(inv_color_list[0])
-# cmap = mpl.colors.ListedColormap(['#0072B2', '#CC79A7', '#D55E00', '#009E73', '#F0E442', '#56B4E9'])
-# cmap.set_under('#56B4E9')
-# cmap.set_over('#0072B2')
-# invcmap = mpl.colors.ListedColormap(['#56B4E9', '#F0E442', '#009E73', '#D55E00', '#CC79A7', '#0072B2'])
-# invcmap.set_over('#56B4E9')
-# invcmap.set_under('#0072B2')
 
-__all__ = ['weighted_average',
-           'generate_correlation_map',
-           'generate_correlation_plot',
-           'generate_spectrum',
-           'poisson_interval',
-           'load_model',
-           'beta',
-           'dopplerfactor']
+__all__ = ['plot_line_ids', 'generate_correlation_map', 'generate_correlation_plot']
 
-def weighted_average(x, sigma, axis=None):
-    r"""Takes the weighted average of an array of values and the associated
-    errors. Calculates the scatter and statistical error, and returns
-    the greater of these two values.
+# Code for 'plot_line_ids' taken from Prasanth Nair
+
+def _convert_to_array(x, size, name):
+    """Check length of array or convert scalar to array.
+
+    Check to see is `x` has the given length `size`. If this is true
+    then return Numpy array equivalent of `x`. If not then raise
+    ValueError, using `name` as an idnetification. If len(x) returns
+    TypeError, then assume it is a scalar and create a Numpy array of
+    length `size`. Each item of this array will have the value as `x`.
+    """
+    try:
+        l = len(x)
+        if l != size:
+            raise ValueError(
+                "{0} must be scalar or of length {1}".format(
+                    name, size))
+    except TypeError:
+        # Only one item
+        xa = np.array([x] * size)  # Each item is a diff. object.
+    else:
+        xa = np.array(x)
+
+    return xa
+
+def get_line_flux(line_wave, wave, flux, **kwargs):
+    """Interpolated flux at a given wavelength (calls np.intrep).
+    """
+    return np.interp(line_wave, wave, flux, **kwargs)
+
+def unique_labels(line_labels):
+    """If a label occurs more than once, add num. as suffix."""
+    from collections import defaultdict
+    d = defaultdict(int)
+    for i in line_labels:
+        d[i] += 1
+    d = dict((i, k) for i, k in d.items() if k != 1)
+    line_labels_u = []
+    for lab in reversed(line_labels):
+        c = d.get(lab, 0)
+        if c >= 1:
+            v = lab + "_num_" + str(c)
+            d[lab] -= 1
+        else:
+            v = lab
+        line_labels_u.insert(0, v)
+
+    return line_labels_u
+
+def get_box_loc(fig, ax, line_wave, arrow_tip, box_axes_space=0.06):
+    """Box loc in data coords, given Fig. coords offset from arrow_tip.
 
     Parameters
     ----------
-    x: array_like
-        Array-like assortment of measured values, is transformed into a
-        1D-array.
-    sigma: array_like
-        Array-like assortment of errors on the measured values, is transformed
-        into a 1D-array.
+    fig: matplotlib Figure artist
+        Figure on which the boxes will be placed.
+    ax: matplotlib Axes artist
+        Axes on which the boxes will be placed.
+    arrow_tip: list or array of floats
+        Location of tip of arrow, in data coordinates.
+    box_axes_space: float
+        Vertical space between arrow tip and text box in figure
+        coordinates.  Default is 0.06.
 
     Returns
     -------
-    tuple
-        Returns a tuple (weighted_average, uncertainty), with the uncertainty
-        being the greater of the uncertainty calculated from the statistical
-        uncertainty and the scattering uncertainty.
+    box_loc: list of floats
+        Box locations in data coordinates.
 
-    Note
-    ----
-    The formulas used are
+    Notes
+    -----
+    Note that this function is not needed if user provides both arrow
+    tip positions and box locations. The use case is when the program
+    has to automatically find positions of boxes. In the automated
+    plotting case, the arrow tip is set to be the top of the Axes
+    (outside this function) and the box locations are determined by
+    `box_axes_space`.
 
-    .. math::
+    In Matplotlib annotate function, both the arrow tip and the box
+    location can be specified. While calculating automatic box
+    locations, it is not ideal to use data coordinates to calculate
+    box location, since plots will not have a uniform appearance. Given
+    locations of arrow tips, and a spacing in figure fraction, this
+    function will calculate the box locations in data
+    coordinates. Using this boxes can be placed in a uniform manner.
 
-        \left\langle x\right\rangle_{weighted} &= \frac{\sum_{i=1}^N \frac{x_i}
-                                                                 {\sigma_i^2}}
-                                                      {\sum_{i=1}^N \frac{1}
-                                                                {\sigma_i^2}}
+    """
+    # Plot boxes in their original x position, at a height given by the
+    # key word box_axes_spacing above the arrow tip. The default
+    # is set to 0.06. This is in figure fraction so that the spacing
+    # doesn't depend on the data y range.
+    box_loc = []
+    fig_inv_trans = fig.transFigure.inverted()
+    for w, a in zip(line_wave, arrow_tip):
+        # Convert position of tip of arrow to figure coordinates, add
+        # the vertical space between top edge and text box in figure
+        # fraction. Convert this text box position back to data
+        # coordinates.
+        display_coords = ax.transData.transform((w, a))
+        figure_coords = fig_inv_trans.transform(display_coords)
+        figure_coords[1] += box_axes_space
+        display_coords = fig.transFigure.transform(figure_coords)
+        ax_coords = ax.transData.inverted().transform(display_coords)
+        box_loc.append(ax_coords)
 
-        \sigma_{stat}^2 &= \frac{1}{\sum_{i=1}^N \frac{1}{\sigma_i^2}}
+    return box_loc
 
-        \sigma_{scatter}^2 &= \frac{\sum_{i=1}^N \left(\frac{x_i-\left\langle
-                                                    x\right\rangle_{weighted}}
-                                                      {\sigma_i}\right)^2}
-               {\left(N-1\right)\sum_{i=1}^N \frac{1}{\sigma_i^2}}"""
-    # x = np.ravel(x)
-    # sigma = np.ravel(sigma)
-    Xstat = (1 / sigma**2).sum(axis=axis)
-    Xm = (x / sigma**2).sum(axis=axis) / Xstat
-    # Xscatt = (((x - Xm) / sigma)**2).sum() / ((1 - 1.0 / len(x)) * Xstat)
-    Xscatt = (((x - Xm) / sigma)**2).sum(axis=axis) / ((len(x) - 1) * Xstat)
-    Xstat = 1 / Xstat
-    return Xm, np.maximum.reduce([Xstat, Xscatt], axis=axis) ** 0.5
+def adjust_boxes(line_wave, box_widths, left_edge, right_edge, max_iter=1000, adjust_factor=0.35, factor_decrement=3.0, fd_p=0.75):
+    """Ajdust given boxes so that they don't overlap.
+
+    Parameters
+    ----------
+    line_wave: list or array of floats
+        Line wave lengths. These are assumed to be the initial y (wave
+        length) location of the boxes.
+    box_widths: list or array of floats
+        Width of box containing labels for each line identification.
+    left_edge: float
+        Left edge of valid data i.e., wave length minimum.
+    right_edge: float
+        Right edge of valid data i.e., wave lengths maximum.
+    max_iter: int
+        Maximum number of iterations to attempt.
+    adjust_factor: float
+        Gap between boxes are reduced or increased by this factor after
+        each iteration.
+    factor_decrement: float
+        The `adjust_factor` itself if reduced by this factor, after
+        certain number of iterations. This is useful for crowded
+        regions.
+    fd_p: float
+        Percentage, given as a fraction between 0 and 1, after which
+        adjust_factor must be reduced by a factor of
+        `factor_decrement`. Default is set to 0.75.
+
+    Returns
+    -------
+    wlp, niter, changed: (float, float, float)
+        The new y (wave length) location of the text boxes, the number
+        of iterations used and a flag to indicated whether any changes to
+        the input locations were made or not.
+
+    Notes
+    -----
+    This is a direct translation of the code in lineid_plot.pro file in
+    NASA IDLAstro library.
+
+    Positions are returned either when the boxes no longer overlap or
+    when `max_iter` number of iterations are completed. So if there are
+    many boxes, there is a possibility that the final box locations
+    overlap.
+
+    References
+    ----------
+    + http://idlastro.gsfc.nasa.gov/ftp/pro/plot/lineid_plot.pro
+    + http://idlastro.gsfc.nasa.gov/
+
+    """
+    # Adjust positions.
+    niter = 0
+    changed = True
+    nlines = len(line_wave)
+
+    wlp = line_wave[:]
+    while changed:
+        changed = False
+        for i in range(nlines):
+            if i > 0:
+                diff1 = wlp[i] - wlp[i - 1]
+                separation1 = (box_widths[i] + box_widths[i - 1]) / 2.0
+            else:
+                diff1 = wlp[i] - left_edge + box_widths[i] * 1.01
+                separation1 = box_widths[i]
+            if i < nlines - 2:
+                diff2 = wlp[i + 1] - wlp[i]
+                separation2 = (box_widths[i] + box_widths[i + 1]) / 2.0
+            else:
+                diff2 = right_edge + box_widths[i] * 1.01 - wlp[i]
+                separation2 = box_widths[i]
+
+            if diff1 < separation1 or diff2 < separation2:
+                if wlp[i] == left_edge: diff1 = 0
+                if wlp[i] == right_edge: diff2 = 0
+                if diff2 > diff1:
+                    wlp[i] = wlp[i] + separation2 * adjust_factor
+                    wlp[i] = wlp[i] if wlp[i] < right_edge else \
+                        right_edge
+                else:
+                    wlp[i] = wlp[i] - separation1 * adjust_factor
+                    wlp[i] = wlp[i] if wlp[i] > left_edge else \
+                        left_edge
+                changed = True
+            niter += 1
+        if niter == max_iter * fd_p: adjust_factor /= factor_decrement
+        if niter >= max_iter: break
+
+    return wlp, changed, niter
+
+def prepare_axes(wave, flux, fig=None, ax_lower=(0.1, 0.1), ax_dim=(0.85, 0.65)):
+    """Create fig and axes if needed and layout axes in fig."""
+    # Axes location in figure.
+    if not fig:
+        fig = plt.figure()
+    ax = fig.add_axes([ax_lower[0], ax_lower[1], ax_dim[0], ax_dim[1]])
+    ax.plot(wave, flux)
+    return fig, ax
+
+def plot_line_ids(wave, flux, line_wave, line_label1, label1_size=None, extend=True, **kwargs):
+    """Label features with automatic layout of labels.
+
+    Parameters
+    ----------
+    wave: list or array of floats
+        Wave lengths of data.
+    flux: list or array of floats
+        Flux at each wavelength.
+    line_wave: list or array of floats
+        Wave length of features to be labelled.
+    line_label1: list of strings
+        Label text for each line.
+    label1_size: list of floats
+        Font size in points. If not given the default value in
+        Matplotlib is used. This is typically 12.
+    extend: boolean or list of boolean values
+        For those lines for which this keyword is True, a dashed line
+        will be drawn from the tip of the annotation to the flux at the
+        line.
+    kwargs: key value pairs
+        All of these keywords are optional.
+
+        The following keys are recognized:
+
+          ax : Matplotlib Axes
+              The Axes in which the labels are to be placed. If not
+              given a new Axes is created.
+          fig: Matplotlib Figure
+              The figure in which the labels are to be placed. If `ax`
+              if given then keyword is then ignored. The figure
+              associated with `ax` is used. If `fig` and `ax` are not
+              given then a new figure is created and an axes is added
+              to it.
+          arrow_tip: scalar or list of floats
+              The location of the annotation point, in data coords. If
+              the value is scalar then it is used for all. Default
+              value is the upper bound of the Axes, at the time of
+              plotting.
+          box_loc: scalar or list of floats
+              The y axis location of the text label boxes, in data
+              units. The default is to place it above the `arrow_tip`
+              by `box_axes_space` units in figure fraction length.
+          box_axes_space: float
+              If no `box_loc` is given then the y position of label
+              boxes is set to `arrow_tip` + this many figure fraction
+              units. The default is 0.06. This ensures that the label
+              layout appearance is independent of the y data range.
+          max_iter: int
+              Maximum iterations to use. Default is set to 1000.
+
+    Returns
+    -------
+    fig, ax: Matplotlib Figure, Matplotlib Axes
+        Figure instance on which the labels were placed and the Axes
+        instance on which the labels were placed. These can be used for
+        further customizations. For example, some labels can be hidden
+        by accessing the corresponding `Text` instance form the
+        `ax.texts` list.
+
+    Notes
+    -----
+    + By default the labels are placed along the top of the Axes. The
+      annotation point is on the top boundary of the Axes at the y
+      location of the line. The y location of the boxes are 0.06 figure
+      fraction units above the annotation location. This value can be
+      customized using the `box_axes_space` parameter. The value must
+      be in figure fractions units. Y location of both labels and
+      annotation points can be changed using `arrow_tip` and `box_loc`
+      parameters.
+    + If `arrow_tip` parameter is given then it is used as the
+      annotation point. This can be a list in which case each line can
+      have its own annotation point.
+    + If `box_loc` is given, then the boxes are placed at this
+      position. This too can be a list.
+    + `arrow_tip` and `box_loc` are the "y" components of `xy` and
+      `xyann` (deprecated name `xytext`) parameters accepted by the `annotate`
+      function in Matplotlib.
+    + If the `extend` keyword is True then a line is drawn from the
+      annotation point to the flux at the line wavelength. The flux is
+      calculated by linear interpolation. This parameter can be a list,
+      with one value for each line.
+    + The maximum iterations to be used can be customized using the
+      `max_iter` keyword parameter.
+
+    """
+    wave = np.array(wave)
+    flux = np.array(flux)
+    line_wave = np.array(line_wave)
+    line_label1 = np.array(line_label1)
+
+    nlines = len(line_wave)
+    assert nlines == len(line_label1), "Each line must have a label."
+
+    if label1_size == None:
+        label1_size = np.array([12] * nlines)
+    label1_size = _convert_to_array(label1_size, nlines, "lable1_size")
+
+    extend = _convert_to_array(extend, nlines, "extend")
+
+    # Sort.
+    indx = np.argsort(wave)
+    wave[:] = wave[indx]
+    flux[:] = flux[indx]
+    indx = np.argsort(line_wave)
+    line_wave[:] = line_wave[indx]
+    line_label1[:] = line_label1[indx]
+    label1_size[:] = label1_size[indx]
+
+    # Flux at the line wavelengths.
+    line_flux = get_line_flux(line_wave, wave, flux)
+
+    # Figure and Axes. If Axes is given then use it. If not, create
+    # figure, if not given, and add Axes to it using a default
+    # layout. Also plot the data in the Axes.
+    ax = kwargs.get("ax", None)
+    if not ax:
+        fig = kwargs.get("fig", None)
+        fig, ax = prepare_axes(wave, flux, fig)
+    else:
+        fig = ax.figure
+
+    # Find location of the tip of the arrow. Either the top edge of the
+    # Axes or the given data coordinates.
+    ax_bounds = ax.get_ybound()
+    arrow_tip = kwargs.get("arrow_tip", ax_bounds[1])
+    arrow_tip = _convert_to_array(arrow_tip, nlines, "arrow_tip")
+
+    # The y location of boxes from the arrow tips. Either given heights
+    # in data coordinates or use `box_axes_space` in figure
+    # fraction. The latter has a default value which is used when no
+    # box locations are given. Figure coordiantes are used so that the
+    # y location does not dependent on the data y range.
+    box_loc = kwargs.get("box_loc", None)
+    if not box_loc:
+        box_axes_space = kwargs.get("box_axes_space", 0.06)
+        box_loc = get_box_loc(fig, ax, line_wave, arrow_tip, box_axes_space)
+    else:
+        box_loc = _convert_to_array(box_loc, nlines, "box_loc")
+        box_loc = tuple(zip(line_wave, box_loc))
+
+    # If any labels are repeated add "_num_#" to it. If there are 3 "X"
+    # then the first gets "X_num_3". The result is passed as the label
+    # parameter of annotate. This makes it easy to find the box
+    # corresponding to a label using Figure.findobj.
+    label_u = unique_labels(line_label1)
+
+    # Draw boxes at initial (x, y) location.
+    for i in range(nlines):
+        ax.annotate(line_label1[i], xy=(line_wave[i], arrow_tip[i]),
+                    xytext=(box_loc[i][0],
+                            box_loc[i][1]),
+                    xycoords="data", textcoords="data",
+                    rotation=90, horizontalalignment="center",
+                    verticalalignment="center",
+                    fontsize=label1_size[i],
+                    arrowprops=dict(arrowstyle="-",
+                                    relpos=(0.5, 0.0)),
+                    label=label_u[i])
+        if extend[i]:
+            ax.plot([line_wave[i]] * 2, [arrow_tip[i], line_flux[i]],
+                    linestyle="--", color="k",
+                    scalex=False, scaley=False,
+                    label=label_u[i] + "_line")
+
+    # Draw the figure so that get_window_extent() below works.
+    fig.canvas.draw()
+
+    # Get annotation boxes and convert their dimensions from display
+    # coordinates to data coordinates. Specifically, we want the width
+    # in wavelength units. For each annotation box, transform the
+    # bounding box into data coordinates and extract the width.
+    ax_inv_trans = ax.transData.inverted()  # display to data
+    box_widths = []  # box width in wavelength units.
+    line_wave = []
+    for box in ax.texts:
+        b_ext = box.get_window_extent()
+        box_widths.append(b_ext.transformed(ax_inv_trans).width)
+        line_wave.append(box.xy[0])
+
+    # Find final x locations of boxes so that they don't overlap.
+    # Function adjust_boxes uses a direct translation of the equivalent
+    # code in lineid_plot.pro in IDLASTRO.
+    max_iter = kwargs.get('max_iter', 1000)
+    adjust_factor = kwargs.get('adjust_factor', 0.35)
+    factor_decrement = kwargs.get('factor_decrement', 3.0)
+    wlp, niter, changed = adjust_boxes(line_wave, box_widths,
+                                       np.min(wave), np.max(wave),
+                                       adjust_factor=adjust_factor,
+                                       factor_decrement=factor_decrement,
+                                       max_iter=max_iter)
+
+    # Redraw the boxes at their new x location.
+    for i in range(nlines):
+        box = ax.texts[i]
+        if hasattr(box, 'xyann'):
+            box.xyann = (wlp[i], box.xyann[1])
+        else:
+            box.xytext = (wlp[i], box.xytext[1])
+
+    # Update the figure
+    fig.canvas.draw()
+
+    # Return Figure and Axes so that they can be used for further
+    # manual customization.
+    return fig, ax
 
 def _make_axes_grid(no_variables, padding=0, cbar_size=0.5, axis_padding=0.5, cbar=True):
     """Makes a triangular grid of axes, with a colorbar axis next to it.
@@ -229,7 +575,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     npar: int
         Number of parameters for which simultaneous predictions need to be made.
         Influences the uncertainty estimates from the parabola."""
-    from . import fitting
 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
@@ -407,11 +752,7 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
     -------
     figure
         Returns the MatPlotLib figure created."""
-    # cmap = plt.cm.get_cmap()
-    # try:
-    #     invcmap = plt.cm.get_cmap(name=cmap.name + '_r')
-    # except:
-    #     invcmap = plt.cm.get_cmap(name=cmap.name.split('_')[0])
+
     with h5py.File(filename, 'r') as store:
         columns = store['data'].attrs['format']
         columns = [f.decode('utf-8') for f in columns]
@@ -438,9 +779,9 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                     bins[bin_index] = np.arange(x.min(), x.max()+width, width)
                 try:
                     ax.hist(x, int(bins[bin_index]), histtype='step')
-                except ValueError:
-                    bins = 50
-                    ax.hist(x, bins, histtype='step')
+                except TypeError:
+                    bins[bin_index] = 50
+                    ax.hist(x, int(bins[bin_index]), histtype='step')
                 metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
                 q = [16.0, 50.0, 84.0]
@@ -501,146 +842,3 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
             cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
             cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     return fig, axes, cbar
-
-def generate_spectrum(spectrum, x, number_of_counts, nwalkers=100):
-    """Generates a model by random sampling from the provided :class:`.HFSModel`
-    and range. The total number of counts for the generated spectrum
-    is required.
-
-    Parameters
-    ----------
-    spectrum: :class:`.HFSModel`
-        An instance of class:`.HFSModel`, which gives the probability distribution
-        from which the random samples are drawn.
-    x: NumPy array
-        NumPy array representing the bin centers for the spectrum.
-    number_of_counts: int
-        Parameter controlling the total number of counts in the spectrum.
-    nwalkers: int, optional
-        Number of walkers for the random sampling algorithm from emcee.
-
-    Returns
-    -------
-    y: NumPy array
-        Array containing the number of counts corresponding to each value
-        in x.
-    """
-    binsize = x[1] - x[0]  # Need the binsize for accurate lnprob boundaries
-
-    def lnprob(x, left, right):
-        if x > right + binsize / 2 or x < left - binsize / 2:
-            return -np.inf  # Make sure only to draw from the provided range
-        else:
-            return np.log(spectrum(x))  # No need to normalize lnprob!
-    ndim = 1
-    pos = (np.random.rand(nwalkers) * (x.max() - x.min())
-           + x.min()).reshape((nwalkers, ndim))
-    sampler = mcmc.EnsembleSampler(nwalkers, ndim, lnprob,
-                                   args=(x.min(), x.max()))
-    # Burn-in
-    pos, prob, state = sampler.run_mcmc(pos, 1000)
-    sampler.reset()
-    # Making sure not to do too much work! Divide requested number of samples
-    # by number of walkers, make sure it's a higher integer.
-    sampler.run_mcmc(pos, np.ceil(number_of_counts / nwalkers))
-    samples = sampler.flatchain[-number_of_counts:]
-    # Bin the samples
-    bins = x - binsize / 2
-    bins = np.append(bins, bins[-1] + binsize)
-    y, _ = np.histogram(samples, bins)
-    return y
-
-def poisson_interval(data, alpha=0.32):
-    """Calculates the confidence interval
-    for the mean of a Poisson distribution.
-
-    Parameters
-    ----------
-    data: array_like
-        Data giving the mean of the Poisson distributions.
-    alpha: float
-        Significance level of interval. Defaults to
-        one sigma (0.32).
-
-    Returns
-    -------
-    low, high: array_like
-        Lower and higher limits for the interval."""
-    a = alpha
-    low, high = (chi2.ppf(a / 2, 2 * data) / 2,
-                 chi2.ppf(1 - a / 2, 2 * data + 2) / 2)
-    low = np.nan_to_num(low)
-    return low, high
-
-def load_model(path):
-    """Loads the saved BaseModel and returns the reconstructed object.
-
-    Parameters
-    ----------
-    path: string
-        Location of the saved model.
-
-    Returns
-    -------
-    model: BaseModel
-        Saved BaseModel/child class instance."""
-    import pickle
-    with open(path, 'rb') as f:
-        return pickle.load(f)
-
-def beta(mass, V):
-    r"""Calculates the beta-factor for a mass in amu
-    and applied voltage in Volt. The formula used is
-
-    .. math::
-
-        \beta = \sqrt{1-\frac{m^2c^4}{\left(mc^2+eV\right)^2}}
-
-    Parameters
-    ----------
-    mass : float
-        Mass in amu.
-    V : float
-        voltage in volt.
-
-    Returns
-    -------
-    float
-        Relativistic beta-factor.
-    """
-    c = 299792458.0
-    q = 1.60217657 * (10 ** (-19))
-    AMU2KG = 1.66053892 * 10 ** (-27)
-    mass = mass * AMU2KG
-    top = mass ** 2 * c ** 4
-    bottom = (mass * c ** 2 + q * V) ** 2
-    beta = np.sqrt(1 - top / bottom)
-    return beta
-
-def dopplerfactor(mass, V):
-    r"""Calculates the Doppler shift of the laser frequency for a
-    given mass in amu and voltage in V. Transforms from the lab frame
-    to the particle frame. The formula used is
-
-    .. math::
-
-        doppler = \sqrt{\frac{1-\beta}{1+\beta}}
-
-    To invert, divide instead of multiply with
-    this factor.
-
-    Parameters
-    ----------
-    mass : float
-        Mass in amu.
-    V : float
-        Voltage in volt.
-
-    Returns
-    -------
-    float
-        Doppler factor.
-    """
-    betaFactor = beta(mass, V)
-    dopplerFactor = np.sqrt((1.0 - betaFactor) / (1.0 + betaFactor))
-    return dopplerFactor
