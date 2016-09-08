@@ -52,13 +52,13 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
                 yerr = func(l)
                 xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
-                return -0.5* (y - l) / bottom
+                return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
         else:
             def gaussian_llh(y, f, x):
                 l = np.hstack(f(x))
                 bottom = func(l)
-                return -0.5* (y - l) / bottom
+                return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
     else:
         if xerr is not None:
@@ -66,12 +66,12 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
                 l = f(x)
                 xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
-                return -0.5* (y - l) / bottom
+                return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
         else:
             def gaussian_llh(y, f, x, yerr=yerr):
                 l = np.hstack(f(x))
-                return -0.5* (y - l) / yerr
+                return -0.5*( (y - l) / yerr)**2
             return gaussian_llh
 
 def create_gaussian_priormap(literature_value, uncertainty):
