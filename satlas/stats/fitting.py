@@ -821,7 +821,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
                 pbar.update(1)
             except:
                 pass
-            result = orig_params[param_name].max
+            result = boundary
             break
         new_value = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
         try:
