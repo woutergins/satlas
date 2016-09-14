@@ -89,13 +89,8 @@ class LinkedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = lm.Parameter(new_key,
-                                                value=params[key].value,
-                                                min=params[key].min,
-                                                max=params[key].max,
-                                                vary=params[key].vary,
-                                                expr=expr)
-                    par[new_key].stderr = params[key].stderr
+                    par[new_key] = copy.deepcopy(params[key])
+                    par[new_key].name = new_key
             spec.params = par
 
     def seperate_response(self, x):

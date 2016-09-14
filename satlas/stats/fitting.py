@@ -24,7 +24,7 @@ from scipy.stats import chi2
 
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk', 'createBand']
+           'likelihood_fit', 'likelihood_walk', 'create_band']
 chisquare_warning_message = "The supplied dictionary for {} did not contain the necessary keys 'value' and 'uncertainty'."
 
 ###############################
@@ -414,7 +414,7 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
         return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -517,7 +517,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='tnc', metho
         progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
 
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
-    result.scalar_minimize(method=method, **method_kws)
+    result = result.scalar_minimize(method=method, **method_kws)
     f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
     success = False
@@ -642,7 +642,6 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
         progress.set_description('Inverting matrix')
         progress.update(1)
     hess_vals = np.linalg.inv(hess_vals)
-    f.params = params
     if likelihood:
         hess_vals = -hess_vals
         multiplier = 1
@@ -652,22 +651,22 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
         progress.set_description('Assigning uncertainties')
         progress.update(1)
     for name, hess in zip(var_names, np.diag(multiplier*hess_vals)):
-        f.params[name].stderr = np.sqrt(hess)
+        params[name].stderr = np.sqrt(hess)
 
     if progress is not None:
         progress.set_description('Assigning correlations')
         progress.update(1)
     for i, name in enumerate(var_names):
-        f.params[name].correl = {}
+        params[name].correl = {}
         for j, name2 in enumerate(var_names):
             if name != name2:
-                f.params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
+                params[name].correl[name2] = hess_vals[i, j] / np.sqrt(hess_vals[i, i]*hess_vals[j, j])
     if progress is not None:
         progress.set_description('Finished Hessian calculation')
         progress.update(1)
         progress.close()
 
-def createBand(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
+def create_band(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
     r"""Calculates prediction or confidence bounds at the 1:math:`\sigma` level.
     The method used is based on the Delta Method: at the requested prediction points *x*, the bound is calculated as
 
@@ -1005,7 +1004,7 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     The parameters associated with the MLE fit are not updated
     with the uncertainty as estimated by this method."""
 
-    params = f.mle_fit
+    params = f.params
     var_names = []
     vars = []
     for key in params.keys():
@@ -1063,5 +1062,4 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
                     dset[i * walkers:(i + 1) * walkers, :] = result
                     pbar.update(1)
 
-    f.mle_fit = params
     f.params = params
