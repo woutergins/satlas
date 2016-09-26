@@ -6,13 +6,14 @@ Implementation of base class for extension to models describing actual data.
 """
 import copy
 
-from . import lmfit as lm
-from .loglikelihood import create_gaussian_priormap
+
+import lmfit as lm
+from satlas.loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-__all__ = ['Model']
+__all__ = ['load_model']
 
 
 class BaseModel(object):
@@ -385,3 +386,19 @@ class BaseModel(object):
 
     def __call__(self, x):
         raise NotImplementedError("Method has to be implemented in subclass!")
+
+def load_model(path):
+    """Loads the saved BaseModel and returns the reconstructed object.
+
+    Parameters
+    ----------
+    path: string
+        Location of the saved model.
+
+    Returns
+    -------
+    model: BaseModel
+        Saved BaseModel/child class instance."""
+    import pickle
+    with open(path, 'rb') as f:
+        return pickle.load(f)

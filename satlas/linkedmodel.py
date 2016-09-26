@@ -6,9 +6,9 @@ Implementation of a class for the simultaneous fitting of hyperfine structure sp
 """
 import copy
 
-from . import lmfit as lm
-from .basemodel import BaseModel
-from .utilities import poisson_interval
+import lmfit as lm
+from satlas.basemodel import BaseModel
+from satlas.utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -89,13 +89,8 @@ class LinkedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
-                    par[new_key] = lm.Parameter(new_key,
-                                                value=params[key].value,
-                                                min=params[key].min,
-                                                max=params[key].max,
-                                                vary=params[key].vary,
-                                                expr=expr)
-                    par[new_key].stderr = params[key].stderr
+                    par[new_key] = copy.deepcopy(params[key])
+                    par[new_key].name = new_key
             spec.params = par
 
     def seperate_response(self, x):

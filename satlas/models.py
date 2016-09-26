@@ -3,10 +3,11 @@ Implementation of a class for the analysis of linear data.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
-from . import lmfit as lm
-from .basemodel import BaseModel
-from .loglikelihood import poisson_llh
-from .summodel import SumModel
+
+import lmfit as lm
+from satlas.basemodel import BaseModel
+from satlas.loglikelihood import poisson_llh
+from satlas.summodel import SumModel
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
