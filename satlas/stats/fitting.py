@@ -1039,27 +1039,22 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     else:
         filename = '.'.join(filename.split('.')[:-1]) + '.h5'
 
-    if os.path.isfile(filename):
-        with h5py.File(filename, 'a') as store:
-            dset = store['data']
-            offset = dset.len()
-            pos = dset[-walkers:, :]
-            dset.resize(offset + nsteps * walkers, axis=0)
-
-            with tqdm.tqdm(total=nsteps, desc='Walk', leave=True) as pbar:
-                for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
-                    result = result[0]
-                    dset[offset + i * walkers:offset + (i + 1) * walkers, :] = result
-                    pbar.update(1)
-    else:
+    if not os.path.isfile(filename):
         with h5py.File(filename, 'w') as store:
             dset = store.create_dataset('data', (nsteps * walkers, ndim), dtype='float', chunks=True, compression='gzip', maxshape=(None, ndim))
             dset.attrs['format'] = np.array([f.encode('utf-8') for f in var_names])
+    else:
+        with h5py.File(filename, 'a') as store:
+            dset = store['data']
+            pos = dset[-walkers:, :]
 
-            with tqdm.tqdm(total=nsteps, desc='Walk', leave=True) as pbar:
-                for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
-                    result = result[0]
-                    dset[i * walkers:(i + 1) * walkers, :] = result
-                    pbar.update(1)
+    with tqdm.tqdm(total=nsteps, desc='Walk', leave=True) as pbar:
+        for i, result in enumerate(sampler.sample(pos, iterations=nsteps, storechain=False)):
+            with h5py.File(filename, 'a') as store:
+                dset = store['data']
+                dset.resize(((i+1)*walkers, ndim))
+                dset[i*walkers:(i+1)*walkers,:] = result[0]
+                pbar.update(1)
 
-    f.params = params
+    f.mle_fit = copy.deepcopy(params)
+    f.params = copy.deepcopy(params)
