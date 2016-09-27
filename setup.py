@@ -3,6 +3,7 @@ exec(open('satlas/version.py').read())
 setup(
   name='satlas',
   packages=['satlas', 'satlas.stats', 'satlas.stats.emcee', 'satlas.tqdm', 'satlas.styles', 'satlas.utilities'],
+  package_data={'': ['*.mplstyle']},
   version=__release__,
   description='This Python package has been created with the goal of creating an easier interface for the analysis of data gathered from laser spectroscopy experiments. Support for fitting the spectra, using both chi2-fitting and Maximum Likelihood Estimation routines, are present.',
   author='Wouter Gins',

@@ -287,7 +287,7 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     import scipy.integrate as integrate
     return (np.log([
         integrate.quad(
-            lambda theta: (np.exp(func(Y, f(X+theta * XERR))[i]) * np.exp(-theta*theta/2)/sqrt2pi),
+            lambda theta: (np.exp(func(Y, f, X+theta * XERR)[i]) * np.exp(-theta*theta/2)/sqrt2pi),
             -np.inf, np.inf)[0] for i, (X, Y, XERR) in enumerate(zip(x, y, xerr))
         ]).sum())
     # Cache already calculated values:
@@ -408,13 +408,14 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
         Array containing the loglikelihood for each seperate datapoint."""
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
+    y = np.hstack(y)
     if xerr is None or np.allclose(0, xerr):
         return_value = func(y, f, x)
     else:
         return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -445,7 +446,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         +----------------------------+------------------------+
         | ``method`` arg             | Fitting method         |
         +============================+========================+
-        | ``nelder``                 | Nelder-Mead            |
+        | ``nelder-mead``            | Nelder-Mead            |
         +----------------------------+------------------------+
         | ``powell``                 | Powell                 |
         +----------------------------+------------------------+
@@ -517,7 +518,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
 
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
-    result = result.scalar_minimize(method=method, **method_kws)
+    result = result.minimize(method=method, params=params, **method_kws)
     f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
     success = False
@@ -539,6 +540,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
     f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+    if np.isnan(f.mle_chisqr):
+        print('Used loglikelihood does not allow calculation of reduced chisquare for these data point! Does it contain 0 or negative numbers?')
     try:
         f.mle_redchi = f.mle_chisqr / f.ndof
     except:

@@ -48,15 +48,15 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
     if func is not None:
         if xerr is not None:
             def gaussian_llh(y, f, x, xerr=xerr):
-                l = np.hstack(f(x))
+                l = np.hstack(np.array([f(x)]))
                 yerr = func(l)
-                xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
+                xerr = np.hstack(np.array([(sp.misc.derivative(f, x, dx=1E-6) * xerr)]))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
                 return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
         else:
             def gaussian_llh(y, f, x):
-                l = np.hstack(f(x))
+                l = np.hstack(np.array([f(x)]))
                 bottom = func(l)
                 return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
@@ -64,13 +64,13 @@ def create_gaussian_llh(yerr=1, xerr=None, func=None):
         if xerr is not None:
             def gaussian_llh(y, f, x, xerr=xerr, yerr=yerr):
                 l = f(x)
-                xerr = np.hstack((sp.misc.derivative(f, x, dx=1E-6) * xerr))
+                xerr = np.hstack(np.array([(sp.misc.derivative(f, x, dx=1E-6) * xerr)]))
                 bottom = np.sqrt(yerr * yerr + xerr * xerr)
                 return -0.5*( (y - l) / bottom)**2
             return gaussian_llh
         else:
             def gaussian_llh(y, f, x, yerr=yerr):
-                l = np.hstack(f(x))
+                l = np.hstack(np.array([f(x)]))
                 return -0.5*( (y - l) / yerr)**2
             return gaussian_llh
 

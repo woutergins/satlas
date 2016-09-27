@@ -638,7 +638,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         success = success_left * success_right
         ranges[param_names[i]]['left'] = result_left
         ranges[param_names[i]]['right'] = result_right
-        print(result_left, result_right)
 
         if not success:
             print("Warning: boundary calculation did not fully succeed for " + param_names[i])
