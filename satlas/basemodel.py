@@ -168,8 +168,6 @@ class BaseModel(object):
         # If defined, calculate the lnprior for each seperate parameter
         return_value = 1.0
         for key in self._lnprior_mapping.keys():
-            print(key)
-            print(params)
             return_value += self._lnprior_mapping[key](params[key].value)
         return return_value
 

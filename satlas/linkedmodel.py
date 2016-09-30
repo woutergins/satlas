@@ -40,9 +40,7 @@ class LinkedModel(BaseModel):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
 
     def get_lnprior_mapping(self, params):
-        self.params = params
-        params = self.params
-        return sum([f.get_lnprior_mapping(params) for f in self.models])
+        return sum([f.get_lnprior_mapping(f.params) for f in self.models])
 
     @property
     def shared(self):
@@ -94,9 +92,12 @@ class LinkedModel(BaseModel):
                     new_key = key[len('s'+str(i)+'_'):]
                     expr = params[key].expr
                     if expr is not None:
-                        for k in params:
-                            nk = k[len('s'+str(i)+'_'):]
-                            expr = expr.replace(k, nk)
+                        if 's' + str(i) + '_' in expr:
+                            for k in params:
+                                nk = k[len('s'+str(i)+'_'):]
+                                expr = expr.replace(k, nk)
+                        else:
+                            expr = None
                     params[key].expr = None
                     par[new_key] = copy.deepcopy(params[key])
                     par[new_key].name = new_key

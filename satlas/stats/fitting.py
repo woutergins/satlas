@@ -24,7 +24,7 @@ from scipy.stats import chi2
 
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk', 'create_band']
+           'likelihood_fit', 'likelihood_walk', 'create_band', 'process_walk']
 chisquare_warning_message = "The supplied dictionary for {} did not contain the necessary keys 'value' and 'uncertainty'."
 
 ###############################
@@ -192,14 +192,14 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
          def iter_cb(params, iter, resid, *args, **kwargs):
             pass
 
-    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), np.hstack(xerr), func), iter_cb=iter_cb, method=method)
+    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
     f.params = copy.deepcopy(result.params)
     f.chisqr = copy.deepcopy(result.chisqr)
 
     success = False
     counter = 0
     while not success:
-        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), np.hstack(xerr), func), iter_cb=iter_cb, method=method)
+        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
         f.params = copy.deepcopy(result.params)
         success = np.isclose(result.chisqr, f.chisqr)
         f.chisqr = copy.deepcopy(result.chisqr)
@@ -542,9 +542,12 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     f.mle_fit = copy.deepcopy(result.params)
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+    try:
+        f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+    except AttributeError:
+        f.mle_chisqr = np.nan
     if np.isnan(f.mle_chisqr):
-        print('Used loglikelihood does not allow calculation of reduced chisquare for these data point! Does it contain 0 or negative numbers?')
+        print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
     try:
         f.mle_redchi = f.mle_chisqr / f.ndof
     except:
@@ -776,17 +779,7 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
         params[params_name].value = value
         params[params_name].vary = False
 
-    print()
-    print()
-    print()
-    print()
-    print(params)
     f.params = params
-    print(params)
-    print()
-    print()
-    print()
-    print()
     success = False
     counter = 0
     while not success:
@@ -1074,3 +1067,28 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
 
     f.mle_fit = copy.deepcopy(params)
     f.params = copy.deepcopy(params)
+
+def process_walk(model, filename, selection=(0, 100)):
+    p = model.params.copy()
+    with h5py.File(filename, 'r') as store:
+        columns = store['data'].attrs['format']
+        columns = [f.decode('utf-8') for f in columns]
+        with tqdm.tqdm(total=len(columns)+(len(columns)**2-len(columns))/2, leave=True) as pbar:
+            dataset_length = store['data'].shape[0]
+            first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
+            for i, val in enumerate(columns):
+                pbar.set_description(val)
+                i = columns.index(val)
+                x = store['data'][first:last, i]
+
+                q = [16.0, 50.0, 84.0]
+                q16, q50, q84 = np.percentile(x, q)
+
+                value, std_dev = q50, max(q50-q16, q84-q50)
+                p[val].value = value
+                p[val].stderr = std_dev
+                pbar.update(1)
+    model.params = p.copy()
+    model.mle_fit = p.copy()
+    model.mle_chisqr = np.nan
+    model.mle_redchi = np.nan
