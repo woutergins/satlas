@@ -40,6 +40,8 @@ class LinkedModel(BaseModel):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
 
     def get_lnprior_mapping(self, params):
+        self.params = params
+        params = self.params
         return sum([f.get_lnprior_mapping(params) for f in self.models])
 
     @property
@@ -56,6 +58,8 @@ class LinkedModel(BaseModel):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
         params = lm.Parameters()
+        to_give_expr = []
+        expr_to_give = []
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
@@ -70,11 +74,15 @@ class LinkedModel(BaseModel):
                             p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
-                    p[new_key].expr = 's0_' + old_key
+                    to_give_expr.append(new_key)
+                    expr_to_give.append('s0_' + old_key)
                     p[new_key].vary = False
                 if new_key in self._expr.keys():
                     p[new_key].expr = self._expr[new_key]
             params += p
+        for key, expr in zip(to_give_expr, expr_to_give):
+            params[key].expr = expr
+            params[key].vary = False
         return params
 
     @params.setter
@@ -89,8 +97,14 @@ class LinkedModel(BaseModel):
                         for k in params:
                             nk = k[len('s'+str(i)+'_'):]
                             expr = expr.replace(k, nk)
+                    params[key].expr = None
                     par[new_key] = copy.deepcopy(params[key])
                     par[new_key].name = new_key
+                    if new_key == expr:
+                        par[new_key].expr = None
+                        par[new_key].vary = False
+                    if expr is not None:
+                        par[new_key].expr = expr
             spec.params = par
 
     def seperate_response(self, x):

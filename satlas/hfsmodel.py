@@ -460,6 +460,7 @@ class HFSModel(BaseModel):
         return par
 
     def _check_variation(self, par):
+        par = super(HFSModel, self)._check_variation(par)
         # Make sure the variations in the params are set correctly.
         for key in self._vary.keys():
             if key in par.keys():

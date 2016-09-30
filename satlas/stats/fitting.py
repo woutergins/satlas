@@ -79,7 +79,10 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         yerr = func(model)
     if xerr is not None:
         x = np.array(x)
-        xerr = np.hstack((derivative(f, x, dx=1E-5) * xerr))
+        if len(x.shape) > 1:
+            xerr = derivative(lambda x: np.hstack(f.seperate_response(x)), x, dx=1E-5) * xerr
+        else:
+            xerr = derivative(f, x, dx=1E-5) * xerr
         bottom = np.sqrt(yerr * yerr + xerr * xerr)
     else:
         bottom = yerr
@@ -189,14 +192,14 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
          def iter_cb(params, iter, resid, *args, **kwargs):
             pass
 
-    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
+    result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), np.hstack(xerr), func), iter_cb=iter_cb, method=method)
     f.params = copy.deepcopy(result.params)
     f.chisqr = copy.deepcopy(result.chisqr)
 
     success = False
     counter = 0
     while not success:
-        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
+        result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), np.hstack(xerr), func), iter_cb=iter_cb, method=method)
         f.params = copy.deepcopy(result.params)
         success = np.isclose(result.chisqr, f.chisqr)
         f.chisqr = copy.deepcopy(result.chisqr)
@@ -773,7 +776,17 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
         params[params_name].value = value
         params[params_name].vary = False
 
+    print()
+    print()
+    print()
+    print()
+    print(params)
     f.params = params
+    print(params)
+    print()
+    print()
+    print()
+    print()
     success = False
     counter = 0
     while not success:

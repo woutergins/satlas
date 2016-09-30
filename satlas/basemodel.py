@@ -143,6 +143,9 @@ class BaseModel(object):
                     par[key].max = self._constraints[key][bound]
                 else:
                     pass
+        for key in self._expr.keys():
+            if key in par.keys():
+                par[key].expr = self._expr[key]
         return par
 
     def get_chisquare_mapping(self):
@@ -165,6 +168,8 @@ class BaseModel(object):
         # If defined, calculate the lnprior for each seperate parameter
         return_value = 1.0
         for key in self._lnprior_mapping.keys():
+            print(key)
+            print(params)
             return_value += self._lnprior_mapping[key](params[key].value)
         return return_value
 
