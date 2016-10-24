@@ -524,7 +524,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     result = result.minimize(method=method, params=params, **method_kws)
     f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    success = False
+    success = True
     counter = 0
     while not success:
         result = lm.Minimizer(negativeloglikelihood, result.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
@@ -797,6 +797,7 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
         pbar.update(1)
     except:
         pass
+    print(return_value)
     return return_value
 
 def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 'chisquare_spectroscopic'}, verbose=True):
@@ -820,6 +821,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
     backup = copy.deepcopy(f.params)
     backup_fit = params_map[method.lower()]
     function_kwargs['pbar'] = pbar
+    orig_stat = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
     function_kwargs['orig_stat'] = orig_stat
     while True:
         search_value += step
@@ -843,7 +845,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
                 pbar.update(1)
             except:
                 pass
-            result, output = optimize.brentq(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
+            result, output = optimize.bisect(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
                                              search_value - step, search_value,
                                              full_output=True)
             try:

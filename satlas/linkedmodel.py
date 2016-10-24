@@ -72,9 +72,20 @@ class LinkedModel(BaseModel):
                             p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
-                    to_give_expr.append(new_key)
-                    expr_to_give.append('s0_' + old_key)
-                    p[new_key].vary = False
+                    model_selection = 0
+                    selected = False
+                    while not selected:
+                        try:
+                            if old_key in self.models[model_selection].params:
+                                selected = True
+                            else:
+                                model_selection += 1
+                        except IndexError:
+                            raise NameError('Variable to be shared not defined in any model')
+                    if not model_selection == i:
+                        to_give_expr.append(new_key)
+                        expr_to_give.append('s' + str(model_selection) + '_' + old_key)
+                        p[new_key].vary = False
                 if new_key in self._expr.keys():
                     p[new_key].expr = self._expr[new_key]
             params += p
