@@ -560,7 +560,7 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
 
     Other parameters
     ----------------
-    method: {'chisquare', 'mle'}
+    method: {'chisquare', 'chisquare_spectroscopic', mle'}
         Chooses between generating the map for the chisquare routine or for
         the likelihood routine.
     filter: list of strings

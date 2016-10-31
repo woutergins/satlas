@@ -1,7 +1,7 @@
-satlas.transformmodel.TransformHFSModel
+satlas.models.transformmodel.TransformHFSModel
 =======================================
 
-.. currentmodule:: satlas.transformmodel
+.. currentmodule:: satlas.models.transformmodel
 
 .. autoclass:: TransformHFSModel
 

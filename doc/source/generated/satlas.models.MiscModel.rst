@@ -1,7 +1,7 @@
-satlas.models.MiscModel
+satlas.models.models.MiscModel
 =======================
 
-.. currentmodule:: satlas.models
+.. currentmodule:: satlas.models.models
 
 .. autoclass:: MiscModel
 

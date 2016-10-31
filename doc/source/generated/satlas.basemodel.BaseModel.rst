@@ -1,7 +1,7 @@
 satlas.basemodel.BaseModel
 ==========================
 
-.. currentmodule:: satlas.basemodel
+.. currentmodule:: satlas.models.basemodel
 
 .. autoclass:: BaseModel
 

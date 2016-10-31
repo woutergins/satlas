@@ -1,7 +1,7 @@
-satlas.models.PolynomialModel
+satlas.models.models.PolynomialModel
 =============================
 
-.. currentmodule:: satlas.models
+.. currentmodule:: satlas.models.models
 
 .. autoclass:: PolynomialModel
 

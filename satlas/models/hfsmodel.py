@@ -7,17 +7,16 @@ Implementation of a class for the analysis of hyperfine structure spectra.
 import copy
 from fractions import Fraction
 
-
 import lmfit as lm
-from satlas.basemodel import BaseModel
-from satlas.utilities.plotting import plot_line_ids
+from satlas.models.basemodel import BaseModel
+from satlas.models.summodel import SumModel
 from satlas.loglikelihood import poisson_llh
-from satlas.summodel import SumModel
 from satlas.utilities import poisson_interval
+from satlas.utilities import plot_line_ids
+import satlas.profiles as p
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import satlas.profiles as p
 import scipy.optimize as optimize
 from sympy.physics.wigner import wigner_6j, wigner_3j
 

@@ -1,7 +1,7 @@
-satlas.summodel.SumModel
+satlas.models.summodel.SumModel
 ====================================
 
-.. currentmodule:: satlas.summodel
+.. currentmodule:: satlas.models.summodel
 
 .. autoclass:: SumModel
 

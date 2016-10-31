@@ -7,7 +7,7 @@ Implementation of a class for the simultaneous fitting of hyperfine structure sp
 import copy
 
 import lmfit as lm
-from satlas.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel
 from satlas.utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np

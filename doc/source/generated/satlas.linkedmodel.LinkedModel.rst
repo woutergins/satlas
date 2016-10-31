@@ -1,7 +1,7 @@
 satlas.linkedmodel.LinkedModel
 ========================================
 
-.. currentmodule:: satlas.linkedmodel
+.. currentmodule:: satlas.models.linkedmodel
 
 .. autoclass:: LinkedModel
 
