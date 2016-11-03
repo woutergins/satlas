@@ -631,7 +631,8 @@ class HFSModel(BaseModel):
             s = np.zeros(x.shape)
             for i in range(self._params['N'].value + 1):
                 s += (self._params['Poisson'].value ** i) * (sum([prof(x - i * self._params['Offset'].value)
-                                                                for prof in self.parts]) * self._params['Scale'].value) / np.math.factorial(i)
+                                                                for prof in self.parts])) / np.math.factorial(i)
+            s *= self._params['Scale'].value
         else:
             s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
         background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
@@ -827,7 +828,7 @@ class HFSModel(BaseModel):
         return self.plot(**kwargs)
 
 
-    def plot_scheme(self, show=True, upper_color='#D55E00', lower_color='#009E73', arrow_color='#0072B2', distance=5):
+    def plot_scheme(self, show=True, upper_color='#D55E00', lower_color='#009E73', arrow_color='#0072B2', distance=5, spectrum=False):
         """Create a figure where both the splitting of the upper and lower state is drawn,
         and the hfs associated with this.
 
@@ -861,6 +862,13 @@ class HFSModel(BaseModel):
         distances = (locations - plotrange[0]) / (plotrange[1] - plotrange[0]) * length_plot
         height = self(locations)
         plotrange = ax.get_ylim()
+        if not spectrum:
+            plt.close(fig)
+            fig = plt.figure(frameon=False)
+            lower_state_height = 0.1
+        else:
+            lower_state_height = 0.525
+        upper_state_height = 0.95
         height = (height - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
         A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
                               np.ones(self.num_upper) * self._params['Au'].value)
@@ -869,13 +877,19 @@ class HFSModel(BaseModel):
         C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
                               np.ones(self.num_upper) * self._params['Cu'].value)
         energies = self.C * A + self.D * B + self.E * C
-        #energies -= energies.min()
+
+        energy_range = (upper_state_height - lower_state_height) / 2 - 0.025
+
         energies_upper = energies[self.num_lower:]
         energies_upper_norm = np.abs(energies_upper.max()) if not energies_upper.max()==0 else 1
-        energies_upper = energies_upper / energies_upper_norm * 0.1
+        energies_upper_norm = np.ptp(energies_upper)
+        energies_upper = energies_upper / energies_upper_norm * energy_range
         energies_lower = energies[:self.num_lower]
         energies_lower_norm = np.abs(energies_lower.max()) if not energies_lower.max()==0 else 1
-        energies_lower = energies_lower / energies_lower_norm * 0.1
+        energies_lower_norm = np.ptp(energies_lower)
+        energies_lower = energies_lower / energies_lower_norm * energy_range
+        lower_state_height -= energies_lower.min()
+        upper_state_height -= energies_upper.max()
         energies = np.append(energies_lower, energies_upper)
 
         ax2 = fig.add_axes([0, 0, 1, 1], axisbg=[1, 1, 1, 0])
@@ -885,13 +899,13 @@ class HFSModel(BaseModel):
 
         # Lower state
         x = np.array([0, 0.3])
-        y = np.array([0.625, 0.625])
+        y = np.array([lower_state_height, lower_state_height])
         line = lines.Line2D(x, y, lw=2., color=lower_color)
         ax2.add_line(line)
 
         # Upper state
         x = np.array([0, 0.3])
-        y = np.array([0.875, 0.875])
+        y = np.array([upper_state_height, upper_state_height])
         line = lines.Line2D(x, y, lw=2., color=upper_color)
         ax2.add_line(line)
 
@@ -900,13 +914,13 @@ class HFSModel(BaseModel):
             F = Fraction.from_float(F)
             x = np.array([0.5, 0.5 + length_plot])
             if i < self.num_lower:
-                y = np.zeros(len(x)) + 0.625 + energies[i]
+                y = np.zeros(len(x)) + lower_state_height + energies[i]
                 color = lower_color
-                starting = 0.625
+                starting = lower_state_height
             else:
-                y = np.zeros(len(x)) + 0.875 + energies[i]
+                y = np.zeros(len(x)) + upper_state_height + energies[i]
                 color = upper_color
-                starting = 0.875
+                starting = upper_state_height
             line = lines.Line2D(x, y, lw=2., color=color)
             ax2.add_line(line)
 
@@ -932,12 +946,12 @@ class HFSModel(BaseModel):
             x = np.array([distances[i], distances[i]]) + 0.5
             lower = energies[np.where(self.F[:self.num_lower]==lower)[0]]
             upper = energies[np.where(self.F[self.num_lower:]==upper)[0] + self.num_lower]
-            y = np.array([lower + 0.625, upper + 0.875]).flatten()
+            y = np.array([lower + lower_state_height, upper + upper_state_height]).flatten()
             ax2.arrow(x[0], y[0], x[1] - x[0], y[1] - y[0], fc=arrow_color, ec=arrow_color, length_includes_head=True, overhang=0.5, zorder=10)
 
-        ax2.text(0.15, 0.64, 'J=' + str(Fraction.from_float(self.J[0])), fontsize=20, fontdict={'horizontalalignment': 'center'})
-        ax2.text(0.15, 0.89, 'J=' + str(Fraction.from_float(self.J[-1])), fontsize=20, fontdict={'horizontalalignment': 'center'})
-        ax2.text(0.15, 0.765, 'I=' + str(Fraction.from_float(self.I)), fontsize=20, fontdict={'horizontalalignment': 'right'})
+        ax2.text(0.15, lower_state_height + 0.015, 'J=' + str(Fraction.from_float(self.J[0])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, upper_state_height + 0.015, 'J=' + str(Fraction.from_float(self.J[-1])), fontsize=20, fontdict={'horizontalalignment': 'center'})
+        ax2.text(0.15, np.mean([lower_state_height, upper_state_height]) + 0.015, 'I=' + str(Fraction.from_float(self.I)), fontsize=20, fontdict={'horizontalalignment': 'right'})
         if show:
             plt.show()
         return fig, (ax, ax2)
