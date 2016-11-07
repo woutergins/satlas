@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.__init__
+==========================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.__init__

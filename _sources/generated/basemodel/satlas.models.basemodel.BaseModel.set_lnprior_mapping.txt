@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.set_lnprior_mapping
+=====================================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.set_lnprior_mapping

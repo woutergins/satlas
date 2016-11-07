@@ -1,0 +1,6 @@
+satlas.models.linkedmodel.LinkedModel.__call__
+==============================================
+
+.. currentmodule:: satlas.models.linkedmodel
+
+.. automethod:: LinkedModel.__call__

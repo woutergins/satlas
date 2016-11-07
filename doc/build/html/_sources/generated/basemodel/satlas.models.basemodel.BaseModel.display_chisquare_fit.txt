@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.display_chisquare_fit
+=======================================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.display_chisquare_fit

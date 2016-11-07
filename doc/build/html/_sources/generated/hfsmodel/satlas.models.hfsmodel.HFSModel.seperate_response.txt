@@ -1,0 +1,6 @@
+satlas.models.hfsmodel.HFSModel.seperate_response
+=================================================
+
+.. currentmodule:: satlas.models.hfsmodel
+
+.. automethod:: HFSModel.seperate_response

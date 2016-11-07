@@ -1,0 +1,6 @@
+satlas.models.summodel.SumModel.__init__
+========================================
+
+.. currentmodule:: satlas.models.summodel
+
+.. automethod:: SumModel.__init__

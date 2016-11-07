@@ -1,0 +1,6 @@
+satlas.models.linkedmodel.LinkedModel.plot_spectroscopic
+========================================================
+
+.. currentmodule:: satlas.models.linkedmodel
+
+.. automethod:: LinkedModel.plot_spectroscopic

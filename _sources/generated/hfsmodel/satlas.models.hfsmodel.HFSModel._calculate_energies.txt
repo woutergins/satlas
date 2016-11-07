@@ -1,0 +1,6 @@
+satlas.models.hfsmodel.HFSModel._calculate_energies
+===================================================
+
+.. currentmodule:: satlas.models.hfsmodel
+
+.. automethod:: HFSModel._calculate_energies

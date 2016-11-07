@@ -1,0 +1,6 @@
+satlas.models.summodel.SumModel.seperate_response
+=================================================
+
+.. currentmodule:: satlas.models.summodel
+
+.. automethod:: SumModel.seperate_response

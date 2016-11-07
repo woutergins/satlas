@@ -1,0 +1,6 @@
+satlas.models.hfsmodel.HFSModel.plot_scheme
+===========================================
+
+.. currentmodule:: satlas.models.hfsmodel
+
+.. automethod:: HFSModel.plot_scheme

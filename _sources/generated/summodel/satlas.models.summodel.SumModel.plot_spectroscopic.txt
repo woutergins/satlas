@@ -1,0 +1,6 @@
+satlas.models.summodel.SumModel.plot_spectroscopic
+==================================================
+
+.. currentmodule:: satlas.models.summodel
+
+.. automethod:: SumModel.plot_spectroscopic

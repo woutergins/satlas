@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.set_value
+===========================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.set_value

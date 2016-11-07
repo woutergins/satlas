@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.save
+======================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.save

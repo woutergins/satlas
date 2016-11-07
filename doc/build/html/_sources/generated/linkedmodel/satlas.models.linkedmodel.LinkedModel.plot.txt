@@ -1,0 +1,6 @@
+satlas.models.linkedmodel.LinkedModel.plot
+==========================================
+
+.. currentmodule:: satlas.models.linkedmodel
+
+.. automethod:: LinkedModel.plot

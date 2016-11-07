@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.set_boundaries
+================================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.set_boundaries

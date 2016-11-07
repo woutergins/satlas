@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>satlas.models.basemodel.BaseModel.get_result_frame &mdash; SATLAS 0.1.0b26 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0b26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b26 documentation</a></li>
+	 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="satlas-models-basemodel-basemodel-get-result-frame">
+<h1>satlas.models.basemodel.BaseModel.get_result_frame<a class="headerlink" href="#satlas-models-basemodel-basemodel-get-result-frame" title="Permalink to this headline">¶</a></h1>
+<dl class="method">
+<dt id="satlas.models.basemodel.BaseModel.get_result_frame">
+<code class="descclassname">BaseModel.</code><code class="descname">get_result_frame</code><span class="sig-paren">(</span><em>method='chisquare'</em>, <em>selected=False</em>, <em>bounds=False</em>, <em>vary=False</em>, <em>scaled=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/satlas/models/basemodel.html#BaseModel.get_result_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.basemodel.BaseModel.get_result_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the data from the fit in a pandas DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>method</strong> (<em>str, optional</em>) &#8211; Selects which fitresults have to be loaded. Can be &#8216;chisquare&#8217; or
+&#8216;mle&#8217;. Defaults to &#8216;chisquare&#8217;.</li>
+<li><strong>selected</strong> (<em>list of strings, optional</em>) &#8211; Selects the parameters that have any string in the list
+as a substring in their name. Set to <em>None</em> to select
+all parameters. Defaults to <em>None</em>.</li>
+<li><strong>bounds</strong> (<em>boolean, optional</em>) &#8211; Selects if the boundary also has to be given. Defaults to
+<em>False</em>.</li>
+<li><strong>vary</strong> (<em>boolean, optional</em>) &#8211; Selects if only the parameters that have been varied have to
+be supplied. Defaults to <em>False</em>.</li>
+<li><strong>scaled</strong> (<em>boolean, optional</em>) &#8211; Sets the uncertainty scaling with the reduced chisquare value. Default to <em>True</em>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>resultframe</strong> &#8211;
+Dateframe with MultiIndex, using the variable names as main column names
+and either two subcolumns for the value and the uncertainty, or
+four subcolumns for the value, uncertainty and bounds.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <div>
+    <a href="../../_sources/generated/basemodel/satlas.models.basemodel.BaseModel.get_result_frame.txt"
+       rel="nofollow">Show Source</a>
+  </div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.get_result
+============================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.get_result

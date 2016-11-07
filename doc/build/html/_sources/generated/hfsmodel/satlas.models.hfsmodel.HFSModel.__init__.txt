@@ -1,0 +1,6 @@
+satlas.models.hfsmodel.HFSModel.__init__
+========================================
+
+.. currentmodule:: satlas.models.hfsmodel
+
+.. automethod:: HFSModel.__init__

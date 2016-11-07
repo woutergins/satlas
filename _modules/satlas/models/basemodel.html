@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>satlas.models.basemodel &mdash; SATLAS 0.1.0b26 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0b26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../../../index.html" >
+    <link rel="up" title="Module code" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../../index.html">SATLAS 0.1.0b26 documentation</a></li>
+	
+          <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <h1>Source code for satlas.models.basemodel</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implementation of base class for extension to models describing actual data.</span>
+
+<span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@kuleuven.be&gt;</span>
+<span class="sd">.. moduleauthor:: Ruben de Groote &lt;ruben.degroote@kuleuven.be&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">import</span> <span class="nn">lmfit</span> <span class="kn">as</span> <span class="nn">lm</span>
+<span class="kn">from</span> <span class="nn">satlas.loglikelihood</span> <span class="kn">import</span> <span class="n">create_gaussian_priormap</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;load_model&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="BaseModel"><a class="viewcode-back" href="../../../generated/satlas.models.basemodel.BaseModel.html#satlas.models.basemodel.BaseModel">[docs]</a><span class="k">class</span> <span class="nc">BaseModel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;Abstract baseclass for all models. For input, see these</span>
+<span class="sd">    classes.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseModel.__init__"><a class="viewcode-back" href="../../../generated/satlas.models.basemodel.BaseModel.html#satlas.models.basemodel.BaseModel.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vary</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lnprior_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chisquare_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_literature_values"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_literature_values.html#satlas.models.basemodel.BaseModel.set_literature_values">[docs]</a>    <span class="k">def</span> <span class="nf">set_literature_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">literatureDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the lnprior and chisquare mapping to handle the given</span>
+<span class="sd">        literature values and uncertainties.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        literatureDict: dictionary</span>
+<span class="sd">            Dictionary with the parameter names as keys. Each</span>
+<span class="sd">            key should correspond to a dictionary containing</span>
+<span class="sd">            a &#39;value&#39; and &#39;uncertainty&#39; key.&quot;&quot;&quot;</span>
+        <span class="n">priorDict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">chisquareDict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">literatureDict</span><span class="p">:</span>
+            <span class="n">v</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">literatureDict</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">literatureDict</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">]</span>
+
+            <span class="n">prior</span> <span class="o">=</span> <span class="n">create_gaussian_priormap</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+            <span class="n">priorDict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">prior</span>
+
+            <span class="n">chisquare</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span> <span class="o">/</span> <span class="n">u</span>
+            <span class="n">chisquareDict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">chisquare</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_chisquare_mapping</span><span class="p">(</span><span class="n">chisquareDict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_lnprior_mapping</span><span class="p">(</span><span class="n">priorDict</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_lnprior_mapping"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_lnprior_mapping.html#satlas.models.basemodel.BaseModel.set_lnprior_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">set_lnprior_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mappingDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the prior mapping for the different parameters.</span>
+<span class="sd">        This will affect likelihood fits.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mappingDict: dictionary</span>
+<span class="sd">            Dictionary containing the functions that give the</span>
+<span class="sd">            prior for the given parameter value. Use the parameter</span>
+<span class="sd">            names as keys.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mappingDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lnprior_mapping</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mappingDict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_chisquare_mapping"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_chisquare_mapping.html#satlas.models.basemodel.BaseModel.set_chisquare_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">set_chisquare_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mappingDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the prior mapping for the different parameters.</span>
+<span class="sd">        This will affect chisquare fits.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mappingDict: dictionary</span>
+<span class="sd">            Dictionary containing the functions that give the</span>
+<span class="sd">            prior for the given parameter value. Use the parameter</span>
+<span class="sd">            names as keys.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mappingDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_chisquare_mapping</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mappingDict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_value"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_value.html#satlas.models.basemodel.BaseModel.set_value">[docs]</a>    <span class="k">def</span> <span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">valueDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the value of the given parameters to the given values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        valueDict: dictionary</span>
+<span class="sd">            Dictionary containing the values for the parameters</span>
+<span class="sd">            with the parameter names as keys.&quot;&quot;&quot;</span>
+        <span class="n">par</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">valueDict</span><span class="p">:</span>
+            <span class="n">par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">valueDict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">par</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_expr"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_expr.html#satlas.models.basemodel.BaseModel.set_expr">[docs]</a>    <span class="k">def</span> <span class="nf">set_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exprDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the expression of the selected parameters</span>
+<span class="sd">        to the given expressions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exprDict: dictionary</span>
+<span class="sd">            Dictionary containing the expressions for the parameters</span>
+<span class="sd">            with the parameter names as keys.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">exprDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">exprDict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_variation"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_variation.html#satlas.models.basemodel.BaseModel.set_variation">[docs]</a>    <span class="k">def</span> <span class="nf">set_variation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varyDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the variation of the fitparameters as supplied in the</span>
+<span class="sd">        dictionary.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        varyDict: dictionary</span>
+<span class="sd">            A dictionary containing &#39;key: True/False&#39; mappings with</span>
+<span class="sd">            the parameter names as keys.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">varyDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vary</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">varyDict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="BaseModel.set_boundaries"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.set_boundaries.html#satlas.models.basemodel.BaseModel.set_boundaries">[docs]</a>    <span class="k">def</span> <span class="nf">set_boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boundaryDict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the boundaries of the fitparameters as supplied in the</span>
+<span class="sd">        dictionary.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        boundaryDict: dictionary</span>
+<span class="sd">            A dictionary containing &quot;key: {&#39;min&#39;: value, &#39;max&#39;: value}&quot; mappings.</span>
+<span class="sd">            A value of *None* or a missing key gives no boundary</span>
+<span class="sd">            in that direction. The parameter names have to be used as keys.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">boundaryDict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">boundaryDict</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</div>
+    <span class="k">def</span> <span class="nf">_check_variation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="p">):</span>
+        <span class="c1"># Make sure the variations in the params are set correctly.</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">par</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vary</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">bound</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">bound</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;min&#39;</span><span class="p">:</span>
+                    <span class="n">par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">bound</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">bound</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
+                    <span class="n">par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraints</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">bound</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">par</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expr</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">par</span>
+
+    <span class="k">def</span> <span class="nf">get_chisquare_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_chisquare_mapping</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chisquare_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">get_lnprior_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="c1"># Check if the parameter values are within the acceptable range.</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">par</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">par</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">leftbound</span><span class="p">,</span> <span class="n">rightbound</span> <span class="o">=</span> <span class="p">(</span><span class="n">par</span><span class="o">.</span><span class="n">priormin</span><span class="p">,</span>
+                                             <span class="n">par</span><span class="o">.</span><span class="n">priormax</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="n">leftbound</span><span class="p">,</span> <span class="n">rightbound</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">par</span><span class="o">.</span><span class="n">max</span>
+                <span class="n">leftbound</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">leftbound</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">leftbound</span>
+                <span class="n">rightbound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">rightbound</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">rightbound</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">leftbound</span> <span class="o">&lt;</span> <span class="n">par</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">rightbound</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="c1"># If defined, calculate the lnprior for each seperate parameter</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lnprior_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">return_value</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lnprior_mapping</span><span class="p">[</span><span class="n">key</span><span class="p">](</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_value</span>
+
+<div class="viewcode-block" id="BaseModel.display_mle_fit"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.display_mle_fit.html#satlas.models.basemodel.BaseModel.display_mle_fit">[docs]</a>    <span class="k">def</span> <span class="nf">display_mle_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Give a readable overview of the result of the MLE fitting routine.</span>
+
+<span class="sd">        Warning</span>
+<span class="sd">        -------</span>
+<span class="sd">        The uncertainty shown is the largest of the asymmetrical errors! Work</span>
+<span class="sd">        is being done to incorporate asymmetrical errors in the report; for</span>
+<span class="sd">        now, rely on the correlation plot.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mle_fit&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;show_correl&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;show_correl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Chisquare: {:.8G}, Reduced Chisquare: {:.8G}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_chisqr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_redchi</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Errors scaled with reduced chisquare.&#39;</span><span class="p">)</span>
+                <span class="n">par</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">par</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">par</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_redchi</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">lm</span><span class="o">.</span><span class="n">fit_report</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Errors not scaled with reduced chisquare.&#39;</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">lm</span><span class="o">.</span><span class="n">fit_report</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Model has not yet been fitted with this method!&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseModel.display_chisquare_fit"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.display_chisquare_fit.html#satlas.models.basemodel.BaseModel.display_chisquare_fit">[docs]</a>    <span class="k">def</span> <span class="nf">display_chisquare_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display all relevent info of the least-squares fitting routine,</span>
+<span class="sd">        if this has been performed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        kwargs: misc</span>
+<span class="sd">            Keywords passed on to :func:`fit_report` from the LMFit package.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">):</span>
+            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chisqr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">redchi</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Errors scaled with reduced chisquare.&#39;</span><span class="p">)</span>
+                <span class="n">par</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">par</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">par</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redchi</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">lm</span><span class="o">.</span><span class="n">fit_report</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Errors not scaled with reduced chisquare.&#39;</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">lm</span><span class="o">.</span><span class="n">fit_report</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Spectrum has not yet been fitted with this method!&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="BaseModel.get_result"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.get_result.html#satlas.models.basemodel.BaseModel.get_result">[docs]</a>    <span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="s1">&#39;any&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the variable names, values and estimated error bars for the</span>
+<span class="sd">        parameters as seperate lists.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        selection: string, optional</span>
+<span class="sd">            Selects if the chisquare (&#39;chisquare&#39; or &#39;any&#39;) or MLE values are</span>
+<span class="sd">            used. Defaults to &#39;any&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        names, values, uncertainties: tuple of lists</span>
+<span class="sd">            Returns a 3-tuple of lists containing the names of the parameters,</span>
+<span class="sd">            the values and the estimated uncertainties.&quot;&quot;&quot;</span>
+        <span class="n">var</span><span class="p">,</span> <span class="n">var_names</span><span class="p">,</span> <span class="n">varerr</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">selection</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;chisquare&#39;</span>
+                                               <span class="ow">or</span> <span class="n">selection</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;any&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+                    <span class="n">var</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">varerr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;mle_fit&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+                    <span class="n">var</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">varerr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+                    <span class="n">var</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">varerr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">var_names</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">varerr</span>
+</div>
+<div class="viewcode-block" id="BaseModel.get_result_frame"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.get_result_frame.html#satlas.models.basemodel.BaseModel.get_result_frame">[docs]</a>    <span class="k">def</span> <span class="nf">get_result_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;chisquare&#39;</span><span class="p">,</span> <span class="n">selected</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">vary</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the data from the fit in a pandas DataFrame.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        method: str, optional</span>
+<span class="sd">            Selects which fitresults have to be loaded. Can be &#39;chisquare&#39; or</span>
+<span class="sd">            &#39;mle&#39;. Defaults to &#39;chisquare&#39;.</span>
+<span class="sd">        selected: list of strings, optional</span>
+<span class="sd">            Selects the parameters that have any string in the list</span>
+<span class="sd">            as a substring in their name. Set to *None* to select</span>
+<span class="sd">            all parameters. Defaults to *None*.</span>
+<span class="sd">        bounds: boolean, optional</span>
+<span class="sd">            Selects if the boundary also has to be given. Defaults to</span>
+<span class="sd">            *False*.</span>
+<span class="sd">        vary: boolean, optional</span>
+<span class="sd">            Selects if only the parameters that have been varied have to</span>
+<span class="sd">            be supplied. Defaults to *False*.</span>
+<span class="sd">        scaled: boolean, optional</span>
+<span class="sd">            Sets the uncertainty scaling with the reduced chisquare value. Default to *True*.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        resultframe: DataFrame</span>
+<span class="sd">            Dateframe with MultiIndex, using the variable names as main column names</span>
+<span class="sd">            and either two subcolumns for the value and the uncertainty, or</span>
+<span class="sd">            four subcolumns for the value, uncertainty and bounds.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">p</span><span class="p">:</span>
+                    <span class="n">p</span><span class="p">[</span><span class="n">par</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redchi</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;mle&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">p</span><span class="p">:</span>
+                    <span class="n">p</span><span class="p">[</span><span class="n">par</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_redchi</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">selected</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">vary</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">vary</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">bounds</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">,</span> <span class="s1">&#39;Uncertainty&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper Bound&#39;</span><span class="p">,</span> <span class="s1">&#39;Lower Bound&#39;</span><span class="p">]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">min</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">],</span>
+                       <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">stderr</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">,</span> <span class="s1">&#39;Uncertainty&#39;</span><span class="p">]</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">],</span>
+                       <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">values</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">]]</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">columns</span><span class="p">)))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;Chisquare&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">chisqr</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;Reduced chisquare&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">redchi</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;NDoF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">ndof</span><span class="p">]),</span> <span class="n">index</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="BaseModel.get_result_dict"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.get_result_dict.html#satlas.models.basemodel.BaseModel.get_result_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_result_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;chisquare&#39;</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the fitted parameters in a dictionary of the form {name: [value, uncertainty]}.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        method: {&#39;chisquare&#39;, &#39;mle&#39;}</span>
+<span class="sd">            Selects which parameters have to be returned.</span>
+<span class="sd">        scaled: boolean</span>
+<span class="sd">            Selects if, in case of chisquare parameters, the uncertainty</span>
+<span class="sd">            has to be scaled by sqrt(reduced_chisquare). Defaults to *True*.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Dictionary of the form described above.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">p</span><span class="p">:</span>
+                    <span class="n">p</span><span class="p">[</span><span class="n">par</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redchi</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chisq_res_par</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">p</span><span class="p">:</span>
+                    <span class="n">p</span><span class="p">[</span><span class="n">par</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_redchi</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mle_fit</span>
+        <span class="n">returnDict</span> <span class="o">=</span> <span class="p">{</span><span class="n">P</span><span class="p">:</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="n">P</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="n">P</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span><span class="p">]</span> <span class="k">for</span> <span class="n">P</span> <span class="ow">in</span> <span class="n">p</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">returnDict</span>
+</div>
+<div class="viewcode-block" id="BaseModel.save"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.save.html#satlas.models.basemodel.BaseModel.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Saves the current spectrum, including the results of the fitting</span>
+<span class="sd">        and the parameters, to the specified file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        path: string</span>
+<span class="sd">            Name of the file to be created.&quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">pickle</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="c1">#######################################</span>
+    <span class="c1">#      METHODS CALLED BY FITTING      #</span>
+    <span class="c1">#######################################</span>
+</div>
+    <span class="k">def</span> <span class="nf">_sanitize_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span>
+
+    <span class="k">def</span> <span class="nf">seperate_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wraps the output of the :meth:`__call__` in a list, for</span>
+<span class="sd">        ease of coding in the fitting routines.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="BaseModel.__add__"><a class="viewcode-back" href="../../../generated/basemodel/satlas.models.basemodel.BaseModel.__add__.html#satlas.models.basemodel.BaseModel.__add__">[docs]</a>    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add two spectra together to get an :class:`.SumModel`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other: BaseModel</span>
+<span class="sd">            Other spectrum to add.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SumModel</span>
+<span class="sd">            A SumModel combining both spectra.&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.summodel</span> <span class="kn">import</span> <span class="n">SumModel</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">SumModel</span><span class="p">):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">models</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">SumModel</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">__radd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__add__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Method has to be implemented in subclass!&quot;</span><span class="p">)</span>
+</div>
+<span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Loads the saved BaseModel and returns the reconstructed object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path: string</span>
+<span class="sd">        Location of the saved model.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    model: BaseModel</span>
+<span class="sd">        Saved BaseModel/child class instance.&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">pickle</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

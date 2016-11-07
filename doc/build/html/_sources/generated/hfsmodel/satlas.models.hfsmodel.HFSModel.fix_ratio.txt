@@ -1,0 +1,6 @@
+satlas.models.hfsmodel.HFSModel.fix_ratio
+=========================================
+
+.. currentmodule:: satlas.models.hfsmodel
+
+.. automethod:: HFSModel.fix_ratio

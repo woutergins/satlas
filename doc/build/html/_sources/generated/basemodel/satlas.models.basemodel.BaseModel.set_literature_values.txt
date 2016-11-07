@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.set_literature_values
+=======================================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.set_literature_values

@@ -1,0 +1,6 @@
+satlas.models.models.PolynomialModel.__init__
+=============================================
+
+.. currentmodule:: satlas.models.models
+
+.. automethod:: PolynomialModel.__init__

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>satlas.stats.fitting &mdash; SATLAS 0.1.0b26 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0b26',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../../../index.html" >
+    <link rel="up" title="Module code" href="../../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+	
+        <li class="active"><a href="../../../index.html">SATLAS 0.1.0b26 documentation</a></li>
+	
+          <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../../../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <h1>Source code for satlas.stats.fitting</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implementation of fitting routines specialised for BaseModel objects. Note that not all functions are loaded into the global satlas namespace.</span>
+
+<span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@kuleuven.be&gt;</span>
+<span class="sd">.. moduleauthor:: Ruben de Groote &lt;ruben.degroote@kuleuven.be&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numdifftools</span> <span class="kn">as</span> <span class="nn">nd</span>
+
+<span class="kn">from</span> <span class="nn">satlas.stats</span> <span class="kn">import</span> <span class="n">emcee</span> <span class="k">as</span> <span class="n">mcmc</span>
+
+<span class="kn">import</span> <span class="nn">lmfit</span> <span class="kn">as</span> <span class="nn">lm</span>
+<span class="kn">from</span> <span class="nn">satlas</span> <span class="kn">import</span> <span class="n">loglikelihood</span> <span class="k">as</span> <span class="n">llh</span>
+<span class="kn">from</span> <span class="nn">satlas</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span>
+<span class="kn">from</span> <span class="nn">scipy.misc</span> <span class="kn">import</span> <span class="n">derivative</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">chi2</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;chisquare_spectroscopic_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;chisquare_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;calculate_analytical_uncertainty&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;likelihood_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;likelihood_walk&#39;</span><span class="p">,</span> <span class="s1">&#39;create_band&#39;</span><span class="p">,</span> <span class="s1">&#39;process_walk&#39;</span><span class="p">]</span>
+<span class="n">chisquare_warning_message</span> <span class="o">=</span> <span class="s2">&quot;The supplied dictionary for {} did not contain the necessary keys &#39;value&#39; and &#39;uncertainty&#39;.&quot;</span>
+
+<span class="c1">###############################</span>
+<span class="c1"># CHI SQUARE FITTING ROUTINES #</span>
+<span class="c1">###############################</span>
+
+<div class="viewcode-block" id="chisquare_model"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.chisquare_model.html#satlas.stats.fitting.chisquare_model">[docs]</a><span class="k">def</span> <span class="nf">chisquare_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;Model function for chisquare fitting routines as established</span>
+<span class="sd">    in this module.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    params: lmfit.Parameters</span>
+<span class="sd">        Instance of lmfit.Parameters object, to be assigned to the model object.</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Callable instance with the correct methods for the fitmethods.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    yerr: array_like</span>
+<span class="sd">        Experimental errorbars on the y-axis.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    xerr: array_like, optional</span>
+<span class="sd">        Given an array with the same size as *x*, the error is taken into</span>
+<span class="sd">        account by using the method of estimated variance. Defaults to *None*.</span>
+<span class="sd">    func: function, optional</span>
+<span class="sd">        Given a function, the errorbars on the y-axis is calculated from</span>
+<span class="sd">        the fitvalue using this function. Defaults to *None*.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NumPy array</span>
+<span class="sd">        Array containing the residuals for the given parameters, divided by the</span>
+<span class="sd">        uncertainty.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    If a custom function is to be used for the calculation of the residual,</span>
+<span class="sd">    this function should be overwritten.</span>
+
+<span class="sd">    The method of estimated variance calculates the chisquare in the following way:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \sqrt{\chi^2} = \frac{y-f(x)}{\sqrt{\sigma_x^2+f&#39;(x)^2\sigma_x^2}}&quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">yerr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">xerr</span> <span class="o">=</span> <span class="n">derivative</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">seperate_response</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">1E-5</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">xerr</span> <span class="o">=</span> <span class="n">derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">1E-5</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span>
+        <span class="n">bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">yerr</span> <span class="o">*</span> <span class="n">yerr</span> <span class="o">+</span> <span class="n">xerr</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bottom</span> <span class="o">=</span> <span class="n">yerr</span>
+    <span class="n">return_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">model</span><span class="p">)</span> <span class="o">/</span> <span class="n">bottom</span>
+    <span class="n">appended_values</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_chisquare_mapping</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">appended_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">return_value</span><span class="p">,</span> <span class="n">appended_values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">return_value</span>
+</div>
+<div class="viewcode-block" id="chisquare_spectroscopic_fit"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.chisquare_spectroscopic_fit.html#satlas.stats.fitting.chisquare_spectroscopic_fit">[docs]</a><span class="k">def</span> <span class="nf">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hessian</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;leastsq&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Use the :func:`chisquare_fit` function, automatically estimating the errors</span>
+<span class="sd">    on the counts by the square root.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model object containing all the information about the fit;</span>
+<span class="sd">        will be fitted to the given data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    xerr: array_like, optional</span>
+<span class="sd">        Error bars on *x*.</span>
+<span class="sd">    func: function, optional</span>
+<span class="sd">        This function is applied to the model values to calculate the errorbars.</span>
+<span class="sd">    verbose: boolean, optional</span>
+<span class="sd">        When set to *True*, a tqdm-progressbar in the terminal is maintained.</span>
+<span class="sd">        Defaults to *True*.</span>
+<span class="sd">    hessian: boolean, optional</span>
+<span class="sd">        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate</span>
+<span class="sd">        is calculated, otherwise the LMFIT version is used. Defaults to *False*.</span>
+<span class="sd">    method: string, optional</span>
+<span class="sd">        Sets the method to be used by lmfit for the fitting. See lmfit for all options.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    success, message: tuple</span>
+<span class="sd">        Boolean indicating the success of the convergence, and the message</span>
+<span class="sd">        from the optimizer.&quot;&quot;&quot;</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">yerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">yerr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">yerr</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">model</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">chisquare_fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">hessian</span><span class="o">=</span><span class="n">hessian</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="chisquare_fit"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.chisquare_fit.html#satlas.stats.fitting.chisquare_fit">[docs]</a><span class="k">def</span> <span class="nf">chisquare_fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hessian</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;leastsq&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Use a non-linear least squares minimization (Levenberg-Marquardt)</span>
+<span class="sd">    algorithm to minimize the chi-square of the fit to data *x* and</span>
+<span class="sd">    *y* with errorbars *yerr*.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model object containing all the information about the fit;</span>
+<span class="sd">        will be fitted to the given data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    yerr: array_like</span>
+<span class="sd">        Uncertainties on *y*.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    xerr: array_like, optional</span>
+<span class="sd">        Uncertainties on *x*.</span>
+<span class="sd">    func: function, optional</span>
+<span class="sd">        Uses the provided function on the fitvalue to calculate the</span>
+<span class="sd">        errorbars.</span>
+<span class="sd">    verbose: boolean, optional</span>
+<span class="sd">        When set to *True*, a tqdm-progressbar in the terminal is maintained.</span>
+<span class="sd">        Defaults to *True*.</span>
+<span class="sd">    hessian: boolean, optional</span>
+<span class="sd">        When set to *True*, the SATLAS implementation of the Hessian uncertainty estimate</span>
+<span class="sd">        is calculated, otherwise the LMFIT version is used. Defaults to *False*.</span>
+<span class="sd">    method: string, optional</span>
+<span class="sd">        Sets the method to be used by lmfit for the fitting. See lmfit for all options.</span>
+
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">    success, message: tuple</span>
+<span class="sd">        Boolean indicating the success of the convergence, and the message</span>
+<span class="sd">        from the optimizer.&quot;&quot;&quot;</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">iter_cb</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">resid</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Chisquare fitting in progress (&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">((</span><span class="n">resid</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Chisquare fitting in progress&#39;</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+         <span class="k">def</span> <span class="nf">iter_cb</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">resid</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">chisquare_model</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">yerr</span><span class="p">),</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="n">iter_cb</span><span class="o">=</span><span class="n">iter_cb</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">chisqr</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">chisqr</span><span class="p">)</span>
+
+    <span class="n">success</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">chisquare_model</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">yerr</span><span class="p">),</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="n">iter_cb</span><span class="o">=</span><span class="n">iter_cb</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">chisqr</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">chisqr</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">chisqr</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">chisqr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Chisquare fitting done&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="n">f</span><span class="o">.</span><span class="n">ndof</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">nfree</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">redchi</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">redchi</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">chisq_res_par</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hessian</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Starting Hessian calculation&#39;</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">miniters</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">assign_hessian_estimate</span><span class="p">(</span><span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="p">(</span><span class="n">chisquare_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">yerr</span><span class="p">),</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">progress</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">/=</span> <span class="n">f</span><span class="o">.</span><span class="n">redchi</span><span class="o">**</span><span class="mf">0.5</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">/=</span> <span class="n">f</span><span class="o">.</span><span class="n">redchi</span><span class="o">**</span><span class="mf">0.5</span>
+
+    <span class="k">return</span> <span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">message</span>
+
+<span class="c1">##########################################</span>
+<span class="c1"># MAXIMUM LIKELIHOOD ESTIMATION ROUTINES #</span>
+<span class="c1">##########################################</span>
+
+</div>
+<span class="k">class</span> <span class="nc">PriorParameter</span><span class="p">(</span><span class="n">lm</span><span class="o">.</span><span class="n">Parameter</span><span class="p">):</span>
+
+    <span class="c1"># Extended the Parameter class from LMFIT to incorporate prior boundaries.</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vary</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">expr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">priormin</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">priormax</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PriorParameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                                             <span class="n">vary</span><span class="o">=</span><span class="n">vary</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="nb">min</span><span class="p">,</span>
+                                             <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="n">expr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priormin</span> <span class="o">=</span> <span class="n">priormin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priormax</span> <span class="o">=</span> <span class="n">priormax</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">PriorParameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getstate__</span><span class="p">()</span>
+        <span class="n">return_value</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">priormin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">priormax</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_value</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">state_pass</span> <span class="o">=</span> <span class="n">state</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">priormin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">priormax</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PriorParameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setstate__</span><span class="p">(</span><span class="n">state_pass</span><span class="p">)</span>
+
+<span class="n">sqrt2pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+<div class="viewcode-block" id="likelihood_x_err"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.likelihood_x_err.html#satlas.stats.fitting.likelihood_x_err">[docs]</a><span class="k">def</span> <span class="nf">likelihood_x_err</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the loglikelihood for a model given</span>
+<span class="sd">    x and y values. Incorporates a common given error on</span>
+<span class="sd">    the x-axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model object set to current parameters.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    xerr: float</span>
+<span class="sd">        Experimental uncertainty on *x*.</span>
+<span class="sd">    func: function</span>
+<span class="sd">        Function taking (*y_data*, *y_model*) as input,</span>
+<span class="sd">        and returning the loglikelihood that the data is</span>
+<span class="sd">        drawn from a distribution characterized by the model.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array_like&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">scipy.integrate</span> <span class="kn">as</span> <span class="nn">integrate</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">([</span>
+        <span class="n">integrate</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">theta</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">X</span><span class="o">+</span><span class="n">theta</span> <span class="o">*</span> <span class="n">XERR</span><span class="p">)[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">theta</span><span class="o">*</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">sqrt2pi</span><span class="p">),</span>
+            <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">XERR</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">))</span>
+        <span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="likelihood_lnprob"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.likelihood_lnprob.html#satlas.stats.fitting.likelihood_lnprob">[docs]</a><span class="k">def</span> <span class="nf">likelihood_lnprob</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the logarithm of the probability that the data fits</span>
+<span class="sd">    the model given the current parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    params: lmfit.Parameters object with satlas.PriorParameters</span>
+<span class="sd">        Group of parameters for which the fit has to be evaluated.</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model object containing all the information about the fit;</span>
+<span class="sd">        will be fitted to the given data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    xerr: array_like</span>
+<span class="sd">        Uncertainty values on *x*.</span>
+<span class="sd">    func: function</span>
+<span class="sd">        Function calculating the loglikelihood of y_data being drawn from</span>
+<span class="sd">        a distribution characterized by y_model.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    The prior is first evaluated for the parameters. If this is</span>
+<span class="sd">    not finite, the values are rejected from consideration by</span>
+<span class="sd">    immediately returning -np.inf.&quot;&quot;&quot;</span>
+    <span class="c1"># Handle old-style BaseModel children by using .lnprior().</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_lnprior_mapping</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">lnprior</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lp</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">lp</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">likelihood_loglikelihood</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">res</span>
+</div>
+<div class="viewcode-block" id="likelihood_loglikelihood"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.likelihood_loglikelihood.html#satlas.stats.fitting.likelihood_loglikelihood">[docs]</a><span class="k">def</span> <span class="nf">likelihood_loglikelihood</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Given a parameters object, a Model object, experimental data</span>
+<span class="sd">    and a loglikelihood function, calculates the loglikelihood for</span>
+<span class="sd">    all data points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model object containing all the information about the fit;</span>
+<span class="sd">        will be fitted to the given data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    xerr: array_like</span>
+<span class="sd">        Experimental data on *x*.</span>
+<span class="sd">    func: function</span>
+<span class="sd">        Function calculating the loglikelihood of y_data being drawn from</span>
+<span class="sd">        a distribution characterized by y_model.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array_like</span>
+<span class="sd">        Array containing the loglikelihood for each seperate datapoint.&quot;&quot;&quot;</span>
+    <span class="c1"># If a value is given to the uncertainty on the x-values, use the adapted</span>
+    <span class="c1"># function.</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xerr</span><span class="p">):</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="n">likelihood_x_err</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">return_value</span>
+</div>
+<div class="viewcode-block" id="likelihood_fit"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.likelihood_fit.html#satlas.stats.fitting.likelihood_fit">[docs]</a><span class="k">def</span> <span class="nf">likelihood_fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">llh</span><span class="o">.</span><span class="n">poisson_llh</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nelder-mead&#39;</span><span class="p">,</span> <span class="n">method_kws</span><span class="o">=</span><span class="p">{},</span> <span class="n">walking</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">walk_kws</span><span class="o">=</span><span class="p">{},</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hessian</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fits the given model to the given data using the Maximum Likelihood Estimation technique.</span>
+<span class="sd">    The given function is used to calculate the loglikelihood. After the fit, the message</span>
+<span class="sd">    from the optimizer is printed and returned.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model to be fitted to the data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    xerr: array_like, optional</span>
+<span class="sd">        Estimated value for the uncertainty on the x-values.</span>
+<span class="sd">        Set to *None* to ignore this uncertainty. Defaults to *None*.</span>
+<span class="sd">    func: function, optional</span>
+<span class="sd">        Used to calculate the loglikelihood that the data is drawn</span>
+<span class="sd">        from a distribution given a model value. Should accept</span>
+<span class="sd">        input as (y_data, y_model). Defaults to the Poisson</span>
+<span class="sd">        loglikelihood.</span>
+<span class="sd">    method: str, optional</span>
+<span class="sd">        Selects the algorithm to be used by the minimizer used by LMFIT.</span>
+<span class="sd">        See LMFIT documentation for possible values. Defaults to &#39;nelder-mead&#39;.</span>
+<span class="sd">    method_kws: dict, optional</span>
+<span class="sd">        Dictionary containing the keywords to be passed to the</span>
+<span class="sd">        minimizer.</span>
+<span class="sd">    walking: boolean, optional</span>
+<span class="sd">        If True, the uncertainty on the parameters is estimated</span>
+<span class="sd">        by performing a random walk in parameter space and</span>
+<span class="sd">        evaluating the loglikelihood. Defaults to False.</span>
+<span class="sd">    walk_kws: dictionary</span>
+<span class="sd">        Contains the keywords for the :func:`.likelihood_walk`</span>
+<span class="sd">        function, used if walking is set to True.</span>
+<span class="sd">    verbose: boolean, optional</span>
+<span class="sd">        When set to *True*, a tqdm-progressbar in the terminal is maintained.</span>
+<span class="sd">        Defaults to *True*.</span>
+<span class="sd">    hessian: boolean, optional</span>
+<span class="sd">        When set to *True*, the Hessian estimate of the uncertainty will be</span>
+<span class="sd">        calculated.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    success, message: tuple</span>
+<span class="sd">        Boolean indicating the success of the optimization and</span>
+<span class="sd">        the message from the optimizer.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">negativeloglikelihood</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">return_val</span> <span class="o">=</span> <span class="o">-</span><span class="n">likelihood_lnprob</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_val</span>
+
+    <span class="k">def</span> <span class="nf">iter_cb</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">resid</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Likelihood fitting in progress (&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">resid</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="c1"># Eliminate the estimated uncertainties</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Likelihood fitting in progress&#39;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Minimizer</span><span class="p">(</span><span class="n">negativeloglikelihood</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">fcn_args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="n">iter_cb</span><span class="o">=</span><span class="n">iter_cb</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">method_kws</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">negativeloglikelihood</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+    <span class="n">success</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Minimizer</span><span class="p">(</span><span class="n">negativeloglikelihood</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">fcn_args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="n">iter_cb</span><span class="o">=</span><span class="n">iter_cb</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">scalar_minimize</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">method_kws</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">new_val</span> <span class="o">=</span> <span class="n">negativeloglikelihood</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">new_val</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">new_val</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span> <span class="ow">and</span> <span class="n">counter</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Likelihood fitting done&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">mle_result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">message</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">mle_likelihood</span> <span class="o">=</span> <span class="n">negativeloglikelihood</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">likelihood_loglikelihood</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">likelihood_loglikelihood</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_redchi</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span> <span class="o">/</span> <span class="n">f</span><span class="o">.</span><span class="n">ndof</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_redchi</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">([</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">hessian</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Starting Hessian calculation&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">progress</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">assign_hessian_estimate</span><span class="p">(</span><span class="n">likelihood_lnprob</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">progress</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">)</span>
+
+
+    <span class="k">if</span> <span class="n">walking</span><span class="p">:</span>
+        <span class="n">likelihood_walk</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="o">**</span><span class="n">walk_kws</span><span class="p">)</span>
+    <span class="n">_x_err_calculation_stored</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">message</span>
+
+<span class="c1">############################</span>
+<span class="c1"># UNCERTAINTY CALCULATIONS #</span>
+<span class="c1">############################</span>
+</div>
+<span class="k">def</span> <span class="nf">_parameterCostfunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="c1"># Creates a costfunction for the given model and arguments/data for the different methods.</span>
+    <span class="c1"># Is used for calculation the derivative of the cost function for the different parameters.</span>
+    <span class="n">var_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+            <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">vars</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="k">return</span>
+    <span class="n">groupParams</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">groupParams</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">PriorParameter</span><span class="p">(</span><span class="n">key</span><span class="p">,</span>
+                                          <span class="n">value</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                                          <span class="n">vary</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">,</span>
+                                          <span class="n">expr</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span>
+                                          <span class="n">priormin</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
+                                          <span class="n">priormax</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">listfunc</span><span class="p">(</span><span class="n">fvars</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fvars</span><span class="p">,</span> <span class="n">var_names</span><span class="p">):</span>
+            <span class="n">groupParams</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">groupParams</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">listfunc</span>
+
+<div class="viewcode-block" id="assign_hessian_estimate"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.assign_hessian_estimate.html#satlas.stats.fitting.assign_hessian_estimate">[docs]</a><span class="k">def</span> <span class="nf">assign_hessian_estimate</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the Hessian of the model at the given parameters,</span>
+<span class="sd">    and associates uncertainty estimates based on the inverted Hessian matrix.</span>
+<span class="sd">    Note that, for estimation for chisquare methods, the inverted matrix is</span>
+<span class="sd">    multiplied by 2.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    func: function</span>
+<span class="sd">        Function used as cost function. Use :func:`.chisquare_model` for chisquare estimates,</span>
+<span class="sd">        and :func:`.likelihood_lnprob` for likelihood estimates.</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model for which the estimates need to be made.</span>
+<span class="sd">    params: Parameters</span>
+<span class="sd">        LMFIT parameters for which the Hessian estimate needs to be made.</span>
+<span class="sd">    args: args for func</span>
+<span class="sd">        Arguments for the defined cost function *func*.</span>
+<span class="sd">    likelihood: boolean</span>
+<span class="sd">        Set to *True* if a likelihood approach is used.</span>
+<span class="sd">    progress: progressbar</span>
+<span class="sd">        TQDM progressbar instance to update.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Parsing parameters&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">var_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+            <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">vars</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;No parameters to vary&#39;</span><span class="p">)</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">progress</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Creating Hessian function&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">Hfun</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">Hessian</span><span class="p">(</span><span class="n">_parameterCostfunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Calculating Hessian matrix&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">hess_vals</span> <span class="o">=</span> <span class="n">Hfun</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Inverting matrix&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">hess_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">hess_vals</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">likelihood</span><span class="p">:</span>
+        <span class="n">hess_vals</span> <span class="o">=</span> <span class="o">-</span><span class="n">hess_vals</span>
+        <span class="n">multiplier</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">multiplier</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Assigning uncertainties&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">hess</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">var_names</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">multiplier</span><span class="o">*</span><span class="n">hess_vals</span><span class="p">)):</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hess</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Assigning correlations&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">var_names</span><span class="p">):</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">correl</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">name2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">var_names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">name2</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">correl</span><span class="p">[</span><span class="n">name2</span><span class="p">]</span> <span class="o">=</span> <span class="n">hess_vals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hess_vals</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">hess_vals</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="s1">&#39;Finished Hessian calculation&#39;</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">progress</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="create_band"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.create_band.html#satlas.stats.fitting.create_band">[docs]</a><span class="k">def</span> <span class="nf">create_band</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">yerr</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;chisquare&#39;</span><span class="p">,</span> <span class="n">func_chi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func_llh</span><span class="o">=</span><span class="n">llh</span><span class="o">.</span><span class="n">poisson_llh</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;prediction&#39;</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;Calculates prediction or confidence bounds at the 1 :math:`\sigma` level.</span>
+<span class="sd">    The method used is based on the Delta Method: at the requested prediction points *x*, the bound is calculated as</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \sqrt{G&#39;(\beta, x)^T H^{-1}(\beta) G&#39;(\beta, x)}</span>
+
+<span class="sd">    with G the cost function, H the Hessian matrix and :math:`\beta` the vector of parameters.</span>
+<span class="sd">    The resulting bound needs to be subtracted and added to the value given by the model to get the confidence interval.</span>
+
+<span class="sd">    For a prediction interval, the value before taking the square root is increased by 1</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model for which the bound needs to be calculated.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Selection of values for which a prediction needs to be made.</span>
+<span class="sd">    x_data: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y_data: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+<span class="sd">    yerr: array_like</span>
+<span class="sd">        Experimental uncertainty for the y-axis.</span>
+<span class="sd">    xerr: array_like</span>
+<span class="sd">        Experimental uncertainty for the x-axis. Defaults to *None*.</span>
+<span class="sd">    method: {&#39;mle&#39;, &#39;chisquare&#39;}</span>
+<span class="sd">        Selected method for which the cost function is selected.</span>
+<span class="sd">    func_chi: function, optional</span>
+<span class="sd">        Is passed on to the chisquare methods in order to calculate the</span>
+<span class="sd">        experimental uncertainty from the modelvalue. Defaults to *None*,</span>
+<span class="sd">        which uses *yerr*.</span>
+<span class="sd">    func_llh: function</span>
+<span class="sd">        Is passed on to the likelihood fitting method to define the</span>
+<span class="sd">        likelihood function. Defaults to :func:`satlas.loglikelihood.poisson_llh`.</span>
+<span class="sd">    kind: {&#39;prediction&#39;, &#39;confidence&#39;}</span>
+<span class="sd">        Selects which type of bound is calculated.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bound: array_like</span>
+<span class="sd">        Array describing the deviation from the model value as can be expected</span>
+<span class="sd">        for the selected parameters at the 1:math:`\sigma` level.&quot;&quot;&quot;</span>
+    <span class="n">method_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="n">likelihood_lnprob</span><span class="p">,</span>
+                      <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="p">(</span><span class="n">chisquare_model</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">y_data</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">yerr</span><span class="p">),</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func_chi</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">x_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func_llh</span><span class="p">,</span> <span class="bp">False</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="n">method_mapping</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+    <span class="n">var_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+            <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="n">backup</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">Hfun</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">Hessian</span><span class="p">(</span><span class="n">_parameterCostfunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;mle&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span>
+        <span class="n">hess_vals</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Hfun</span><span class="p">(</span><span class="nb">vars</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">hess_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Hfun</span><span class="p">(</span><span class="nb">vars</span><span class="p">))</span><span class="o">*</span><span class="mi">2</span>
+    <span class="n">groupParams</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">groupParams</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">PriorParameter</span><span class="p">(</span><span class="n">key</span><span class="p">,</span>
+                                          <span class="n">value</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                                          <span class="n">vary</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">,</span>
+                                          <span class="n">expr</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span>
+                                          <span class="n">priormin</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
+                                          <span class="n">priormax</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">listfunc</span><span class="p">(</span><span class="n">fvars</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fvars</span><span class="p">,</span> <span class="n">var_names</span><span class="p">):</span>
+            <span class="n">groupParams</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">groupParams</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">jacob</span> <span class="o">=</span> <span class="n">nd</span><span class="o">.</span><span class="n">Jacobian</span><span class="p">(</span><span class="n">listfunc</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">jacob</span><span class="p">(</span><span class="nb">vars</span><span class="p">)):</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">hess_vals</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">backup</span>
+    <span class="k">if</span> <span class="n">kind</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;prediction&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">result</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">**</span><span class="mf">0.5</span>
+</div>
+<span class="n">params_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="s1">&#39;mle_fit&#39;</span><span class="p">,</span> <span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">:</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">,</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">}</span>
+<span class="n">fit_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="n">likelihood_fit</span><span class="p">,</span> <span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">:</span> <span class="n">chisquare_spectroscopic_fit</span><span class="p">,</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span> <span class="n">chisquare_fit</span><span class="p">}</span>
+<span class="n">attr_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="s1">&#39;mle_likelihood&#39;</span><span class="p">,</span> <span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">:</span> <span class="s1">&#39;chisqr&#39;</span><span class="p">,</span> <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span> <span class="s1">&#39;chisqr&#39;</span><span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">calculate_updated_statistic</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">params_name</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;chisquare&#39;</span><span class="p">,</span> <span class="n">func_args</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">func_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">pbar</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">orig_stat</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="n">fit_mapping</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+    <span class="n">attr</span> <span class="o">=</span> <span class="n">attr_mapping</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">params_name</span><span class="p">):</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">params_name</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">params</span><span class="p">[</span><span class="n">params_name</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+    <span class="n">success</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+        <span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">func_args</span><span class="p">,</span> <span class="o">**</span><span class="n">func_kwargs</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">counter</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">return_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="o">-</span> <span class="n">orig_stat</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">params_name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">params_name</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">params_name</span> <span class="o">+</span> <span class="s1">&#39; (&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">return_value</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+        <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">return_value</span>
+
+<span class="k">def</span> <span class="nf">_find_boundary</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">bound</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">function_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">},</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">function_kwargs</span><span class="p">[</span><span class="s1">&#39;method&#39;</span><span class="p">]</span>
+    <span class="n">attr</span> <span class="o">=</span> <span class="n">attr_mapping</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+    <span class="n">orig_stat</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">search_value</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span>
+        <span class="n">boundary</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">min</span>
+        <span class="n">boundary_test</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">val</span><span class="p">:</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">boundary</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span>
+        <span class="n">boundary</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">max</span>
+        <span class="n">boundary_test</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">val</span><span class="p">:</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">boundary</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (searching &#39;</span> <span class="o">+</span> <span class="n">direction</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="n">miniters</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">backup</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">backup_fit</span> <span class="o">=</span> <span class="n">params_map</span><span class="p">[</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+    <span class="n">function_kwargs</span><span class="p">[</span><span class="s1">&#39;pbar&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pbar</span>
+    <span class="n">orig_stat</span> <span class="o">=</span> <span class="n">calculate_updated_statistic</span><span class="p">(</span><span class="n">search_value</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">function_kwargs</span><span class="p">)</span>
+    <span class="n">function_kwargs</span><span class="p">[</span><span class="s1">&#39;orig_stat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig_stat</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">search_value</span> <span class="o">+=</span> <span class="n">step</span>
+        <span class="k">if</span> <span class="n">boundary_test</span><span class="p">(</span><span class="n">search_value</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (&#39;</span> <span class="o">+</span> <span class="n">direction</span> <span class="o">+</span> <span class="s1">&#39; limit reached)&#39;</span><span class="p">)</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">boundary</span>
+            <span class="k">break</span>
+        <span class="n">new_value</span> <span class="o">=</span> <span class="n">calculate_updated_statistic</span><span class="p">(</span><span class="n">search_value</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">function_kwargs</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (searching &#39;</span> <span class="o">+</span> <span class="n">direction</span> <span class="o">+</span> <span class="s1">&#39;:  {:.3g}, change of {:.3f}, at {:.3f}%)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">search_value</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">new_value</span><span class="o">/</span><span class="n">bound</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">new_value</span> <span class="o">&gt;</span> <span class="n">bound</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (finding root, between {:.3g} and {:.3g})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">search_value</span><span class="p">))</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">result</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">bisect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">calculate_updated_statistic</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">function_kwargs</span><span class="p">)</span> <span class="o">-</span> <span class="n">bound</span><span class="p">,</span>
+                                             <span class="n">search_value</span> <span class="o">-</span> <span class="n">step</span><span class="p">,</span> <span class="n">search_value</span><span class="p">,</span>
+                                             <span class="n">full_output</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (root found: {:.3g})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">success</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">converged</span>
+            <span class="k">break</span>
+    <span class="n">result_value</span> <span class="o">=</span> <span class="n">calculate_updated_statistic</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">function_kwargs</span><span class="p">)</span>
+    <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="n">param_name</span> <span class="o">+</span> <span class="s1">&#39; (root found: {:.3g}, change of {:.3f})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">result_value</span><span class="p">))</span>
+    <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">backup</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">orig_stat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">success</span>
+
+<span class="k">def</span> <span class="nf">_get_state</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;mle&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span><span class="p">),</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_result</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_likelihood</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_redchi</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">chisq_res_par</span><span class="p">),</span> <span class="n">f</span><span class="o">.</span><span class="n">chisqr</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">ndof</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">redchi</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_set_state</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;mle&#39;</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">mle_result</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_likelihood</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_chisqr</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">mle_redchi</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">chisq_res_par</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">chisqr</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">ndof</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">redchi</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+<div class="viewcode-block" id="calculate_analytical_uncertainty"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.calculate_analytical_uncertainty.html#satlas.stats.fitting.calculate_analytical_uncertainty">[docs]</a><span class="k">def</span> <span class="nf">calculate_analytical_uncertainty</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fit_args</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">fit_kws</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the analytical errors on the parameters, by changing the value for</span>
+<span class="sd">    a parameter and finding the point where the chisquare for the refitted parameters</span>
+<span class="sd">    is one greater. For MLE, an increase of 0.5 is sought. The corresponding series</span>
+<span class="sd">    of parameters of the model is adjusted with the values found here.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Instance of a model which is to be fitted.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    method: {&#39;chisquare_spectroscopic&#39;, &#39;chisquare&#39;, &#39;mle&#39;}</span>
+<span class="sd">        Select for which method the analytical uncertainty has to be calculated.</span>
+<span class="sd">        Defaults to &#39;chisquare_spectroscopic&#39;.</span>
+<span class="sd">    filter: list of strings, optional</span>
+<span class="sd">        Select only a subset of the variable parameters to calculate the uncertainty for.</span>
+<span class="sd">        Defaults to *None* (all parameters).</span>
+<span class="sd">    fit_kws: dictionary, optional</span>
+<span class="sd">        Dictionary of keywords to be passed on to the selected fitting routine.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    The function edits the parameters of the given instance. Furthermore,</span>
+<span class="sd">    it only searches for the uncertainty in the neighbourhood of the starting</span>
+<span class="sd">    point, which is taken to be the values of the parameters as given in</span>
+<span class="sd">    the instance. This does not do a full exploration, so the results might be</span>
+<span class="sd">    from a local minimum!&quot;&quot;&quot;</span>
+
+    <span class="c1"># Save the original goodness-of-fit and parameters for later use</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;chisquare_spectroscopic&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">,</span> <span class="s1">&#39;chisqr&#39;</span><span class="p">,</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">),</span>
+               <span class="s1">&#39;chisquare&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">chisquare_fit</span><span class="p">,</span> <span class="s1">&#39;chisqr&#39;</span><span class="p">,</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">),</span>
+               <span class="s1">&#39;mle&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">likelihood_fit</span><span class="p">,</span> <span class="s1">&#39;mle_likelihood&#39;</span><span class="p">,</span> <span class="s1">&#39;mle_fit&#39;</span><span class="p">)}</span>
+    <span class="n">func</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">save_attr</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">(</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">,</span> <span class="s1">&#39;chisqr&#39;</span><span class="p">,</span> <span class="s1">&#39;chisq_res_par&#39;</span><span class="p">))</span>
+    <span class="n">fit_kws</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">fit_kws</span><span class="p">[</span><span class="s1">&#39;hessian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="n">func</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">fit_args</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_kws</span><span class="p">)</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="n">_get_state</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="n">orig_params</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">ranges</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Select all variable parameters, generate the figure</span>
+    <span class="n">param_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">no_params</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">orig_params</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">orig_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">filter</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">([</span><span class="n">f</span> <span class="ow">in</span> <span class="n">p</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">])):</span>
+            <span class="n">no_params</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">param_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">chifunc</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">chi2</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.682689492</span> <span class="c1"># Calculate 1 sigma boundary</span>
+    <span class="n">bound</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">root</span><span class="p">(</span><span class="n">chifunc</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;mle&#39;</span> <span class="k">else</span> <span class="n">optimize</span><span class="o">.</span><span class="n">root</span><span class="p">(</span><span class="n">chifunc</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">no_params</span><span class="p">):</span>
+        <span class="c1"># _set_state(f, state, method=method.lower())</span>
+        <span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Select starting point to determine error widths.</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">orig_params</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">stderr</span> <span class="o">=</span> <span class="n">orig_params</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">stderr</span>
+        <span class="n">stderr</span> <span class="o">=</span> <span class="n">stderr</span> <span class="k">if</span> <span class="n">stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">stderr</span> <span class="o">=</span> <span class="n">stderr</span> <span class="k">if</span> <span class="n">stderr</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="n">function_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;method&#39;</span><span class="p">:</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s1">&#39;func_args&#39;</span><span class="p">:</span> <span class="n">fit_args</span><span class="p">,</span> <span class="s1">&#39;func_kwargs&#39;</span><span class="p">:</span> <span class="n">fit_kws</span><span class="p">}</span>
+
+        <span class="n">result_left</span><span class="p">,</span> <span class="n">success_left</span> <span class="o">=</span> <span class="n">_find_boundary</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bound</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">function_kwargs</span><span class="o">=</span><span class="n">function_kws</span><span class="p">)</span>
+        <span class="n">result_right</span><span class="p">,</span> <span class="n">success_right</span> <span class="o">=</span> <span class="n">_find_boundary</span><span class="p">(</span><span class="o">-</span><span class="n">stderr</span><span class="p">,</span> <span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bound</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">function_kwargs</span><span class="o">=</span><span class="n">function_kws</span><span class="p">)</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">success_left</span> <span class="o">*</span> <span class="n">success_right</span>
+        <span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;left&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_left</span>
+        <span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_right</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Warning: boundary calculation did not fully succeed for &quot;</span> <span class="o">+</span> <span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;right&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;left&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span>
+        <span class="n">ranges</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig_params</span><span class="p">[</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="c1"># First, clear all uncertainty estimates</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">orig_params</span><span class="p">:</span>
+        <span class="n">orig_params</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">ranges</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">orig_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">param_name</span><span class="p">][</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">]</span>
+        <span class="n">orig_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">param_name</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">orig_params</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="n">_set_state</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="likelihood_walk"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.likelihood_walk.html#satlas.stats.fitting.likelihood_walk">[docs]</a><span class="k">def</span> <span class="nf">likelihood_walk</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">llh</span><span class="o">.</span><span class="n">poisson_llh</span><span class="p">,</span> <span class="n">nsteps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">walkers</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the uncertainty on MLE-optimized parameter values</span>
+<span class="sd">    by performing a random walk through parameter space and comparing</span>
+<span class="sd">    the resulting loglikelihood values. For more information,</span>
+<span class="sd">    see the emcee package. The data from the random walk is saved in a</span>
+<span class="sd">    file, as defined with the *filename*.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f: :class:`.BaseModel`</span>
+<span class="sd">        Model to be fitted to the data.</span>
+<span class="sd">    x: array_like</span>
+<span class="sd">        Experimental data for the x-axis.</span>
+<span class="sd">    y: array_like</span>
+<span class="sd">        Experimental data for the y-axis.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    func: function, optional</span>
+<span class="sd">        Used to calculate the loglikelihood that the data is drawn</span>
+<span class="sd">        from a distribution given a model value. Should accept</span>
+<span class="sd">        input as (y_data, y_model). Defaults to the Poisson</span>
+<span class="sd">        loglikelihood.</span>
+<span class="sd">    nsteps: integer, optional</span>
+<span class="sd">        Determines how many steps each walker should take.</span>
+<span class="sd">        Defaults to 2000 steps.</span>
+<span class="sd">    walkers: integer, optional</span>
+<span class="sd">        Sets the number of walkers to be used for the random walk.</span>
+<span class="sd">        The number of walkers should never be less than twice the</span>
+<span class="sd">        number of parameters. For more information on this, see</span>
+<span class="sd">        the emcee documentation. Defaults to 20 walkers.</span>
+<span class="sd">    filename: string, optional</span>
+<span class="sd">        Filename where the random walk has to be saved. If *None*,</span>
+<span class="sd">        the current time in seconds since January 1970 is used.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    The parameters associated with the MLE fit are not updated</span>
+<span class="sd">    with the uncertainty as estimated by this method.&quot;&quot;&quot;</span>
+
+    <span class="n">params</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">params</span>
+    <span class="n">var_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">:</span>
+            <span class="n">var_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="nb">vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">sample_ball</span><span class="p">(</span><span class="nb">vars</span><span class="p">,</span> <span class="p">[</span><span class="mf">1e-4</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">walkers</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">params</span><span class="p">[</span><span class="n">var_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="n">var_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">min</span><span class="o">+</span><span class="p">(</span><span class="mf">1E-5</span><span class="p">),</span> <span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+        <span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">params</span><span class="p">[</span><span class="n">var_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="n">var_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="o">-</span><span class="p">(</span><span class="mf">1E-5</span><span class="p">),</span> <span class="n">pos</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">lnprobList</span><span class="p">(</span><span class="n">fvars</span><span class="p">,</span> <span class="n">groupParams</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fvars</span><span class="p">,</span> <span class="n">var_names</span><span class="p">):</span>
+            <span class="n">groupParams</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">likelihood_lnprob</span><span class="p">(</span><span class="n">groupParams</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="n">groupParams</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">groupParams</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">PriorParameter</span><span class="p">(</span><span class="n">key</span><span class="p">,</span>
+                                          <span class="n">value</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                                          <span class="n">vary</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vary</span><span class="p">,</span>
+                                          <span class="n">expr</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">expr</span><span class="p">,</span>
+                                          <span class="n">priormin</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">,</span>
+                                          <span class="n">priormax</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">mcmc</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="n">walkers</span><span class="p">,</span> <span class="n">ndim</span><span class="p">,</span> <span class="n">lnprobList</span><span class="p">,</span>
+                                   <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">groupParams</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">xerr</span><span class="p">,</span> <span class="n">func</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">time</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;{}.h5&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;.h5&#39;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+            <span class="n">dset</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">nsteps</span> <span class="o">*</span> <span class="n">walkers</span><span class="p">,</span> <span class="n">ndim</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">ndim</span><span class="p">))</span>
+            <span class="n">dset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+            <span class="n">dset</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">dset</span><span class="p">[</span><span class="o">-</span><span class="n">walkers</span><span class="p">:,</span> <span class="p">:]</span>
+
+    <span class="k">with</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Walk&#39;</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">storechain</span><span class="o">=</span><span class="bp">False</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+                <span class="n">dset</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+                <span class="n">dset</span><span class="o">.</span><span class="n">resize</span><span class="p">(((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">walkers</span><span class="p">,</span> <span class="n">ndim</span><span class="p">))</span>
+                <span class="n">dset</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">walkers</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">walkers</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">f</span><span class="o">.</span><span class="n">mle_fit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="process_walk"><a class="viewcode-back" href="../../../fitting/satlas.stats.fitting.process_walk.html#satlas.stats.fitting.process_walk">[docs]</a><span class="k">def</span> <span class="nf">process_walk</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)):</span>
+    <span class="sd">r&quot;&quot;&quot;Given a model and H5 file with the results of a random walk,</span>
+<span class="sd">    the parameters varied in the walk are set to the 50% percentile,</span>
+<span class="sd">    and the uncertainty is set to either the difference between the</span>
+<span class="sd">    50% and 16% percentile, or between the 84% and 50%, whichever is</span>
+<span class="sd">    the largest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model: :class:`.BaseModel`</span>
+<span class="sd">        Object which has a params attribute.</span>
+<span class="sd">    filename: str</span>
+<span class="sd">        Filename of the corresponding H5 file.</span>
+
+<span class="sd">    Other parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    selection: tuple</span>
+<span class="sd">        Sets the lower and upper boundary of the percentage of the random walk</span>
+<span class="sd">        to take into account. Can be used to eliminate burn-in.</span>
+<span class="sd">        Defaults to (0, 100).&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">store</span><span class="p">:</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;format&#39;</span><span class="p">]</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">columns</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+            <span class="n">dataset_length</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dataset_length</span><span class="o">/</span><span class="mi">100</span><span class="o">*</span><span class="n">selection</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">dataset_length</span><span class="o">/</span><span class="mi">100</span><span class="o">*</span><span class="n">selection</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">columns</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="n">first</span><span class="p">:</span><span class="n">last</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+
+                <span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="mf">16.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="mf">84.0</span><span class="p">]</span>
+                <span class="n">q16</span><span class="p">,</span> <span class="n">q50</span><span class="p">,</span> <span class="n">q84</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+
+                <span class="n">value</span><span class="p">,</span> <span class="n">std_dev</span> <span class="o">=</span> <span class="n">q50</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">q50</span><span class="o">-</span><span class="n">q16</span><span class="p">,</span> <span class="n">q84</span><span class="o">-</span><span class="n">q50</span><span class="p">)</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">val</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">val</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">std_dev</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">mle_fit</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">mle_chisqr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">mle_redchi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span></div>
+</pre></div>
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2015, Wouter Gins.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+satlas.models.linkedmodel.LinkedModel.seperate_response
+=======================================================
+
+.. currentmodule:: satlas.models.linkedmodel
+
+.. automethod:: LinkedModel.seperate_response

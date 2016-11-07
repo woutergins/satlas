@@ -1,0 +1,6 @@
+satlas.models.basemodel.BaseModel.display_mle_fit
+=================================================
+
+.. currentmodule:: satlas.models.basemodel
+
+.. automethod:: BaseModel.display_mle_fit
