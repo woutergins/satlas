@@ -49,6 +49,7 @@ Fitting routines
       satlas.stats.fitting.likelihood_loglikelihood
       satlas.stats.fitting.create_band
       satlas.stats.fitting.assign_hessian_estimate
+      satlas.stats.fitting.process_walk
 
 Likelihood calculations
 -----------------------
