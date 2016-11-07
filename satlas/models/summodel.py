@@ -6,7 +6,7 @@ Implementation of a class for the analysis of hyperfine structure spectra with i
 """
 import copy
 import lmfit as lm
-from satlas.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel
 from satlas.utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,7 +29,7 @@ class SumModel(BaseModel):
             A list containing the models."""
         super(SumModel, self).__init__()
         self.models = models
-        self.shared = []
+        self.shared = ['Background']
 
     def get_chisquare_mapping(self):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
@@ -51,27 +51,32 @@ class SumModel(BaseModel):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
         params = lm.Parameters()
+        to_give_expr = []
+        expr_to_give = []
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
             for old_key in keys:
                 new_key = 's' + str(i) + '_' + old_key
                 p[new_key] = p.pop(old_key)
+                # If an expression is defined, replace the old names with the new ones
                 if p[new_key].expr is not None:
                     for o_key in keys:
                         if o_key in p[new_key].expr:
                             n_key = 's' + str(i) + '_' + o_key
                             p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
+                # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
-                    p[new_key].expr = 's0_' + old_key
+                    to_give_expr.append(new_key)
+                    expr_to_give.append('s0_' + old_key)
                     p[new_key].vary = False
-                if i > 0 and 'Background' in new_key:
-                    p[new_key].value = 0
-                    p[new_key].vary = False
-                    p[new_key].expr = None
                 if new_key in self._expr.keys():
                     p[new_key].expr = self._expr[new_key]
             params += p
+        for key, expr in zip(to_give_expr, expr_to_give):
+            params[key].expr = expr
+            params[key].vary = False
+            params.update_constraints()
         return params
 
     @params.setter
@@ -83,16 +88,21 @@ class SumModel(BaseModel):
                     new_key = key[len('s'+str(i)+'_'):]
                     expr = params[key].expr
                     if expr is not None:
-                        for k in params:
-                            nk = k[len('s'+str(i)+'_'):]
-                            expr = expr.replace(k, nk)
-                    par[new_key] = lm.Parameter(new_key,
-                                                value=params[key].value,
-                                                min=params[key].min,
-                                                max=params[key].max,
-                                                vary=params[key].vary,
-                                                expr=expr)
-                    par[new_key].stderr = params[key].stderr
+                        if 's' + str(i) + '_' in expr:
+                            for k in params:
+                                nk = k[len('s'+str(i)+'_'):]
+                                expr = expr.replace(k, nk)
+                        else:
+                            expr = None
+                    params[key].expr = None
+                    par[new_key] = copy.deepcopy(params[key])
+                    par[new_key].name = new_key
+                    if new_key == expr:
+                        par[new_key].expr = None
+                        par[new_key].vary = False
+                    if expr is not None:
+                        par[new_key].expr = expr
+            par.update_constraints()
             spec.params = par
 
     def seperate_response(self, x, background=False):
@@ -115,8 +125,7 @@ class SumModel(BaseModel):
         list of floats or NumPy arrays
             Seperate responses of models to the input *x*."""
         background_vals = [np.polyval([s.params[par_name].value for par_name in s.params if par_name.startswith('Background')], x) for s in self.models]
-        back = self.models[0].params['Background'].value if background else 0
-        return [s(x) - b + back for s, b in zip(self.models, background_vals)]
+        return [s(x) - b * (1-background) for s, b in zip(self.models, background_vals)]
 
     ###############################
     #      PLOTTING ROUTINES      #

@@ -5,9 +5,9 @@ Implementation of a class for the analysis of linear data.
 """
 
 import lmfit as lm
-from satlas.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel
+from satlas.models.summodel import SumModel
 from satlas.loglikelihood import poisson_llh
-from satlas.summodel import SumModel
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

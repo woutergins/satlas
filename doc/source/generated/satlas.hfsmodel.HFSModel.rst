@@ -1,7 +1,7 @@
 satlas.hfsmodel.HFSModel
 ====================================
 
-.. currentmodule:: satlas.hfsmodel
+.. currentmodule:: satlas.models.hfsmodel
 
 .. autoclass:: HFSModel
 

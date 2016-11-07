@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{b389313b-ce55-49c9-9ba0-936ae979d05a}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>setup.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <InterpreterVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="doc\source\scipy\layout.html" />
+    <Content Include="doc\source\scipy\searchbox.html" />
+    <Content Include="doc\source\scipy\sourcelink.html" />
+    <Content Include="doc\source\scipy\static\css\extend.css" />
+    <Content Include="doc\source\scipy\static\css\pygments.css" />
+    <Content Include="doc\source\scipy\static\css\scipy-central.css" />
+    <Content Include="doc\source\scipy\static\css\spc-bootstrap.css" />
+    <Content Include="doc\source\scipy\static\css\spc-extend.css" />
+    <Content Include="doc\source\scipy\static\img\glyphicons-halflings-white.png" />
+    <Content Include="doc\source\scipy\static\img\glyphicons-halflings.png" />
+    <Content Include="doc\source\scipy\static\img\LOGO.png" />
+    <Content Include="doc\source\scipy\static\img\scipy_org_logo.gif" />
+    <Content Include="doc\source\scipy\static\js\copybutton.js" />
+    <Content Include="doc\source\scipy\static\scipy.css_t" />
+    <Content Include="doc\source\tutorials\output_11_0.png" />
+    <Content Include="doc\source\tutorials\output_1_1.png" />
+    <Content Include="doc\source\tutorials\output_1_1r.png" />
+    <Content Include="doc\source\tutorials\output_1_2.png" />
+    <Content Include="doc\source\tutorials\output_1_3.png" />
+    <Content Include="doc\source\tutorials\output_2_2.png" />
+    <Content Include="doc\source\tutorials\output_3_0.png" />
+    <Content Include="doc\source\tutorials\output_3_2.png" />
+    <Content Include="doc\source\tutorials\output_3_3.png" />
+    <Content Include="doc\source\tutorials\output_3_3r.png" />
+    <Content Include="doc\source\tutorials\output_5_0.png" />
+    <Content Include="doc\source\tutorials\output_5_2.png" />
+    <Content Include="doc\source\tutorials\output_5_3.png" />
+    <Content Include="doc\source\tutorials\output_6_2.png" />
+    <Content Include="doc\source\tutorials\output_6_3.png" />
+    <Content Include="doc\source\tutorials\output_7_0.png" />
+    <Content Include="doc\source\tutorials\output_9_0.png" />
+    <Content Include="doc\source\tutorials\output_9_1.png" />
+    <Content Include="LICENSE.txt" />
+    <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="doc\source\conf.py" />
+    <Compile Include="doc\source\pyplots\CombinedSingleSpectrum.py" />
+    <Compile Include="doc\source\pyplots\IsomerExample.py" />
+    <Compile Include="doc\source\pyplots\ProfileExamples.py" />
+    <Compile Include="doc\source\pyplots\RelaxationExample.py" />
+    <Compile Include="doc\source\pyplots\SingleSpectrumExample.py" />
+    <Compile Include="doc\source\pyplots\spectrumcreation.py" />
+    <Compile Include="doc\source\pyplots\Xerror.py" />
+    <Compile Include="satlas\basemodel.py" />
+    <Compile Include="satlas\hfsmodel.py" />
+    <Compile Include="satlas\linearmodel.py" />
+    <Compile Include="satlas\linkedmodel.py" />
+    <Compile Include="satlas\loglikelihood.py" />
+    <Compile Include="satlas\models.py" />
+    <Compile Include="satlas\profiles.py" />
+    <Compile Include="satlas\stats\emcee\autocorr.py" />
+    <Compile Include="satlas\stats\emcee\ensemble.py" />
+    <Compile Include="satlas\stats\emcee\interruptible_pool.py" />
+    <Compile Include="satlas\stats\emcee\mh.py" />
+    <Compile Include="satlas\stats\emcee\mpi_pool.py" />
+    <Compile Include="satlas\stats\emcee\ptsampler.py" />
+    <Compile Include="satlas\stats\emcee\sampler.py" />
+    <Compile Include="satlas\stats\emcee\tests.py" />
+    <Compile Include="satlas\stats\emcee\utils.py" />
+    <Compile Include="satlas\stats\emcee\__init__.py" />
+    <Compile Include="satlas\stats\fitting.py" />
+    <Compile Include="satlas\stats\__init__.py" />
+    <Compile Include="satlas\style.py" />
+    <Compile Include="satlas\summodel.py" />
+    <Compile Include="satlas\tqdm\_tqdm.py" />
+    <Compile Include="satlas\tqdm\_tqdm_gui.py" />
+    <Compile Include="satlas\tqdm\_tqdm_pandas.py" />
+    <Compile Include="satlas\tqdm\_utils.py" />
+    <Compile Include="satlas\tqdm\_version.py" />
+    <Compile Include="satlas\tqdm\__init__.py" />
+    <Compile Include="satlas\transformmodel.py" />
+    <Compile Include="satlas\utilities\lineid_plot.py" />
+    <Compile Include="satlas\utilities\plotting.py" />
+    <Compile Include="satlas\utilities\utilities.py" />
+    <Compile Include="satlas\utilities\__init__.py" />
+    <Compile Include="satlas\version.py" />
+    <Compile Include="satlas\__init__.py" />
+    <Compile Include="setup.py" />
+    <Compile Include="tests\test_basemodel.py" />
+    <Compile Include="tests\test_combinedmodel.py" />
+    <Compile Include="tests\test_loglikelihood.py" />
+    <Compile Include="tests\test_multimodel.py" />
+    <Compile Include="tests\test_profiles.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="doc\" />
+    <Folder Include="doc\source" />
+    <Folder Include="doc\source\pyplots" />
+    <Folder Include="doc\source\scipy" />
+    <Folder Include="doc\source\scipy\static" />
+    <Folder Include="doc\source\scipy\static\css" />
+    <Folder Include="doc\source\scipy\static\img" />
+    <Folder Include="doc\source\scipy\static\js" />
+    <Folder Include="doc\source\tutorials" />
+    <Folder Include="satlas" />
+    <Folder Include="satlas\stats" />
+    <Folder Include="satlas\stats\emcee" />
+    <Folder Include="satlas\tqdm" />
+    <Folder Include="satlas\utilities" />
+    <Folder Include="tests" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>

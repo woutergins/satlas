@@ -11,7 +11,6 @@ import numdifftools as nd
 from satlas.stats import emcee as mcmc
 
 import lmfit as lm
-from satlas import linkedmodel
 from satlas import loglikelihood as llh
 from satlas import tqdm
 import h5py
@@ -24,7 +23,7 @@ from scipy.stats import chi2
 
 
 __all__ = ['chisquare_spectroscopic_fit', 'chisquare_fit', 'calculate_analytical_uncertainty',
-           'likelihood_fit', 'likelihood_walk', 'create_band']
+           'likelihood_fit', 'likelihood_walk', 'create_band', 'process_walk']
 chisquare_warning_message = "The supplied dictionary for {} did not contain the necessary keys 'value' and 'uncertainty'."
 
 ###############################
@@ -79,7 +78,10 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         yerr = func(model)
     if xerr is not None:
         x = np.array(x)
-        xerr = np.hstack((derivative(f, x, dx=1E-5) * xerr))
+        if len(x.shape) > 1:
+            xerr = derivative(lambda x: np.hstack(f.seperate_response(x)), x, dx=1E-5) * xerr
+        else:
+            xerr = derivative(f, x, dx=1E-5) * xerr
         bottom = np.sqrt(yerr * yerr + xerr * xerr)
     else:
         bottom = yerr
@@ -154,12 +156,12 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
     y: array_like
         Experimental data for the y-axis.
     yerr: array_like
-        Error bars on *y*.
+        Uncertainties on *y*.
 
     Other parameters
     ----------------
     xerr: array_like, optional
-        Error bars on *x*.
+        Uncertainties on *x*.
     func: function, optional
         Uses the provided function on the fitvalue to calculate the
         errorbars.
@@ -250,11 +252,9 @@ class PriorParameter(lm.Parameter):
         self.priormin, self.priormax = state[-2:]
         super(PriorParameter, self).__setstate__(state_pass)
 
-theta_array = np.linspace(-5, 5, 2**10)
-_x_err_calculation_stored = {}
 sqrt2pi = np.sqrt(2*np.pi)
 
-def likelihood_x_err(f, x, y, xerr, func, cache=True):
+def likelihood_x_err(f, x, y, xerr, func):
     """Calculates the loglikelihood for a model given
     x and y values. Incorporates a common given error on
     the x-axis.
@@ -287,65 +287,11 @@ def likelihood_x_err(f, x, y, xerr, func, cache=True):
     import scipy.integrate as integrate
     return (np.log([
         integrate.quad(
-            lambda theta: (np.exp(func(Y, f(X+theta * XERR))[i]) * np.exp(-theta*theta/2)/sqrt2pi),
+            lambda theta: (np.exp(func(Y, f, X+theta * XERR)[i]) * np.exp(-theta*theta/2)/sqrt2pi),
             -np.inf, np.inf)[0] for i, (X, Y, XERR) in enumerate(zip(x, y, xerr))
         ]).sum())
-    # Cache already calculated values:
-    # - x_grid
-    # - y_grid
-    # - FFT of x-uncertainty
-    # Note that this works only if the uncertainty remains the same.
-    # If a parameter approach is desired, this needs to be changed.
-    # for theta in theta_array:
-    #     print(func(y, f(x+theta*xerr)))
-    # x = np.array(x)
-    # y = np.array(y)
-    # xerr = np.array(xerr)
-    # key = id(f)
-    # if key in _x_err_calculation_stored and cache:
-    #     x_grid, y_grid, theta, rfft_g = _x_err_calculation_stored[key]
-    # else:
-    #     # This section is messy, but works.
-    #     # Should be cleaned up a bit in a future update...
-    #     if isinstance(f, linkedmodel.LinkedModel):
-    #         x_grid = []
-    #         y_grid, _ = np.meshgrid(y, theta_array)
-    #         g = []
-    #         for X, Y in zip(x, y):
-    #             X_grid, theta = np.meshgrid(X, theta_array)
-    #             X_grid = X_grid + xerr * theta
-    #             x_grid.append(X_grid)
-    #             g_top = (np.exp(-theta*theta * 0.5 / xerr**2)).T
-    #             g.append((g_top.T / (sqrt2pi * xerr)).T)
-    #         g = np.vstack(g)
-    #         rfft_g = np.fft.rfft(g)
-    #     else:
-    #         x_grid, theta = np.meshgrid(x, theta_array)
-    #         y_grid, _ = np.meshgrid(y, theta_array)
-    #         g_top = (np.exp(-theta*theta * 0.5))
-    #         g = (g_top / sqrt2pi).T
-    #         rfft_g = np.fft.rfft(g)
-    #         x_grid = x_grid + xerr * theta
-    #     if cache:
-    #         _x_err_calculation_stored[key] = x_grid, y_grid, theta, rfft_g
-    # # Calculate the loglikelihoods for the grid of uncertainty.
-    # # Each column is a new datapoint.
-    # vals = func(y_grid, f(x_grid))
-    # # To avoid overflows, subtract the maximal values from each column.
-    # mod = vals.max(axis=0)
-    # vals_mod = vals - mod
-    # p = (np.exp(vals)).T
-    # # Perform the convolution.
-    # integral_value = np.fft.irfft(np.fft.rfft(p) * rfft_g)[:, -1]
-    # # After taking the logarithm, add the maximal values again.
-    # # The subtraction becomes multiplication (with an exponential) after the exponential,
-    # # shifts through the integral, and becomes an addition (due to the logarithm).
-    # results = np.log(integral_value)
-    # mask = np.isnan(results)
-    # results[mask] = 0
-    # return results + mod
 
-def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
+def likelihood_lnprob(params, f, x, y, xerr, func):
     """Calculates the logarithm of the probability that the data fits
     the model given the current parameters.
 
@@ -379,10 +325,10 @@ def likelihood_lnprob(params, f, x, y, xerr, func, cache=True):
     f.params = params
     if not np.isfinite(lp):
         return -np.inf
-    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func, cache=cache))
+    res = lp + np.sum(likelihood_loglikelihood(f, x, y, xerr, func))
     return res
 
-def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
+def likelihood_loglikelihood(f, x, y, xerr, func):
     """Given a parameters object, a Model object, experimental data
     and a loglikelihood function, calculates the loglikelihood for
     all data points.
@@ -408,13 +354,14 @@ def likelihood_loglikelihood(f, x, y, xerr, func, cache=True):
         Array containing the loglikelihood for each seperate datapoint."""
     # If a value is given to the uncertainty on the x-values, use the adapted
     # function.
+    y = np.hstack(y)
     if xerr is None or np.allclose(0, xerr):
         return_value = func(y, f, x)
     else:
-        return_value = likelihood_x_err(f, x, y, xerr, func, cache=cache)
+        return_value = likelihood_x_err(f, x, y, xerr, func)
     return return_value
 
-def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
+def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead', method_kws={}, walking=False, walk_kws={}, verbose=True, hessian=True):
     """Fits the given model to the given data using the Maximum Likelihood Estimation technique.
     The given function is used to calculate the loglikelihood. After the fit, the message
     from the optimizer is printed and returned.
@@ -445,7 +392,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         +----------------------------+------------------------+
         | ``method`` arg             | Fitting method         |
         +============================+========================+
-        | ``nelder``                 | Nelder-Mead            |
+        | ``nelder-mead``            | Nelder-Mead            |
         +----------------------------+------------------------+
         | ``powell``                 | Powell                 |
         +----------------------------+------------------------+
@@ -517,10 +464,10 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
         progress = tqdm.tqdm(leave=True, desc='Likelihood fitting in progress')
 
     result = lm.Minimizer(negativeloglikelihood, params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
-    result = result.scalar_minimize(method=method, **method_kws)
+    result = result.minimize(method=method, params=params, **method_kws)
     f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    success = False
+    success = True
     counter = 0
     while not success:
         result = lm.Minimizer(negativeloglikelihood, result.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
@@ -538,7 +485,12 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='powell', me
     f.mle_fit = copy.deepcopy(result.params)
     f.mle_result = result.message
     f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+    try:
+        f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+    except AttributeError:
+        f.mle_chisqr = np.nan
+    if np.isnan(f.mle_chisqr):
+        print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
     try:
         f.mle_redchi = f.mle_chisqr / f.ndof
     except:
@@ -788,6 +740,7 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
         pbar.update(1)
     except:
         pass
+    print(return_value)
     return return_value
 
 def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 'chisquare_spectroscopic'}, verbose=True):
@@ -811,6 +764,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
     backup = copy.deepcopy(f.params)
     backup_fit = params_map[method.lower()]
     function_kwargs['pbar'] = pbar
+    orig_stat = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
     function_kwargs['orig_stat'] = orig_stat
     while True:
         search_value += step
@@ -834,7 +788,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
                 pbar.update(1)
             except:
                 pass
-            result, output = optimize.brentq(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
+            result, output = optimize.bisect(lambda v: calculate_updated_statistic(v, param_name, f, x, y, **function_kwargs) - bound,
                                              search_value - step, search_value,
                                              full_output=True)
             try:
@@ -868,7 +822,7 @@ def _set_state(f, state, method='mle'):
         f.params = copy.deepcopy(state[0])
         f.chisqr, f.ndof, f.redchi = state[1:]
 
-def calculate_analytical_uncertainty(f, x, y, npar=1, method='chisquare_spectroscopic', filter=None, fit_args=tuple(), fit_kws={}):
+def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', filter=None, fit_args=tuple(), fit_kws={}):
     """Calculates the analytical errors on the parameters, by changing the value for
     a parameter and finding the point where the chisquare for the refitted parameters
     is one greater. For MLE, an increase of 0.5 is sought. The corresponding series
@@ -927,8 +881,8 @@ def calculate_analytical_uncertainty(f, x, y, npar=1, method='chisquare_spectros
             param_names.append(p)
 
     params = copy.deepcopy(f.params)
-    chifunc = lambda x: chi2.cdf(x, npar) - 0.682689492 # Calculate 1 sigma boundary
-    bound = optimize.root(chifunc, npar).x[0] * 0.5 if method.lower() == 'mle' else optimize.root(chifunc, npar).x[0]
+    chifunc = lambda x: chi2.cdf(x, 1) - 0.682689492 # Calculate 1 sigma boundary
+    bound = optimize.root(chifunc, 1).x[0] * 0.5 if method.lower() == 'mle' else optimize.root(chifunc, 1).x[0]
     for i in range(no_params):
         # _set_state(f, state, method=method.lower())
         ranges[param_names[i]] = {}
@@ -987,14 +941,14 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
         from a distribution given a model value. Should accept
         input as (y_data, y_model). Defaults to the Poisson
         loglikelihood.
+    nsteps: integer, optional
+        Determines how many steps each walker should take.
+        Defaults to 2000 steps.
     walkers: integer, optional
         Sets the number of walkers to be used for the random walk.
         The number of walkers should never be less than twice the
         number of parameters. For more information on this, see
         the emcee documentation. Defaults to 20 walkers.
-    nsteps: integer, optional
-        Determines how many steps each walker should take.
-        Defaults to 2000 steps.
     filename: string, optional
         Filename where the random walk has to be saved. If *None*,
         the current time in seconds since January 1970 is used.
@@ -1058,3 +1012,47 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
 
     f.mle_fit = copy.deepcopy(params)
     f.params = copy.deepcopy(params)
+
+def process_walk(model, filename, selection=(0, 100)):
+    r"""Given a model and H5 file with the results of a random walk,
+    the parameters varied in the walk are set to the 50% percentile,
+    and the uncertainty is set to either the difference between the
+    50% and 16% percentile, or between the 84% and 50%, whichever is
+    the largest.
+
+    Parameters
+    ----------
+    model: :class:`.BaseModel`
+        Object which has a params attribute.
+    filename: str
+        Filename of the corresponding H5 file.
+
+    Other parameters
+    ----------------
+    selection: tuple
+        Sets the lower and upper boundary of the percentage of the random walk
+        to take into account. Can be used to eliminate burn-in.
+        Defaults to (0, 100)."""
+    p = model.params.copy()
+    with h5py.File(filename, 'r') as store:
+        columns = store['data'].attrs['format']
+        columns = [f.decode('utf-8') for f in columns]
+        with tqdm.tqdm(total=len(columns)+(len(columns)**2-len(columns))/2, leave=True) as pbar:
+            dataset_length = store['data'].shape[0]
+            first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
+            for i, val in enumerate(columns):
+                pbar.set_description(val)
+                i = columns.index(val)
+                x = store['data'][first:last, i]
+
+                q = [16.0, 50.0, 84.0]
+                q16, q50, q84 = np.percentile(x, q)
+
+                value, std_dev = q50, max(q50-q16, q84-q50)
+                p[val].value = value
+                p[val].stderr = std_dev
+                pbar.update(1)
+    model.params = p.copy()
+    model.mle_fit = p.copy()
+    model.mle_chisqr = np.nan
+    model.mle_redchi = np.nan

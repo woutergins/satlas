@@ -6,7 +6,6 @@ Implementation of base class for extension to models describing actual data.
 """
 import copy
 
-
 import lmfit as lm
 from satlas.loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
@@ -143,6 +142,9 @@ class BaseModel(object):
                     par[key].max = self._constraints[key][bound]
                 else:
                     pass
+        for key in self._expr.keys():
+            if key in par.keys():
+                par[key].expr = self._expr[key]
         return par
 
     def get_chisquare_mapping(self):
@@ -254,7 +256,7 @@ class BaseModel(object):
                     varerr.append(None)
         return var_names, var, varerr
 
-    def get_result_frame(self, method='chisquare', selected=False, bounds=False, vary=False):
+    def get_result_frame(self, method='chisquare', selected=False, bounds=False, vary=False, scaled=True):
         """Returns the data from the fit in a pandas DataFrame.
 
         Parameters
@@ -272,6 +274,8 @@ class BaseModel(object):
         vary: boolean, optional
             Selects if only the parameters that have been varied have to
             be supplied. Defaults to *False*.
+        scaled: boolean, optional
+            Sets the uncertainty scaling with the reduced chisquare value. Default to *True*.
 
         Returns
         -------
@@ -280,11 +284,20 @@ class BaseModel(object):
             and either two subcolumns for the value and the uncertainty, or
             four subcolumns for the value, uncertainty and bounds."""
         if method.lower() == 'chisquare':
-            values = self.chisq_res_par.values()
+            if scaled:
+                p = copy.deepcopy(self.chisq_res_par)
+                for par in p:
+                    p[par].stderr *= self.redchi**0.5
+            else:
+                p = self.chisq_res_par
         elif method.lower() == 'mle':
-            values = self.mle_fit.values()
-        else:
-            raise KeyError
+            if scaled:
+                p = copy.deepcopy(self.mle_fit)
+                for par in p:
+                    p[par].stderr *= self.mle_redchi**0.5
+            else:
+                p = self.mle_fit
+        values = p.values()
         if selected:
             values = [v for n in self.selected for v in values if n in v.name]
         if vary:
@@ -301,6 +314,9 @@ class BaseModel(object):
                        [x for p in values for x in ind]]
         columns = pd.MultiIndex.from_tuples(list(zip(*columns)))
         result = pd.DataFrame(data, index=columns).T
+        result.loc[:, 'Chisquare'] = pd.Series(np.array([self.chisqr]), index=result.index)
+        result.loc[:, 'Reduced chisquare'] = pd.Series(np.array([self.redchi]), index=result.index)
+        result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof]), index=result.index)
         return result
 
     def get_result_dict(self, method='chisquare', scaled=True):

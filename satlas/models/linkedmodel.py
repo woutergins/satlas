@@ -7,7 +7,7 @@ Implementation of a class for the simultaneous fitting of hyperfine structure sp
 import copy
 
 import lmfit as lm
-from satlas.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel
 from satlas.utilities import poisson_interval
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,7 +40,7 @@ class LinkedModel(BaseModel):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
 
     def get_lnprior_mapping(self, params):
-        return sum([f.get_lnprior_mapping(params) for f in self.models])
+        return sum([f.get_lnprior_mapping(f.params) for f in self.models])
 
     @property
     def shared(self):
@@ -56,6 +56,8 @@ class LinkedModel(BaseModel):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
         params = lm.Parameters()
+        to_give_expr = []
+        expr_to_give = []
         for i, s in enumerate(self.models):
             p = copy.deepcopy(s.params)
             keys = list(p.keys())
@@ -70,11 +72,27 @@ class LinkedModel(BaseModel):
                             p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
                 # Link the shared parameters to the first subspectrum
                 if any([shared in old_key for shared in self.shared]) and i > 0:
-                    p[new_key].expr = 's0_' + old_key
-                    p[new_key].vary = False
+                    model_selection = 0
+                    selected = False
+                    while not selected:
+                        try:
+                            if old_key in self.models[model_selection].params:
+                                selected = True
+                            else:
+                                model_selection += 1
+                        except IndexError:
+                            raise NameError('Variable to be shared not defined in any model')
+                    if not model_selection == i:
+                        to_give_expr.append(new_key)
+                        expr_to_give.append('s' + str(model_selection) + '_' + old_key)
+                        p[new_key].vary = False
                 if new_key in self._expr.keys():
                     p[new_key].expr = self._expr[new_key]
             params += p
+        for key, expr in zip(to_give_expr, expr_to_give):
+            params[key].expr = expr
+            params[key].vary = False
+        params.update_constraints()
         return params
 
     @params.setter
@@ -86,11 +104,20 @@ class LinkedModel(BaseModel):
                     new_key = key[len('s'+str(i)+'_'):]
                     expr = params[key].expr
                     if expr is not None:
-                        for k in params:
-                            nk = k[len('s'+str(i)+'_'):]
-                            expr = expr.replace(k, nk)
+                        if 's' + str(i) + '_' in expr:
+                            for k in params:
+                                nk = k[len('s'+str(i)+'_'):]
+                                expr = expr.replace(k, nk)
+                        else:
+                            expr = None
+                    params[key].expr = None
                     par[new_key] = copy.deepcopy(params[key])
                     par[new_key].name = new_key
+                    if new_key == expr:
+                        par[new_key].expr = None
+                        par[new_key].vary = False
+                    if expr is not None:
+                        par[new_key].expr = expr
             spec.params = par
 
     def seperate_response(self, x):

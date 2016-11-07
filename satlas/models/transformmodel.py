@@ -6,8 +6,7 @@ to the higher class. Currently only supports HFSModel.
 """
 import copy
 
-from .hfsmodel import HFSModel
-
+from satlas.models.hfsmodel import HFSModel
 
 __all__ = ['TransformHFSModel']
 
