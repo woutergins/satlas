@@ -314,6 +314,9 @@ class BaseModel(object):
                        [x for p in values for x in ind]]
         columns = pd.MultiIndex.from_tuples(list(zip(*columns)))
         result = pd.DataFrame(data, index=columns).T
+        result.loc[:, 'Chisquare'] = pd.Series(np.array([self.chisqr]), index=result.index)
+        result.loc[:, 'Reduced chisquare'] = pd.Series(np.array([self.redchi]), index=result.index)
+        result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof]), index=result.index)
         return result
 
     def get_result_dict(self, method='chisquare', scaled=True):

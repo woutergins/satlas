@@ -9,6 +9,7 @@ from satlas.models import linkedmodel
 from satlas.models.linkedmodel import *
 from satlas.models import summodel
 from satlas.models.summodel import *
+from satlas.models import *
 from satlas import utilities
 from satlas.utilities import *
 from satlas.stats import fitting
