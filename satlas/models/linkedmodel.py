@@ -24,7 +24,7 @@ class LinkedModel(BaseModel):
 
         Parameters
         ----------
-        models: list of :class:`.BaseModel` or :class:`.SingleSpectrum` objects
+        models: list of :class:`.BaseModel` children objects
             A list defining the different models."""
         super(LinkedModel, self).__init__()
         self.models = models

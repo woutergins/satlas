@@ -5,8 +5,6 @@ API reference
 
 .. currentmodule:: satlas
 
-Note that the CombinedModel and MultiModel are still available for use, but are deprecated and will be removed in a future release. Please upgrade your code to use :class:`.LinkedModel` and :class:`.SumModel` instead.
-
 Models
 ------
 
@@ -19,38 +17,38 @@ General Models
 .. autosummary::
     :toctree: generated/
 
-    satlas.basemodel.BaseModel
-    satlas.summodel.SumModel
-    satlas.linkedmodel.LinkedModel
-    satlas.models.MiscModel
-    satlas.models.PolynomialModel
+    satlas.models.basemodel.BaseModel
+    satlas.models.summodel.SumModel
+    satlas.models.linkedmodel.LinkedModel
+    satlas.models.models.MiscModel
+    satlas.models.models.PolynomialModel
 
 Specialized Models
 ~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: generated/
 
-    satlas.hfsmodel.HFSModel
-    satlas.transformmodel.TransformHFSModel
+    satlas.models.hfsmodel.HFSModel
+    satlas.models.transformmodel.TransformHFSModel
 
 Fitting routines
 ----------------
-.. automodule:: satlas.fitting
+.. automodule:: satlas.stats.fitting
 
 .. autosummary::
       :toctree: fitting/
 
-      satlas.fitting.calculate_analytical_uncertainty
-      satlas.fitting.chisquare_fit
-      satlas.fitting.chisquare_model
-      satlas.fitting.chisquare_spectroscopic_fit
-      satlas.fitting.likelihood_fit
-      satlas.fitting.likelihood_walk
-      satlas.fitting.likelihood_x_err
-      satlas.fitting.likelihood_lnprob
-      satlas.fitting.likelihood_loglikelihood
-      satlas.fitting.createBand
-      satlas.fitting.assignHessianEstimate
+      satlas.stats.fitting.calculate_analytical_uncertainty
+      satlas.stats.fitting.chisquare_fit
+      satlas.stats.fitting.chisquare_model
+      satlas.stats.fitting.chisquare_spectroscopic_fit
+      satlas.stats.fitting.likelihood_fit
+      satlas.stats.fitting.likelihood_walk
+      satlas.stats.fitting.likelihood_x_err
+      satlas.stats.fitting.likelihood_lnprob
+      satlas.stats.fitting.likelihood_loglikelihood
+      satlas.stats.fitting.create_band
+      satlas.stats.fitting.assign_hessian_estimate
 
 Likelihood calculations
 -----------------------
@@ -61,7 +59,6 @@ Likelihood calculations
       :toctree: loglikelihood/
 
       satlas.loglikelihood.poisson_llh
-      satlas.loglikelihood.gaussian_llh
       satlas.loglikelihood.create_gaussian_llh
       satlas.loglikelihood.create_gaussian_priormap
 
@@ -83,19 +80,16 @@ Lineshapes
 Utilities
 ---------
 
-.. automodule:: satlas.utilities
+.. automodule:: satlas.utilities.utilities
 
    .. autosummary::
       :toctree: utilities/
 
-      satlas.utilities.generate_correlation_plot
-      satlas.utilities.generate_correlation_map
-      satlas.utilities.generate_spectrum
-      satlas.utilities.load_model
-      satlas.utilities.poisson_interval
-      satlas.utilities.weighted_average
-      satlas.utilities.beta
-      satlas.utilities.dopplerfactor
+      satlas.utilities.utilities.generate_spectrum
+      satlas.utilities.utilities.poisson_interval
+      satlas.utilities.utilities.weighted_average
+      satlas.utilities.utilities.beta
+      satlas.utilities.utilities.dopplerfactor
 
 Visualisations
 --------------
@@ -109,13 +103,10 @@ Visualisations
       satlas.style.get_available_styles
       satlas.style.set_font
 
-.. warning::
-
-  The following routines are still in an experimental stage!
-
-.. automodule:: satlas.plotter
+.. automodule:: satlas.utilities.plotting
 
     .. autosummary::
-      :toctree: plotter/
+      :toctree: plotting/
 
-      satlas.plotter.Plotter
+      satlas.utilities.plotting.generate_correlation_map
+      satlas.utilities.plotting.generate_correlation_plot

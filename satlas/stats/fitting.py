@@ -91,7 +91,7 @@ def chisquare_model(params, f, x, y, yerr, xerr=None, func=None):
         return_value = np.append(return_value, appended_values)
     return return_value
 
-def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, verbose=True, hessian=False, method='leastsq'):
+def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=np.sqrt, verbose=True, hessian=False, method='leastsq'):
     """Use the :func:`chisquare_fit` function, automatically estimating the errors
     on the counts by the square root.
 
@@ -109,13 +109,8 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, model=True, func=np.sqrt, ve
     ----------------
     xerr: array_like, optional
         Error bars on *x*.
-    model: boolean, optional
-        When set to *True*, use the square root of the model function as uncertainty. *False*
-        uses the square root of the datapoints. A value of *None* reverts to the given function
-        *func* to be applied to the model values. Defaults to *True*.
     func: function, optional
-        If *model* is set to *None*, this function is applied to the model values to calculate
-        the weights of the fit.
+        This function is applied to the model values to calculate the errorbars.
     verbose: boolean, optional
         When set to *True*, a tqdm-progressbar in the terminal is maintained.
         Defaults to *True*.
@@ -216,7 +211,7 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
             progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True, miniters=1)
         else:
             progress = None
-        assignHessianEstimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.chisq_res_par, x, np.hstack(y), np.hstack(yerr), xerr, func, progress=progress)
+        assign_hessian_estimate(lambda *args: (chisquare_model(*args)**2).sum(), f, f.chisq_res_par, x, np.hstack(y), np.hstack(yerr), xerr, func, progress=progress)
     else:
         for key in f.params.keys():
             if f.params[key].stderr is not None:
@@ -276,14 +271,7 @@ def likelihood_x_err(f, x, y, xerr, func):
 
     Returns
     -------
-    array_like
-
-    Note
-    ----
-    This method uses the FFT algorithm to quickly calculate
-    a convolution integral. If greater accuracy is required,
-    change *satlas.fitting.theta_array* to a suitable
-    range and length."""
+    array_like"""
     import scipy.integrate as integrate
     return (np.log([
         integrate.quad(
@@ -387,40 +375,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
         loglikelihood.
     method: str, optional
         Selects the algorithm to be used by the minimizer used by LMFIT.
-        Possible values:
-
-        +----------------------------+------------------------+
-        | ``method`` arg             | Fitting method         |
-        +============================+========================+
-        | ``nelder-mead``            | Nelder-Mead            |
-        +----------------------------+------------------------+
-        | ``powell``                 | Powell                 |
-        +----------------------------+------------------------+
-        | ``cg``                     | Conjugate Gradient     |
-        +----------------------------+------------------------+
-        | ``bfgs``                   | BFGS                   |
-        +----------------------------+------------------------+
-        | ``newton``                 | Newton-CG              |
-        +----------------------------+------------------------+
-        | ``lbfgs``                  | L-BFGS-B               |
-        +----------------------------+------------------------+
-        | ``l-bfgs``                 | L-BFGS-B               |
-        +----------------------------+------------------------+
-        | ``tnc``                    | Truncated Newton       |
-        +----------------------------+------------------------+
-        | ``cobyla``                 | COBYLA                 |
-        +----------------------------+------------------------+
-        | ``slsqp``                  | Sequential Linear      |
-        |                            | Squares Programming    |
-        +----------------------------+------------------------+
-        | ``dogleg``                 | Dogleg                 |
-        +----------------------------+------------------------+
-        | ``trust-ncg``              | trust-ncg              |
-        +----------------------------+------------------------+
-        | ``differential_evolution`` | Differential evolution |
-        +----------------------------+------------------------+
-
-        Defaults to 'tnc'.
+        See LMFIT documentation for possible values. Defaults to 'nelder-mead'.
     method_kws: dict, optional
         Dictionary containing the keywords to be passed to the
         minimizer.
@@ -467,7 +422,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     result = result.minimize(method=method, params=params, **method_kws)
     f.params = copy.deepcopy(result.params)
     val = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    success = True
+    success = False
     counter = 0
     while not success:
         result = lm.Minimizer(negativeloglikelihood, result.params, fcn_args=(f, x, y, xerr, func), iter_cb=iter_cb)
@@ -502,7 +457,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
         else:
             progress = None
 
-        assignHessianEstimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
+        assign_hessian_estimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
         f.params = copy.deepcopy(f.mle_fit)
 
 
@@ -540,7 +495,7 @@ def _parameterCostfunction(f, params, func, *args, likelihood=False):
         return func(groupParams, f, *args)
     return listfunc
 
-def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=None):
+def assign_hessian_estimate(func, f, params, *args, likelihood=False, progress=None):
     """Calculates the Hessian of the model at the given parameters,
     and associates uncertainty estimates based on the inverted Hessian matrix.
     Note that, for estimation for chisquare methods, the inverted matrix is
@@ -619,11 +574,11 @@ def assignHessianEstimate(func, f, params, *args, likelihood=False, progress=Non
         progress.close()
 
 def create_band(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_chi=None, func_llh=llh.poisson_llh, kind='prediction'):
-    r"""Calculates prediction or confidence bounds at the 1:math:`\sigma` level.
+    r"""Calculates prediction or confidence bounds at the 1 :math:`\sigma` level.
     The method used is based on the Delta Method: at the requested prediction points *x*, the bound is calculated as
 
     .. math::
-        \sqrt{G'(\beta, x).T H^{-1}(\beta) G'(\beta, x)}
+        \sqrt{G'(\beta, x)^T H^{-1}(\beta) G'(\beta, x)}
 
     with G the cost function, H the Hessian matrix and :math:`\beta` the vector of parameters.
     The resulting bound needs to be subtracted and added to the value given by the model to get the confidence interval.
@@ -653,7 +608,7 @@ def create_band(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_
         which uses *yerr*.
     func_llh: function
         Is passed on to the likelihood fitting method to define the
-        likelihood function. Defaults to :func:`llh.poisson_llh`.
+        likelihood function. Defaults to :func:`satlas.loglikelihood.poisson_llh`.
     kind: {'prediction', 'confidence'}
         Selects which type of bound is calculated.
 
@@ -740,7 +695,6 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
         pbar.update(1)
     except:
         pass
-    print(return_value)
     return return_value
 
 def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 'chisquare_spectroscopic'}, verbose=True):

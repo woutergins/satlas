@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 sqrt2pi = np.sqrt(2*np.pi)
-__all__ = ['poisson_llh', 'create_gaussian_llh']
+__all__ = ['poisson_llh', 'create_gaussian_llh' , 'create_gaussian_priormap']
 
 
 def poisson_llh(y, f, x):

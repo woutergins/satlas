@@ -225,6 +225,7 @@ class Lorentzian(Profile):
 class PseudoVoigt(Profile):
 
     r"""A callable normalized PseudoVoigt profile.
+
     Parameters
     ----------
     fwhm: float
@@ -233,11 +234,13 @@ class PseudoVoigt(Profile):
         Location of the center, defaults to 0.
     amp: float
         Amplitude of the profile, defaults to 1.
+
     Returns
     -------
     PseudoVoigt
         Callable instance, evaluates the pseudovoigt profile in the arguments
         supplied.
+
     Note
     ----
     The formula used is taken from the webpage
@@ -265,6 +268,7 @@ class PseudoVoigt(Profile):
 
     @property
     def fwhm(self):
+        """FWHM of the peak."""
         return self._fwhm
 
     @fwhm.setter
@@ -278,6 +282,7 @@ class PseudoVoigt(Profile):
 
     @property
     def n(self):
+        """Ratio of Lorentzian aspect."""
         return self._n
 
     @n.setter
@@ -292,6 +297,7 @@ class PseudoVoigt(Profile):
 
     @property
     def a(self):
+        """Asymmetry parameter."""
         return self._a
 
     @a.setter
