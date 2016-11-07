@@ -92,6 +92,7 @@ class LinkedModel(BaseModel):
         for key, expr in zip(to_give_expr, expr_to_give):
             params[key].expr = expr
             params[key].vary = False
+        params.update_constraints()
         return params
 
     @params.setter

@@ -29,7 +29,7 @@ class SumModel(BaseModel):
             A list containing the models."""
         super(SumModel, self).__init__()
         self.models = models
-        self.shared = []
+        self.shared = ['Background']
 
     def get_chisquare_mapping(self):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
@@ -76,6 +76,7 @@ class SumModel(BaseModel):
         for key, expr in zip(to_give_expr, expr_to_give):
             params[key].expr = expr
             params[key].vary = False
+            params.update_constraints()
         return params
 
     @params.setter
@@ -101,6 +102,7 @@ class SumModel(BaseModel):
                         par[new_key].vary = False
                     if expr is not None:
                         par[new_key].expr = expr
+            par.update_constraints()
             spec.params = par
 
     def seperate_response(self, x, background=False):
@@ -123,8 +125,7 @@ class SumModel(BaseModel):
         list of floats or NumPy arrays
             Seperate responses of models to the input *x*."""
         background_vals = [np.polyval([s.params[par_name].value for par_name in s.params if par_name.startswith('Background')], x) for s in self.models]
-        back = self.models[0].params['Background'].value if background else 0
-        return [s(x) - b + back for s, b in zip(self.models, background_vals)]
+        return [s(x) - b * (1-background) for s, b in zip(self.models, background_vals)]
 
     ###############################
     #      PLOTTING ROUTINES      #
