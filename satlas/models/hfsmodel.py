@@ -415,7 +415,7 @@ class HFSModel(BaseModel):
 
         par.add('Centroid', value=centroid, vary=True)
 
-        for i, val in reversed(list(enumerate(background_params))):
+        for i, val in enumerate(reversed(background_params)):
             par.add('Background' + str(i), value=background_params[i], vary=True)
         self.background_degree = i
         n, poisson, offset = sidepeak_params['N'], sidepeak_params['Poisson'], sidepeak_params['Offset']

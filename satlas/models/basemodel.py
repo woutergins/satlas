@@ -194,12 +194,14 @@ class BaseModel(object):
         varyDict: dictionary
             A dictionary containing 'key: True/False' mappings with
             the parameter names as keys."""
+        p = self.params.copy()
         for k in varyDict.keys():
             self._vary[k] = copy.deepcopy(varyDict[k])
             try:
-                self.params[k].vary = self._vary[k]
+                p[k].vary = self._vary[k]
             except KeyError:
                 pass
+        self.params = p.copy()
 
     def set_boundaries(self, boundaryDict):
         """Sets the boundaries of the fitparameters as supplied in the
@@ -209,20 +211,23 @@ class BaseModel(object):
         ----------
         boundaryDict: dictionary
             A dictionary containing "key: {'min': value, 'max': value}" mappings.
-            A value of *None* or a missing key gives no boundary
+            A missing 'min' or 'max' key gives no boundary
             in that direction. The parameter names have to be used as keys."""
+        p = self.params.copy()
         for k in boundaryDict.keys():
             self._constraints[k] = copy.deepcopy(boundaryDict[k])
             for bound in self._constraints[k].keys():
+                b = self._constraints[k][bound]
                 try:
                     if bound.lower() == 'min':
-                        self.params[k].min = self._constraints[k][bound]
+                        p[k].min = b if b is not None else -np.inf
                     elif bound.lower() == 'max':
-                        self.params[k].max = self._constraints[k][bound]
+                        p[k].max = b if b is not None else np.inf
                     else:
                         pass
                 except KeyError:
-                    pass
+                    raise
+        self.params = p.copy()
 
     def _check_variation(self, par):
         # Make sure the variations in the params are set correctly.
