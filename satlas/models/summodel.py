@@ -29,7 +29,23 @@ class SumModel(BaseModel):
             A list containing the models."""
         super(SumModel, self).__init__()
         self.models = models
-        self.shared = ['Background']
+        for i, model in enumerate(self.models):
+            model._add_prefix('s' + str(i) + '_')
+        self._set_params()
+        self.shared = []
+
+    def _set_params(self):
+        for model in self.models:
+            try:
+                p.add_many(*model.params.values())
+            except:
+                p = model.params.copy()
+        self.params = p
+
+    def _add_prefix(self, value):
+        for model in self.models:
+            model._add_prefix(value)
+        self._set_params()
 
     def get_chisquare_mapping(self):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
@@ -44,66 +60,29 @@ class SumModel(BaseModel):
 
     @shared.setter
     def shared(self, value):
+        params = self.params.copy()
         self._shared = value
+        for name in self._shared:
+            selected_list = [p for p in params.keys() if name in p]
+            try:
+                selected_name = selected_list[0]
+                for p in selected_list[1:]:
+                    params[p].expr = selected_name
+            except IndexError:
+                pass
+        self.params = params
 
     @property
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        params = lm.Parameters()
-        to_give_expr = []
-        expr_to_give = []
-        for i, s in enumerate(self.models):
-            p = copy.deepcopy(s.params)
-            keys = list(p.keys())
-            for old_key in keys:
-                new_key = 's' + str(i) + '_' + old_key
-                p[new_key] = p.pop(old_key)
-                # If an expression is defined, replace the old names with the new ones
-                if p[new_key].expr is not None:
-                    for o_key in keys:
-                        if o_key in p[new_key].expr:
-                            n_key = 's' + str(i) + '_' + o_key
-                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
-                # Link the shared parameters to the first subspectrum
-                if any([shared in old_key for shared in self.shared]) and i > 0:
-                    to_give_expr.append(new_key)
-                    expr_to_give.append('s0_' + old_key)
-                    p[new_key].vary = False
-                if new_key in self._expr.keys():
-                    p[new_key].expr = self._expr[new_key]
-            params += p
-        for key, expr in zip(to_give_expr, expr_to_give):
-            params[key].expr = expr
-            params[key].vary = False
-            params.update_constraints()
-        return params
+        return self._parameters
 
     @params.setter
     def params(self, params):
-        for i, spec in enumerate(self.models):
-            par = lm.Parameters()
-            for key in params:
-                if key.startswith('s'+str(i)+'_'):
-                    new_key = key[len('s'+str(i)+'_'):]
-                    expr = params[key].expr
-                    if expr is not None:
-                        if 's' + str(i) + '_' in expr:
-                            for k in params:
-                                nk = k[len('s'+str(i)+'_'):]
-                                expr = expr.replace(k, nk)
-                        else:
-                            expr = None
-                    params[key].expr = None
-                    par[new_key] = copy.deepcopy(params[key])
-                    par[new_key].name = new_key
-                    if new_key == expr:
-                        par[new_key].expr = None
-                        par[new_key].vary = False
-                    if expr is not None:
-                        par[new_key].expr = expr
-            par.update_constraints()
-            spec.params = par
+        self._parameters = params.copy()
+        for spec in self.models:
+            spec.params = self._parameters.copy()
 
     def seperate_response(self, x, background=False):
         """Get the response for each seperate spectrum for the values *x*,
@@ -131,10 +110,7 @@ class SumModel(BaseModel):
     #      PLOTTING ROUTINES      #
     ###############################
 
-    def plot(self, x=None, y=None, yerr=None, ax=None,
-             plot_kws={}, plot_seperate=True, show=True,
-             legend=None, data_legend=None, xlabel='Frequency (MHz)',
-             ylabel='Counts'):
+    def plot(self, x=None, y=None, yerr=None, ax=None, plot_kws={}, plot_seperate=True, show=True, legend=None, data_legend=None, xlabel='Frequency (MHz)', ylabel='Counts'):
         """Routine that plots the hfs of all the models,
         possibly on top of experimental data.
 

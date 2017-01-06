@@ -11,9 +11,52 @@ from satlas.loglikelihood import create_gaussian_priormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 
 __all__ = ['load_model']
 
+class SATLASParameters(lm.Parameters):
+    _prefix = ''
+
+    def __getitem__(self, key):
+        try:
+            return super(SATLASParameters, self).__getitem__(key)
+        except KeyError:
+            try:
+                return super(SATLASParameters, self).__getitem__(self._prefix + key)
+            except KeyError:
+                raise
+
+    def __deepcopy__(self, memo):
+        """Parameters deepcopy needs to make sure that
+        asteval is available and that all individula
+        parameter objects are copied"""
+        _pars = SATLASParameters(asteval=None)
+
+        # find the symbols that were added by users, not during construction
+        sym_unique = self._asteval.user_defined_symbols()
+        unique_symbols = {key: deepcopy(self._asteval.symtable[key], memo)
+                              for key in sym_unique}
+        _pars._asteval.symtable.update(unique_symbols)
+
+        # we're just about to add a lot of Parameter objects to the newly
+        parameter_list = []
+        for key, par in self.items():
+            if isinstance(par, lm.Parameter):
+                param = lm.Parameter(name=par.name,
+                                  value=par.value,
+                                  min=par.min,
+                                  max=par.max)
+                param.vary = par.vary
+                param.stderr = par.stderr
+                param.correl = par.correl
+                param.init_value = par.init_value
+                param.expr = par.expr
+                parameter_list.append(param)
+
+        _pars.add_many(*parameter_list)
+        _pars._prefix = self._prefix
+        return _pars
 
 class BaseModel(object):
 
@@ -28,6 +71,40 @@ class BaseModel(object):
         self._params = None
         self._lnprior_mapping = {}
         self._chisquare_mapping = {}
+        self._prefix = ''
+
+    def _set_prefix(self, value):
+        for p in self._parameters:
+            if len(self._prefix) > 0:
+                if self._parameters[p].expr is not None:
+                    self._parameters[p].expr = self._parameters[p].expr.replace(self._prefix, value)
+            else:
+                if self._parameters[p].expr is not None:
+                    for P in self._parameters:
+                        if P in self._parameters[p].expr:
+                            self._parameters[p].expr = self._parameters[p].expr.replace(P, value + P)
+        for p in list(self._parameters.keys()):
+            if len(self._prefix) > 0:
+                self._parameters[p].name = self._parameters[p].name[len(self._prefix):]
+            self._parameters[p].name = value + self._parameters[p].name
+            self._parameters[value + p] = self._parameters.pop(p)
+        self._parameters._prefix = value
+        self._prefix = value
+
+    def _add_prefix(self, value):
+        for p in self._parameters:
+            if self._parameters[p].expr is not None:
+                if len(self._prefix) > 0:
+                    self._parameters[p].expr = self._parameters[p].expr.replace(self._prefix, value + self._prefix)
+                else:
+                    for P in self._parameters:
+                        if P in self._parameters[p].expr:
+                            self._parameters[p].expr = self._parameters[p].expr.replace(P, value + P)
+        for p in list(self._parameters.keys()):
+            self._parameters[p].name = value + self._parameters[p].name
+            self._parameters[value + p] = self._parameters.pop(p)
+        self._parameters._prefix = value + self._parameters._prefix
+        self._prefix = value + self._prefix
 
     def set_literature_values(self, literatureDict):
         """Sets the lnprior and chisquare mapping to handle the given
@@ -86,10 +163,11 @@ class BaseModel(object):
         valueDict: dictionary
             Dictionary containing the values for the parameters
             with the parameter names as keys."""
-        par = self.params
         for key in valueDict:
-            par[key].value = copy.deepcopy(valueDict[key])
-        self.params = par
+            try:
+                self.params[key].value = valueDict[key]
+            except KeyError:
+                pass
 
     def set_expr(self, exprDict):
         """Sets the expression of the selected parameters
@@ -102,6 +180,10 @@ class BaseModel(object):
             with the parameter names as keys."""
         for k in exprDict.keys():
             self._expr[k] = copy.deepcopy(exprDict[k])
+            try:
+                self.params[k].expr = self._expr[k]
+            except KeyError:
+                pass
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
@@ -114,6 +196,10 @@ class BaseModel(object):
             the parameter names as keys."""
         for k in varyDict.keys():
             self._vary[k] = copy.deepcopy(varyDict[k])
+            try:
+                self.params[k].vary = self._vary[k]
+            except KeyError:
+                pass
 
     def set_boundaries(self, boundaryDict):
         """Sets the boundaries of the fitparameters as supplied in the
@@ -127,28 +213,45 @@ class BaseModel(object):
             in that direction. The parameter names have to be used as keys."""
         for k in boundaryDict.keys():
             self._constraints[k] = copy.deepcopy(boundaryDict[k])
+            for bound in self._constraints[k].keys():
+                try:
+                    if bound.lower() == 'min':
+                        self.params[k].min = self._constraints[k][bound]
+                    elif bound.lower() == 'max':
+                        self.params[k].max = self._constraints[k][bound]
+                    else:
+                        pass
+                except KeyError:
+                    pass
 
     def _check_variation(self, par):
         # Make sure the variations in the params are set correctly.
         for key in self._vary.keys():
-            if key in par.keys():
+            try:
                 par[key].vary = self._vary[key]
+            except KeyError:
+                pass
 
         for key in self._constraints.keys():
             for bound in self._constraints[key]:
-                if bound.lower() == 'min':
-                    par[key].min = self._constraints[key][bound]
-                elif bound.lower() == 'max':
-                    par[key].max = self._constraints[key][bound]
-                else:
+                try:
+                    if bound.lower() == 'min':
+                        par[key].min = self._constraints[key][bound]
+                    elif bound.lower() == 'max':
+                        par[key].max = self._constraints[key][bound]
+                    else:
+                        pass
+                except KeyError:
                     pass
         for key in self._expr.keys():
-            if key in par.keys():
-                par[key].expr = self._expr[key]
-        return par
+            try:
+                par[key].expr = self._expr[self._prefix + key]
+            except KeyError:
+                pass
+        return par.copy()
 
     def get_chisquare_mapping(self):
-        return np.array([self._chisquare_mapping[k](self._params[k].value) for k in self._chisquare_mapping.keys()])
+        return np.array([self._chisquare_mapping[k](self.params[k].value) for k in self._chisquare_mapping.keys()])
 
     def get_lnprior_mapping(self, params):
         # Check if the parameter values are within the acceptable range.
@@ -178,20 +281,21 @@ class BaseModel(object):
         The uncertainty shown is the largest of the asymmetrical errors! Work
         is being done to incorporate asymmetrical errors in the report; for
         now, rely on the correlation plot."""
-        if hasattr(self, 'mle_fit'):
+        if hasattr(self, 'fit_mle'):
             if 'show_correl' not in kwargs:
                 kwargs['show_correl'] = False
-            print('Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.mle_chisqr, self.mle_redchi))
+            print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof_mle, self.chisqr_mle, self.redchi_mle))
+            print('Akaike Information Criterium: {:.8G}, Bayesian Information Criterium: {:.8G}'.format(self.aic_mle, self.bic_mle))
             if scaled:
                 print('Errors scaled with reduced chisquare.')
-                par = copy.deepcopy(self.mle_fit)
+                par = copy.deepcopy(self.fit_mle)
                 for p in par:
                     if par[p].stderr is not None:
-                        par[p].stderr *= (self.mle_redchi**0.5)
+                        par[p].stderr *= (self.redchi_mle**0.5)
                 print(lm.fit_report(par, **kwargs))
             else:
                 print('Errors not scaled with reduced chisquare.')
-                print(lm.fit_report(self.mle_fit, **kwargs))
+                print(lm.fit_report(self.fit_mle, **kwargs))
         else:
             print('Model has not yet been fitted with this method!')
 
@@ -204,19 +308,27 @@ class BaseModel(object):
         kwargs: misc
             Keywords passed on to :func:`fit_report` from the LMFit package."""
         if hasattr(self, 'chisq_res_par'):
-            print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof, self.chisqr, self.redchi))
+            print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof_chi, self.chisqr_chi, self.redchi_chi))
+            print('Akaike Information Criterium: {:.8G}, Bayesian Information Criterium: {:.8G}'.format(self.aic_chi, self.bic_chi))
             if scaled:
                 print('Errors scaled with reduced chisquare.')
                 par = copy.deepcopy(self.chisq_res_par)
                 for p in par:
                     if par[p].stderr is not None:
-                        par[p].stderr *= (self.redchi**0.5)
+                        par[p].stderr *= (self.redchi_chi**0.5)
                 print(lm.fit_report(par, **kwargs))
             else:
                 print('Errors not scaled with reduced chisquare.')
                 print(lm.fit_report(self.chisq_res_par, **kwargs))
         else:
             print('Spectrum has not yet been fitted with this method!')
+
+    def get_goodness_of_fit(self, selection='chisquare'):
+        if selection.lower() == 'chisquare':
+            return (self.ndof_chi, self.chisqr_chi, self.redchi_chi, self.aic_chi, self.bic_chi)
+        elif selection.lower() == 'mle':
+            return (self.ndof_mle, self.chisqr_mle, self.redchi_mle, self.aic_mle, self.bic_mle)
+
 
     def get_result(self, selection='any'):
         """Return the variable names, values and estimated error bars for the
@@ -241,12 +353,12 @@ class BaseModel(object):
                     var.append(self.chisq_res_par[key].value)
                     var_names.append(self.chisq_res_par[key].name)
                     varerr.append(self.chisq_res_par[key].stderr)
-        elif hasattr(self, 'mle_fit'):
-            for key in sorted(self.mle_fit.params.keys()):
-                if self.mle_fit.params[key].vary:
-                    var.append(self.mle_fit.params[key].value)
-                    var_names.append(self.mle_fit.params[key].name)
-                    varerr.append(self.mle_fit.params[key].stderr)
+        elif hasattr(self, 'fit_mle'):
+            for key in sorted(self.fit_mle.params.keys()):
+                if self.fit_mle.params[key].vary:
+                    var.append(self.fit_mle.params[key].value)
+                    var_names.append(self.fit_mle.params[key].name)
+                    varerr.append(self.fit_mle.params[key].stderr)
         else:
             params = self.params
             for key in sorted(params.keys()):
@@ -287,16 +399,16 @@ class BaseModel(object):
             if scaled:
                 p = copy.deepcopy(self.chisq_res_par)
                 for par in p:
-                    p[par].stderr *= self.redchi**0.5
+                    p[par].stderr *= self.redchi_chi**0.5
             else:
                 p = self.chisq_res_par
         elif method.lower() == 'mle':
             if scaled:
-                p = copy.deepcopy(self.mle_fit)
+                p = copy.deepcopy(self.fit_mle)
                 for par in p:
-                    p[par].stderr *= self.mle_redchi**0.5
+                    p[par].stderr *= self.redchi_mle**0.5
             else:
-                p = self.mle_fit
+                p = self.fit_mle
         values = p.values()
         if selected:
             values = [v for n in self.selected for v in values if n in v.name]
@@ -314,9 +426,14 @@ class BaseModel(object):
                        [x for p in values for x in ind]]
         columns = pd.MultiIndex.from_tuples(list(zip(*columns)))
         result = pd.DataFrame(data, index=columns).T
-        result.loc[:, 'Chisquare'] = pd.Series(np.array([self.chisqr]), index=result.index)
-        result.loc[:, 'Reduced chisquare'] = pd.Series(np.array([self.redchi]), index=result.index)
-        result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof]), index=result.index)
+        if method.lower() == 'chisquare':
+            result.loc[:, 'Chisquare'] = pd.Series(np.array([self.chisqr_chi]), index=result.index)
+            result.loc[:, 'Reduced chisquare'] = pd.Series(np.array([self.redchi_chi]), index=result.index)
+            result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof_chi]), index=result.index)
+        else:
+            result.loc[:, 'Chisquare'] = pd.Series(np.array([self.chisqr_mle]), index=result.index)
+            result.loc[:, 'Reduced chisquare'] = pd.Series(np.array([self.redchi_mle]), index=result.index)
+            result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof_mle]), index=result.index)
         return result
 
     def get_result_dict(self, method='chisquare', scaled=True):
@@ -343,11 +460,11 @@ class BaseModel(object):
                 p = self.chisq_res_par
         else:
             if scaled:
-                p = copy.deepcopy(self.mle_fit)
+                p = copy.deepcopy(self.fit_mle)
                 for par in p:
-                    p[par].stderr *= self.mle_redchi**0.5
+                    p[par].stderr *= self.redchi_mle**0.5
             else:
-                p = self.mle_fit
+                p = self.fit_mle
         returnDict = {P: [p[P].value, p[P].stderr] for P in p}
         return returnDict
 
@@ -417,4 +534,10 @@ def load_model(path):
         Saved BaseModel/child class instance."""
     import pickle
     with open(path, 'rb') as f:
-        return pickle.load(f)
+        model = pickle.load(f)
+    try:
+        for m in model.models:
+            m._parameters._prefix = m._prefix
+    except:
+        model._parameters._prefix = model._prefix
+    return model

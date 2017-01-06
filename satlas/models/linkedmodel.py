@@ -28,13 +28,23 @@ class LinkedModel(BaseModel):
             A list defining the different models."""
         super(LinkedModel, self).__init__()
         self.models = models
-        self.shared = ['Al',
-                       'Au',
-                       'Bl',
-                       'Bu',
-                       'Cl',
-                       'Cu',
-                       'Offset']
+        for i, model in enumerate(self.models):
+            model._add_prefix('s' + str(i) + '_')
+        self._set_params()
+        self.shared = []
+
+    def _set_params(self):
+        for model in self.models:
+            try:
+                p.add_many(*model.params.values())
+            except:
+                p = model.params.copy()
+        self.params = p
+
+    def _add_prefix(self, value):
+        for model in self.models:
+            model._add_prefix(value)
+        self._set_params()
 
     def get_chisquare_mapping(self):
         return np.hstack([f.get_chisquare_mapping() for f in self.models])
@@ -49,76 +59,30 @@ class LinkedModel(BaseModel):
 
     @shared.setter
     def shared(self, value):
+        params = self.params.copy()
         self._shared = value
+        for name in self._shared:
+            selected_list = [p for p in params.keys() if name in p]
+            try:
+                selected_name = selected_list[0]
+                for p in selected_list[1:]:
+                    params[p].expr = selected_name
+            except IndexError:
+                pass
+        self.params = params
 
     @property
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        params = lm.Parameters()
-        to_give_expr = []
-        expr_to_give = []
-        for i, s in enumerate(self.models):
-            p = copy.deepcopy(s.params)
-            keys = list(p.keys())
-            for old_key in keys:
-                new_key = 's' + str(i) + '_' + old_key
-                p[new_key] = p.pop(old_key)
-                # If an expression is defined, replace the old names with the new ones
-                if p[new_key].expr is not None:
-                    for o_key in keys:
-                        if o_key in p[new_key].expr:
-                            n_key = 's' + str(i) + '_' + o_key
-                            p[new_key].expr = p[new_key].expr.replace(o_key, n_key)
-                # Link the shared parameters to the first subspectrum
-                if any([shared in old_key for shared in self.shared]) and i > 0:
-                    model_selection = 0
-                    selected = False
-                    while not selected:
-                        try:
-                            if old_key in self.models[model_selection].params:
-                                selected = True
-                            else:
-                                model_selection += 1
-                        except IndexError:
-                            raise NameError('Variable to be shared not defined in any model')
-                    if not model_selection == i:
-                        to_give_expr.append(new_key)
-                        expr_to_give.append('s' + str(model_selection) + '_' + old_key)
-                        p[new_key].vary = False
-                if new_key in self._expr.keys():
-                    p[new_key].expr = self._expr[new_key]
-            params += p
-        for key, expr in zip(to_give_expr, expr_to_give):
-            params[key].expr = expr
-            params[key].vary = False
-        params.update_constraints()
-        return params
+        return self._parameters
 
     @params.setter
     def params(self, params):
-        for i, spec in enumerate(self.models):
-            par = lm.Parameters()
-            for key in params:
-                if key.startswith('s'+str(i)+'_'):
-                    new_key = key[len('s'+str(i)+'_'):]
-                    expr = params[key].expr
-                    if expr is not None:
-                        if 's' + str(i) + '_' in expr:
-                            for k in params:
-                                nk = k[len('s'+str(i)+'_'):]
-                                expr = expr.replace(k, nk)
-                        else:
-                            expr = None
-                    params[key].expr = None
-                    par[new_key] = copy.deepcopy(params[key])
-                    par[new_key].name = new_key
-                    if new_key == expr:
-                        par[new_key].expr = None
-                        par[new_key].vary = False
-                    if expr is not None:
-                        par[new_key].expr = expr
-            spec.params = par
+        self._parameters = params.copy()
+        for spec in self.models:
+            spec.params = self._parameters.copy()
+            spec._parameters._prefix = spec._prefix
 
     def seperate_response(self, x):
         """Generates the response for each subspectrum.
@@ -135,7 +99,7 @@ class LinkedModel(BaseModel):
         evaluated: ndarray
             The output array, of the same shape as the input
             list of arrays, containing the response values."""
-        return np.squeeze([s.seperate_response(X)
+        return np.squeeze([s(X)
                            for s, X in zip(self.models, x)])
 
     ###############################
@@ -143,7 +107,7 @@ class LinkedModel(BaseModel):
     ###############################
 
     def plot(self, x=None, y=None, yerr=None,
-             ax=None, show=True, plot_kws={}):
+             ax=None, show=True, plot_kws={}, linked=True):
         """Routine that plots the hfs, possibly on top of experimental data.
 
         Parameters
@@ -156,20 +120,22 @@ class LinkedModel(BaseModel):
         yerr: list of arrays or dict('high': array, 'low': array)
             Experimental errors on y.
         ax: matplotlib axes object
-            If provided, plots on this axis.
+            If provided, plots on these axes.
         show: boolean
             If True, the plot will be shown at the end.
         plot_kws: dictionary
             Dictionary containing the additional keyword arguments for the *plot*
             method of the underlying models. Note that the keyword *ax*
             is passed along correctly.
+        linked: boolean, optional
+            If True, the x-axes of the generated plots will be linked.
 
         Returns
         -------
         fig, ax: matplotlib figure and axis
             Figure and axis used for the plotting."""
         if ax is None:
-            fig, ax = plt.subplots(len(self.models), 1)
+            fig, ax = plt.subplots(len(self.models), 1, sharex=linked)
             height = fig.get_figheight()
             width = fig.get_figwidth()
             fig.set_size_inches(width, len(self.models) * height, forward=True)

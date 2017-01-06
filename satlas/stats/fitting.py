@@ -128,12 +128,6 @@ def chisquare_spectroscopic_fit(f, x, y, xerr=None, func=np.sqrt, verbose=True, 
     y = np.hstack(y)
     yerr = np.sqrt(y)
     yerr[np.isclose(yerr, 0.0)] = 1.0
-    if model:
-        func = np.sqrt
-    elif not model:
-        func = None
-    else:
-        pass
     return chisquare_fit(f, x, y, yerr=yerr, xerr=xerr, func=func, verbose=verbose, hessian=hessian, method=method)
 
 def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessian=False, method='leastsq'):
@@ -188,24 +182,26 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
 
     result = lm.minimize(chisquare_model, params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
     f.params = copy.deepcopy(result.params)
-    f.chisqr = copy.deepcopy(result.chisqr)
+    f.chisqr_chi = copy.deepcopy(result.chisqr)
 
     success = False
     counter = 0
     while not success:
         result = lm.minimize(chisquare_model, result.params, args=(f, x, np.hstack(y), np.hstack(yerr), xerr, func), iter_cb=iter_cb, method=method)
         f.params = copy.deepcopy(result.params)
-        success = np.isclose(result.chisqr, f.chisqr)
-        f.chisqr = copy.deepcopy(result.chisqr)
+        success = np.isclose(result.chisqr, f.chisqr_chi)
+        f.chisqr_chi = copy.deepcopy(result.chisqr)
         if counter > 10 and not success:
             break
     if verbose:
         progress.set_description('Chisquare fitting done')
         progress.close()
 
-    f.ndof = copy.deepcopy(result.nfree)
-    f.redchi = copy.deepcopy(result.redchi)
+    f.ndof_chi = copy.deepcopy(result.nfree)
+    f.redchi_chi = copy.deepcopy(result.redchi)
     f.chisq_res_par = copy.deepcopy(f.params)
+    f.aic_chi = copy.deepcopy(result.aic)
+    f.bic_chi = copy.deepcopy(result.bic)
     if hessian:
         if verbose:
             progress = tqdm.tqdm(desc='Starting Hessian calculation', leave=True, miniters=1)
@@ -215,8 +211,8 @@ def chisquare_fit(f, x, y, yerr=None, xerr=None, func=None, verbose=True, hessia
     else:
         for key in f.params.keys():
             if f.params[key].stderr is not None:
-                f.params[key].stderr /= f.redchi**0.5
-                f.chisq_res_par[key].stderr /= f.redchi**0.5
+                f.params[key].stderr /= f.redchi_chi**0.5
+                f.chisq_res_par[key].stderr /= f.redchi_chi**0.5
 
     return success, result.message
 
@@ -437,19 +433,22 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
-    f.mle_fit = copy.deepcopy(result.params)
-    f.mle_result = result.message
-    f.mle_likelihood = negativeloglikelihood(f.params, f, x, y, xerr, func)
+    f.ndof = copy.deepcopy(result.nfree)
+    f.fit_mle = copy.deepcopy(result.params)
+    f.result_mle = result.message
+    f.likelihood_mle = negativeloglikelihood(f.params, f, x, y, xerr, func)
+    f.aic_mle = copy.deepcopy(result.aic)
+    f.bic_mle = copy.deepcopy(result.bic)
     try:
-        f.mle_chisqr = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
+        f.chisqr_mle = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
     except AttributeError:
-        f.mle_chisqr = np.nan
-    if np.isnan(f.mle_chisqr):
+        f.chisqr_mle = np.nan
+    if np.isnan(f.chisqr_mle):
         print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
     try:
-        f.mle_redchi = f.mle_chisqr / f.ndof
+        f.redchi_mle = f.chisqr_mle / f.ndof
     except:
-        f.mle_redchi = f.mle_chisqr / (len(y) - len([p for p in f.params if f.params[p].vary]))
+        f.redchi_mle = f.chisqr_mle / (len(y) - len([p for p in f.params if f.params[p].vary]))
 
     if hessian:
         if verbose:
@@ -457,13 +456,11 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
         else:
             progress = None
 
-        assign_hessian_estimate(likelihood_lnprob, f, f.mle_fit, x, y, xerr, func, likelihood=True, progress=progress)
-        f.params = copy.deepcopy(f.mle_fit)
-
+        assign_hessian_estimate(likelihood_lnprob, f, f.fit_mle, x, y, xerr, func, likelihood=True, progress=progress)
+        f.params = copy.deepcopy(f.fit_mle)
 
     if walking:
         likelihood_walk(f, x, y, xerr=xerr, func=func, **walk_kws)
-    _x_err_calculation_stored.clear()
     return success, result.message
 
 ############################
@@ -660,9 +657,9 @@ def create_band(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_
     else:
         return result**0.5
 
-params_map = {'mle': 'mle_fit', 'chisquare_spectroscopic': 'chisq_res_par', 'chisquare': 'chisq_res_par'}
+params_map = {'mle': 'fit_mle', 'chisquare_spectroscopic': 'chisq_res_par', 'chisquare': 'chisq_res_par'}
 fit_mapping = {'mle': likelihood_fit, 'chisquare_spectroscopic': chisquare_spectroscopic_fit, 'chisquare': chisquare_fit}
-attr_mapping = {'mle': 'mle_likelihood', 'chisquare_spectroscopic': 'chisqr', 'chisquare': 'chisqr'}
+attr_mapping = {'mle': 'likelihood_mle', 'chisquare_spectroscopic': 'chisqr', 'chisquare': 'chisqr'}
 
 def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare', func_args=tuple(), func_kwargs={}, pbar=None, orig_stat=0):
     params = copy.deepcopy(f.params)
@@ -718,7 +715,6 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
     backup = copy.deepcopy(f.params)
     backup_fit = params_map[method.lower()]
     function_kwargs['pbar'] = pbar
-    orig_stat = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
     function_kwargs['orig_stat'] = orig_stat
     while True:
         search_value += step
@@ -753,24 +749,27 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
             success = output.converged
             break
     result_value = calculate_updated_statistic(result, param_name, f, x, y, **function_kwargs)
-    pbar.set_description(desc=param_name + ' (root found: {:.3g}, change of {:.3f})'.format(result, result_value))
-    pbar.update(1)
-    pbar.close()
+    try:
+        pbar.set_description(desc=param_name + ' (root found: {:.3g}, change of {:.3f})'.format(result, result_value))
+        pbar.update(1)
+        pbar.close()
+    except:
+        pass
     f.params = copy.deepcopy(backup)
     setattr(f, attr, orig_stat)
     return result, success
 
 def _get_state(f, method='mle'):
     if method.lower() == 'mle':
-        return (copy.deepcopy(f.mle_fit), f.mle_result, f.mle_likelihood, f.mle_chisqr, f.mle_redchi)
+        return (copy.deepcopy(f.fit_mle), f.result_mle, f.likelihood_mle, f.chisqr_mle, f.redchi_mle)
     else:
         return (copy.deepcopy(f.chisq_res_par), f.chisqr, f.ndof, f.redchi)
 
 def _set_state(f, state, method='mle'):
     if method.lower() == 'mle':
-        f.mle_fit = copy.deepcopy(state[0])
+        f.fit_mle = copy.deepcopy(state[0])
         f.params = copy.deepcopy(state[0])
-        f.mle_result, f.mle_likelihood, f.mle_chisqr, f.mle_redchi = state[1:]
+        f.result_mle, f.likelihood_mle, f.chisqr_mle, f.redchi_mle = state[1:]
     else:
         f.chisq_res_par = copy.deepcopy(state[0])
         f.params = copy.deepcopy(state[0])
@@ -813,7 +812,7 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
                'chisquare': (chisquare_fit, 'chisqr', 'chisq_res_par'),
-               'mle': (likelihood_fit, 'mle_likelihood', 'mle_fit')}
+               'mle': (likelihood_fit, 'likelihood_mle', 'fit_mle')}
     func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
@@ -964,7 +963,7 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
                 dset[i*walkers:(i+1)*walkers,:] = result[0]
                 pbar.update(1)
 
-    f.mle_fit = copy.deepcopy(params)
+    f.fit_mle = copy.deepcopy(params)
     f.params = copy.deepcopy(params)
 
 def process_walk(model, filename, selection=(0, 100)):
@@ -1007,6 +1006,6 @@ def process_walk(model, filename, selection=(0, 100)):
                 p[val].stderr = std_dev
                 pbar.update(1)
     model.params = p.copy()
-    model.mle_fit = p.copy()
-    model.mle_chisqr = np.nan
-    model.mle_redchi = np.nan
+    model.fit_mle = p.copy()
+    model.chisqr_mle = np.nan
+    model.redchi_mle = np.nan

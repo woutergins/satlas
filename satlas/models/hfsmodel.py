@@ -8,7 +8,7 @@ import copy
 from fractions import Fraction
 
 import lmfit as lm
-from satlas.models.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel, SATLASParameters
 from satlas.models.summodel import SumModel
 from satlas.loglikelihood import poisson_llh
 from satlas.utilities import poisson_interval
@@ -38,7 +38,7 @@ class HFSModel(BaseModel):
                   'voigt': p.Voigt,
                   'pseudovoigt': p.PseudoVoigt}
 
-    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalball_params={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}):
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalballparams={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigtparams={'Eta': 0.5, 'A': 0}):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -95,14 +95,14 @@ class HFSModel(BaseModel):
                 other sidepeaks is calculated from the Poisson-factor.
             offset: float
                 Sets the distance (in MHz) of each sidepeak in the spectrum.
-        crystalball_params: dict
+        crystalballparams: dict
             A dictionary with the following keys and values:
 
             tailamp: float
                 Sets the relative amplitude of the tail for the Crystalball shape function.
             tailloc: float
                 Sets the location of the tail for the Crystalball shape function.
-        pseudovoigt_params: dict
+        pseudovoigtparams: dict
             A dictionary with the following keys and values:
 
             Eta: float between 0 and 1
@@ -175,11 +175,11 @@ class HFSModel(BaseModel):
 
         self._roi = (-np.inf, np.inf)
 
-        self._populate_params(ABC, centroid, fwhm, scale, saturation,
+        self._populateparams(ABC, centroid, fwhm, scale, saturation,
                               background_params,
                               sidepeak_params,
-                              crystalball_params,
-                              pseudovoigt_params)
+                              crystalballparams,
+                              pseudovoigtparams)
 
     @property
     def locations(self):
@@ -220,36 +220,18 @@ class HFSModel(BaseModel):
             self.params['Amp' + label].vary = not (self._use_racah or self._use_saturation)
 
     @property
-    def roi(self):
-        """Tuple of (left, right)-limits between which at least one of
-        the peaks has to be located. If the peaks are all outside this
-        region, the calculation of the prior returns infinity. Defaults
-        to (-np.inf, np.inf)."""
-        return self._roi
-
-    @roi.setter
-    def roi(self, value):
-        self._roi = (value[0], value[1])
-
-    def get_lnprior_mapping(self, params):
-        # Implementation uses the 'fail early' paradigm to speed up calculations.
-        # First, the easiest checks to fail are made, followed by slower ones.
-        # If a check is failed, -np.inf is returned immediately.
-        # Check if at least one of the peaks lies within the region of interest
-        if not any((self.roi[0] < self.locations) & (self.locations < self.roi[1])):
-            return -np.inf
-        return super(HFSModel, self).get_lnprior_mapping(params)
-
-    @property
     def params(self):
         """Instance of lmfit.Parameters object characterizing the
         shape of the HFS."""
-        self._params = self._check_variation(self._params)
-        return self._params
+        return self._parameters
 
     @params.setter
     def params(self, params):
-        self._params = params
+        p = params.copy()
+        p._prefix = self._prefix
+        self._parameters = self._check_variation(p)
+        # self._parameters.pretty_print()
+        # print(self._prefix)
         # When changing the parameters, the energies and
         # the locations have to be recalculated
         self._calculate_energies()
@@ -266,21 +248,21 @@ class HFSModel(BaseModel):
         self._set_fwhm()
         if self.shape.lower() == 'crystalball':
             for part in self.parts:
-                part.alpha = params['Taillocation'].value
-                part.n = params['Tailamplitude'].value
+                part.alpha = self.params['Taillocation'].value
+                part.n = self.params['Tailamplitude'].value
         if self.shape.lower() == 'pseudovoigt':
             for label, part in zip(self.ftof, self.parts):
                 if self.shared_fwhm:
-                    part.n = params['Eta'].value
-                    part.a = params['A'].value
+                    part.n = self.params['Eta'].value
+                    part.a = self.params['A'].value
                 else:
-                    part.n = params['Eta'+label].value
-                    part.a = params['A'+label].value
+                    part.n = self.params['Eta'+label].value
+                    part.a = self.params['A'+label].value
 
     def _set_transitional_amplitudes(self):
-        values = self._calculate_transitional_intensities(self._params['Saturation'].value)
+        values = self._calculate_transitional_intensities(self.params['Saturation'].value)
         for p, l, v in zip(self.parts, self.ftof, values):
-            self._params['Amp' + l].value = v
+            self.params['Amp' + l].value = v
             p.amp = v
 
     @property
@@ -329,14 +311,14 @@ class HFSModel(BaseModel):
         -------
         energy: float
             Energy in MHz."""
-        A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
-                      np.ones(self.num_upper) * self._params['Au'].value)
-        B = np.append(np.ones(self.num_lower) * self._params['Bl'].value,
-                      np.ones(self.num_upper) * self._params['Bu'].value)
-        C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
-                      np.ones(self.num_upper) * self._params['Cu'].value)
+        A = np.append(np.ones(self.num_lower) * self.params['Al'].value,
+                      np.ones(self.num_upper) * self.params['Au'].value)
+        B = np.append(np.ones(self.num_lower) * self.params['Bl'].value,
+                      np.ones(self.num_upper) * self.params['Bu'].value)
+        C = np.append(np.ones(self.num_lower) * self.params['Cl'].value,
+                      np.ones(self.num_upper) * self.params['Cu'].value)
         centr = np.append(np.zeros(self.num_lower),
-                          np.ones(self.num_upper) * self._params['Centroid'].value)
+                          np.ones(self.num_upper) * self.params['Centroid'].value)
         self.energies = centr + self.C * A + self.D * B + self.E * C
 
     def _calculate_transition_locations(self):
@@ -344,13 +326,13 @@ class HFSModel(BaseModel):
 
     def _set_amplitudes(self):
         for p, label in zip(self.parts, self.ftof):
-            p.amp = self._params['Amp' + label].value
+            p.amp = self.params['Amp' + label].value
 
     def _set_fwhm(self):
         if self.shape.lower() == 'voigt':
-            fwhm = [[self._params['FWHMG'].value, self._params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self._params['FWHMG' + label].value, self._params['FWHML' + label].value] for label in self.ftof]
+            fwhm = [[self.params['FWHMG'].value, self.params['FWHML'].value] for _ in self.ftof] if self.shared_fwhm else [[self.params['FWHMG' + label].value, self.params['FWHML' + label].value] for label in self.ftof]
         else:
-            fwhm = [self._params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self._params['FWHM' + label].value for label in self.ftof]
+            fwhm = [self.params['FWHM'].value for _ in self.ftof] if self.shared_fwhm else [self.params['FWHM' + label].value for label in self.ftof]
         for p, f in zip(self.parts, fwhm):
             p.fwhm = f
 
@@ -358,26 +340,26 @@ class HFSModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalball_params, pseudovoigt_params):
+    def _populateparams(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalballparams, pseudovoigtparams):
         # Prepares the params attribute with the initial values
-        par = lm.Parameters()
+        par = SATLASParameters()
         if not self.shape.lower() == 'voigt':
             if self.shared_fwhm:
                 par.add('FWHM', value=fwhm, vary=True, min=0)
                 if self.shape.lower() == 'pseudovoigt':
-                    Eta = pseudovoigt_params['Eta']
-                    A = pseudovoigt_params['A']
+                    Eta = pseudovoigtparams['Eta']
+                    A = pseudovoigtparams['A']
                     par.add('Eta', value=Eta, vary=True, min=0, max=1)
-                    par.add('A', value=tailamp, vary=True)
+                    par.add('Asym', value=A, vary=True)
             else:
                 fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
                     par.add('FWHM' + label, value=val, vary=True, min=0)
                     if self.shape.lower() == 'pseudovoigt':
-                        Eta = pseudovoigt_params['Eta']
-                        A = pseudovoigt_params['A']
+                        Eta = pseudovoigtparams['Eta']
+                        A = pseudovoigtparams['A']
                         par.add('Eta' + label, value=Eta, vary=True, min=0, max=1)
-                        par.add('A' + label, value=A, vary=True)
+                        par.add('Asym' + label, value=A, vary=True)
         else:
             if self.shared_fwhm:
                 par.add('FWHMG', value=fwhm[0], vary=True, min=1)
@@ -398,8 +380,8 @@ class HFSModel(BaseModel):
                                  '+(0.2166*FWHML' + label +
                                  '**2+FWHMG' + label + '**2)**0.5')
         if self.shape.lower() == 'crystalball':
-            taillocation = crystalball_params['Taillocation']
-            tailamplitude = crystalball_params['Tailamplitude']
+            taillocation = crystalballparams['Taillocation']
+            tailamplitude = crystalballparams['Tailamplitude']
             par.add('Taillocation', value=taillocation, vary=True)
             par.add('Tailamplitude', value=tailamplitude, vary=True)
             for part in self.parts:
@@ -435,6 +417,7 @@ class HFSModel(BaseModel):
 
         for i, val in reversed(list(enumerate(background_params))):
             par.add('Background' + str(i), value=background_params[i], vary=True)
+        self.background_degree = i
         n, poisson, offset = sidepeak_params['N'], sidepeak_params['Poisson'], sidepeak_params['Offset']
         par.add('N', value=n, vary=False)
         if n > 0:
@@ -609,7 +592,7 @@ class HFSModel(BaseModel):
             self.ratioB = (value, target)
         if parameter.lower() == 'c':
             self.ratioC = (value, target)
-        self.params = self._set_ratios(self._params)
+        self.params = self._set_ratios(self.params)
 
     ###########################
     #      MAGIC METHODS      #
@@ -627,15 +610,16 @@ class HFSModel(BaseModel):
         -------
         float or NumPy array
             Response of the spectrum for each value of *x*."""
-        if self._params['N'].value > 0:
+        if self.params['N'].value > 0:
             s = np.zeros(x.shape)
-            for i in range(self._params['N'].value + 1):
-                s += (self._params['Poisson'].value ** i) * (sum([prof(x - i * self._params['Offset'].value)
+            for i in range(self.params['N'].value + 1):
+                s += (self.params['Poisson'].value ** i) * (sum([prof(x - i * self.params['Offset'].value)
                                                                 for prof in self.parts])) / np.math.factorial(i)
-            s *= self._params['Scale'].value
+            s *= self.params['Scale'].value
         else:
-            s = self._params['Scale'].value * sum([prof(x) for prof in self.parts])
-        background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+            s = self.params['Scale'].value * sum([prof(x) for prof in self.parts])
+        # background_params = [self.params[par_name].value for par_name in self.params if par_name.startswith('Background')]
+        background_params = [self.params['Background' + str(int(deg))].value for deg in reversed(list(range(self.background_degree + 1)))]
         return s + np.polyval(background_params, x)
 
     ###############################
@@ -723,8 +707,8 @@ class HFSModel(BaseModel):
         else:
             superx = np.linspace(x.min(), x.max(), int(no_of_points))
 
-        if 'sigma_x' in self._params:
-            xerr = self._params['sigma_x'].value
+        if 'sigma_x' in self.params:
+            xerr = self.params['sigma_x'].value
         else:
             xerr = 0
 
@@ -750,7 +734,7 @@ class HFSModel(BaseModel):
                 max_counts = self(range[0])
             else:
                 max_counts = np.ceil(-optimize.brute(lambda x: -self(x), (range,), full_output=True, Ns=1000, finish=optimize.fmin)[1])
-            min_counts = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')][-1]
+            min_counts = [self.params[par_name].value for par_name in self.params if par_name.startswith('Background')][-1]
             min_counts = np.floor(max(0, min_counts - 3 * min_counts ** 0.5))
             y = np.arange(min_counts, max_counts + 3 * max_counts ** 0.5 + 1)
             x, y = np.meshgrid(superx, y)
@@ -764,7 +748,7 @@ class HFSModel(BaseModel):
             if background:
                 y = self(superx)
             else:
-                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                background_params = [self.params[par_name].value for par_name in self.params if par_name.startswith('Background')]
                 y = self(superx) - np.polyval(background_params, superx)
             line, = ax.plot(superx, y, label=legend, color=color_lines)
         ax.set_xlim(superx.min(), superx.max())
@@ -774,7 +758,7 @@ class HFSModel(BaseModel):
             if background:
                 Y = self(self.locations)
             else:
-                background_params = [self._params[par_name].value for par_name in self._params if par_name.startswith('Background')]
+                background_params = [self.params[par_name].value for par_name in self.params if par_name.startswith('Background')]
                 Y = self(self.locations) - np.polyval(background_params, self.locations)
             labels = []
             for l in self.ftof:
@@ -870,12 +854,12 @@ class HFSModel(BaseModel):
             lower_state_height = 0.525
         upper_state_height = 0.95
         height = (height - plotrange[0]) / (plotrange[1] - plotrange[0]) / 2
-        A = np.append(np.ones(self.num_lower) * self._params['Al'].value,
-                              np.ones(self.num_upper) * self._params['Au'].value)
-        B = np.append(np.ones(self.num_lower) * self._params['Bl'].value,
-                              np.ones(self.num_upper) * self._params['Bu'].value)
-        C = np.append(np.ones(self.num_lower) * self._params['Cl'].value,
-                              np.ones(self.num_upper) * self._params['Cu'].value)
+        A = np.append(np.ones(self.num_lower) * self.params['Al'].value,
+                              np.ones(self.num_upper) * self.params['Au'].value)
+        B = np.append(np.ones(self.num_lower) * self.params['Bl'].value,
+                              np.ones(self.num_upper) * self.params['Bu'].value)
+        C = np.append(np.ones(self.num_lower) * self.params['Cl'].value,
+                              np.ones(self.num_upper) * self.params['Cu'].value)
         energies = self.C * A + self.D * B + self.E * C
 
         energy_range = (upper_state_height - lower_state_height) / 2 - 0.025

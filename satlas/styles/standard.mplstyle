@@ -1,5 +1,3 @@
-backend: qt4agg
-
 lines.linewidth: 1.5
 lines.linestyle: -
 lines.marker: None
@@ -39,7 +37,6 @@ text.hinting: auto
 text.hinting_factor: 8
 text.antialiased: True
 
-axes.hold: True
 axes.facecolor: w
 axes.edgecolor: k
 axes.linewidth: 1.0
@@ -59,7 +56,7 @@ axes.formatter.useoffset: False
 
 axes.unicode_minus: True
 #axes.prop_cycle: cycler('color', ['0072B2', '009E73', 'D55E00', 'CC79A7', 'F0E442', '56B4E9'])
-axes.prop_cycle: cycler('color', ['0093e6', '00c48f', 'ff8626', 'ff9cd3', 'fff466', '7acfff'])
+#axes.prop_cycle: cycler('color', ['0093e6', '00c48f', 'ff8626', 'ff9cd3', 'fff466', '7acfff'])
 axes.xmargin: 0
 axes.ymargin: 0
 
@@ -92,7 +89,6 @@ grid.linewidth: 0.5
 grid.alpha: 0.5
 
 legend.fancybox: True
-legend.isaxes: True
 legend.numpoints: 1
 legend.fontsize: medium
 legend.borderpad: 0.5
@@ -114,7 +110,6 @@ figure.dpi: 80
 figure.facecolor: w
 figure.edgecolor: w
 figure.autolayout: True
-figure.max_open_warning: 20
 figure.subplot.left: 0.125
 figure.subplot.right: 0.9
 figure.subplot.bottom: 0.1
@@ -145,5 +140,4 @@ savefig.format: pdf
 savefig.bbox: tight
 savefig.pad_inches: 0.1
 savefig.jpeg_quality: 95
-savefig.directory: ''
 savefig.transparent: False

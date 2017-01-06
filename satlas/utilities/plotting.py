@@ -13,12 +13,12 @@ c = 299792458.0
 h = 6.62606957 * (10 ** -34)
 q = 1.60217657 * (10 ** -19)
 
-cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
-cmap.set_over('#A6CEE3')
-cmap.set_under('#B2DF8A')
-invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
-invcmap.set_under('#A6CEE3')
-invcmap.set_over('#B2DF8A')
+# cmap = mpl.colors.ListedColormap(['#A6CEE3', '#1F78B4', '#B2DF8A'])
+# cmap.set_over('#A6CEE3')
+# cmap.set_under('#B2DF8A')
+# invcmap = mpl.colors.ListedColormap(['#B2DF8A', '#1F78B4', '#A6CEE3'])
+# invcmap.set_under('#A6CEE3')
+# invcmap.set_over('#B2DF8A')
 inv_color_list = ['#7acfff', '#fff466', '#00c48f', '#ff8626', '#ff9cd3', '#0093e6']
 color_list = [c for c in reversed(inv_color_list)]
 cmap = mpl.colors.ListedColormap(color_list)
@@ -28,7 +28,7 @@ invcmap = mpl.colors.ListedColormap(inv_color_list)
 invcmap.set_over(inv_color_list[-1])
 invcmap.set_under(inv_color_list[0])
 
-__all__ = ['plot_line_ids', 'generate_correlation_map', 'generate_correlation_plot']
+__all__ = ['plot_line_ids', 'generate_correlation_map', 'generate_correlation_plot', 'generate_walk_plot']
 
 # Code for 'plot_line_ids' taken from Prasanth Nair
 
@@ -657,14 +657,14 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
                 chisquare[j] = fitting.calculate_updated_statistic(v, param_names[i], f, x_data, y_data, **function_kws)
                 pbar.update(1)
         # Plot the result
-        ax.plot(value_range, chisquare)
+        ax.plot(value_range, chisquare, color='k')
 
-        c = next(ax._get_lines.prop_cycler)['color']
-        # ax.axhline(boundary, ls="dashed", color=color)
+        c = '#0093e6'
         # Indicate the used interval.
         ax.axvline(value + right, ls="dashed", color=c)
         ax.axvline(value - left, ls="dashed", color=c)
         ax.axvline(value, ls="dashed", color=c)
+        ax.axhline(boundary, color=c)
         ax.set_title(title.format(param_names[i], value, left, right))
         # Restore the parameters.
         fitting._set_state(f, state, method=method.lower())
@@ -777,10 +777,10 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                     width = 3.5*np.std(x)/x.size**(1/3) #Scott's rule for binwidth
                     bins[bin_index] = np.arange(x.min(), x.max()+width, width)
                 try:
-                    ax.hist(x, int(bins[bin_index]), histtype='step')
+                    ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
                 except TypeError:
                     bins[bin_index] = 50
-                    ax.hist(x, int(bins[bin_index]), histtype='step')
+                    ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
                 metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
                 q = [16.0, 50.0, 84.0]
@@ -789,7 +789,7 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                 title = title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
                 ax.set_title(title.format(val, q50, q50-q16, q84-q50))
                 qvalues = [q16, q50, q84]
-                c = next(ax._get_lines.prop_cycler)['color']
+                c = '#0093e6'
                 for q in qvalues:
                     ax.axvline(q, ls="dashed", color=c)
                 ax.set_yticks([])
@@ -841,3 +841,45 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
             cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
             cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     return fig, axes, cbar
+
+def generate_walk_plot(filename, filter=None, selection=(0, 100), walkers=20):
+    """Given the random walk data, the random walk for the selected parameters
+    is plotted.
+
+    Parameters
+    ----------
+    filename: string
+        Filename for the h5 file containing the data from the walk.
+    filter: list of str, optional
+        If supplied, only this list of parameters is used for the plot.
+
+    Returns
+    -------
+    figure
+        Returns the MatPlotLib figure created."""
+
+    with h5py.File(filename, 'r') as store:
+        columns = store['data'].attrs['format']
+        columns = [f.decode('utf-8') for f in columns]
+        if filter is not None:
+            filter = [c for f in filter for c in columns if f in c]
+        else:
+            filter = columns
+        with tqdm.tqdm(total=len(filter)+(len(filter)**2-len(filter))/2, leave=True) as pbar:
+            fig, axes = plt.subplots(len(filter), 1, sharex=True)
+
+            dataset_length = store['data'].shape[0]
+            first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
+            for i, (val, ax) in enumerate(zip(filter, axes)):
+                pbar.set_description(val)
+                i = columns.index(val)
+                x = store['data'][first:last, i]
+                new_x = np.reshape(x, (-1, walkers))
+                q50 = np.percentile(x, [50.0])
+                ax.plot(range(new_x.shape[0]), new_x, alpha=0.3, color='gray')
+                ax.set_ylabel(val)
+                ax.axhline(q50, color='k')
+                pbar.update(1)
+            ax.set_xlabel('Step')
+        pbar.close()
+    return fig, axes

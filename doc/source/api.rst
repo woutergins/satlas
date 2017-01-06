@@ -111,3 +111,4 @@ Visualisations
 
       satlas.utilities.plotting.generate_correlation_map
       satlas.utilities.plotting.generate_correlation_plot
+      satlas.utilities.plotting.generate_walk_plot
