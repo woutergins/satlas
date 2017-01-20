@@ -5,7 +5,7 @@ Implementation of a class for the analysis of linear data.
 """
 
 import lmfit as lm
-from satlas.models.basemodel import BaseModel
+from satlas.models.basemodel import BaseModel, SATLASParameters
 from satlas.models.summodel import SumModel
 from satlas.loglikelihood import poisson_llh
 import matplotlib.pyplot as plt
@@ -49,7 +49,7 @@ class PolynomialModel(BaseModel):
 
     def _populate_params(self, args):
         # Prepares the params attribute with the initial values
-        par = lm.Parameters()
+        par = SATLASParameters()
         for i, val in reversed(list(enumerate(args))):
             par.add('Order' + str(i) + 'Coeff', value=val, vary=True)
 
@@ -100,12 +100,13 @@ class MiscModel(BaseModel):
 
     @property
     def params(self):
-        self._params = self._check_variation(self._params)
-        return self._params
+        return self._parameters
 
     @params.setter
     def params(self, params):
-        self._params = params
+        p = params.copy()
+        p._prefix = self._prefix
+        self._parameters = self._check_variation(p)
 
     ####################################
     #      INITIALIZATION METHODS      #
@@ -113,19 +114,23 @@ class MiscModel(BaseModel):
 
     def _populate_params(self, *args, name_list=None):
         # Prepares the params attribute with the initial values
-        par = lm.Parameters()
+        par = SATLASParameters()
+        names = []
         if name_list is None:
             for i, val in enumerate(args):
                 par.add('Param' + str(i + 1), value=val, vary=True)
+                names.append('Param' + str(i + 1))
         else:
             for name, val in zip(name_list, args):
                 par.add(name, value=val, vary=True)
+                names.append(name)
 
         self.params = self._check_variation(par)
+        self.names = names
 
     ###########################
     #      MAGIC METHODS      #
     ###########################
 
     def __call__(self, x):
-        return self.func(x, [self.params[p].value for p in self.params.keys()])
+        return self.func(x, [self.params[p].value for p in self.names])

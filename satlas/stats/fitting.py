@@ -433,7 +433,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     if verbose:
         progress.set_description('Likelihood fitting done')
         progress.close()
-    f.ndof = copy.deepcopy(result.nfree)
+    f.ndof_mle = copy.deepcopy(result.nfree)
     f.fit_mle = copy.deepcopy(result.params)
     f.result_mle = result.message
     f.likelihood_mle = negativeloglikelihood(f.params, f, x, y, xerr, func)
@@ -444,7 +444,7 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     if np.isnan(f.chisqr_mle):
         print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
     try:
-        f.redchi_mle = f.chisqr_mle / f.ndof
+        f.redchi_mle = f.chisqr_mle / f.ndof_mle
     except:
         f.redchi_mle = f.chisqr_mle / (len(y) - len([p for p in f.params if f.params[p].vary]))
 
@@ -930,7 +930,8 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
             groupParams[n].value = val
         return likelihood_lnprob(groupParams, f, x, y, xerr, func)
 
-    groupParams = lm.Parameters()
+    p = f.params.copy()
+    groupParams = f.params.copy()
     for key in params.keys():
         groupParams[key] = PriorParameter(key,
                                           value=params[key].value,
