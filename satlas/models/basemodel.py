@@ -290,7 +290,6 @@ class BaseModel(object):
             if 'show_correl' not in kwargs:
                 kwargs['show_correl'] = False
             print('NDoF: {:d}, Chisquare: {:.8G}, Reduced Chisquare: {:.8G}'.format(self.ndof_mle, self.chisqr_mle, self.redchi_mle))
-            print('Akaike Information Criterium: {:.8G}, Bayesian Information Criterium: {:.8G}'.format(self.aic_mle, self.bic_mle))
             if scaled:
                 print('Errors scaled with reduced chisquare.')
                 par = copy.deepcopy(self.fit_mle)

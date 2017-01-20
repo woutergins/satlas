@@ -437,8 +437,6 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
     f.fit_mle = copy.deepcopy(result.params)
     f.result_mle = result.message
     f.likelihood_mle = negativeloglikelihood(f.params, f, x, y, xerr, func)
-    f.aic_mle = copy.deepcopy(result.aic)
-    f.bic_mle = copy.deepcopy(result.bic)
     try:
         f.chisqr_mle = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
     except AttributeError:
@@ -483,9 +481,12 @@ def _parameterCostfunction(f, params, func, *args, likelihood=False):
         groupParams[key] = PriorParameter(key,
                                           value=params[key].value,
                                           vary=params[key].vary,
-                                          expr=params[key].expr,
+                                          expr=None,
                                           priormin=params[key].min,
                                           priormax=params[key].max)
+    for key in params.keys():
+        groupParams[key].expr = params[key].expr
+
     def listfunc(fvars):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
