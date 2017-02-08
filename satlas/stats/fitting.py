@@ -465,9 +465,10 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
 # UNCERTAINTY CALCULATIONS #
 ############################
 
-def _parameterCostfunction(f, params, func, *args, likelihood=False):
+def _parameterCostfunction(f, params, func, *args, **kwargs):
     # Creates a costfunction for the given model and arguments/data for the different methods.
     # Is used for calculation the derivative of the cost function for the different parameters.
+    likelihood = kwargs.pop('likelihood', False)
     var_names = []
     vars = []
     for key in params.keys():
@@ -493,7 +494,7 @@ def _parameterCostfunction(f, params, func, *args, likelihood=False):
         return func(groupParams, f, *args)
     return listfunc
 
-def assign_hessian_estimate(func, f, params, *args, likelihood=False, progress=None):
+def assign_hessian_estimate(func, f, params, *args, **kwargs):
     """Calculates the Hessian of the model at the given parameters,
     and associates uncertainty estimates based on the inverted Hessian matrix.
     Note that, for estimation for chisquare methods, the inverted matrix is
@@ -518,6 +519,8 @@ def assign_hessian_estimate(func, f, params, *args, likelihood=False, progress=N
     Returns
     -------
     None"""
+    likelihood = kwargs.pop('likelihood', False)
+    progress = kwargs.pop('progress', False)
     if progress is not None:
         progress.set_description('Parsing parameters')
         progress.update(1)
@@ -538,7 +541,7 @@ def assign_hessian_estimate(func, f, params, *args, likelihood=False, progress=N
     if progress is not None:
         progress.set_description('Creating Hessian function')
         progress.update(1)
-    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, likelihood=likelihood))
+    Hfun = nd.Hessian(_parameterCostfunction(f, params, func, *args, **kwargs))
     if progress is not None:
         progress.set_description('Calculating Hessian matrix')
         progress.update(1)
