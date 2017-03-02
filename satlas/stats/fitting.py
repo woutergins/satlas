@@ -663,7 +663,7 @@ def create_band(f, x, x_data, y_data, yerr, xerr=None, method='chisquare', func_
 
 params_map = {'mle': 'fit_mle', 'chisquare_spectroscopic': 'chisq_res_par', 'chisquare': 'chisq_res_par'}
 fit_mapping = {'mle': likelihood_fit, 'chisquare_spectroscopic': chisquare_spectroscopic_fit, 'chisquare': chisquare_fit}
-attr_mapping = {'mle': 'likelihood_mle', 'chisquare_spectroscopic': 'chisqr', 'chisquare': 'chisqr'}
+attr_mapping = {'mle': 'likelihood_mle', 'chisquare_spectroscopic': 'chisqr_chi', 'chisquare': 'chisqr_chi'}
 
 def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare', func_args=tuple(), func_kwargs={}, pbar=None, orig_stat=0):
     params = copy.deepcopy(f.params)
@@ -767,7 +767,7 @@ def _get_state(f, method='mle'):
     if method.lower() == 'mle':
         return (copy.deepcopy(f.fit_mle), f.result_mle, f.likelihood_mle, f.chisqr_mle, f.redchi_mle)
     else:
-        return (copy.deepcopy(f.chisq_res_par), f.chisqr, f.ndof, f.redchi)
+        return (copy.deepcopy(f.chisq_res_par), f.chisqr_chi, f.ndof_chi, f.redchi_chi)
 
 def _set_state(f, state, method='mle'):
     if method.lower() == 'mle':
@@ -777,7 +777,7 @@ def _set_state(f, state, method='mle'):
     else:
         f.chisq_res_par = copy.deepcopy(state[0])
         f.params = copy.deepcopy(state[0])
-        f.chisqr, f.ndof, f.redchi = state[1:]
+        f.chisqr_chi, f.ndof_chi, f.redchi_chi = state[1:]
 
 def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', filter=None, fit_args=tuple(), fit_kws={}):
     """Calculates the analytical errors on the parameters, by changing the value for
@@ -814,10 +814,10 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
     from a local minimum!"""
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
+    mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr_chi', 'chisq_res_par'),
                'chisquare': (chisquare_fit, 'chisqr', 'chisq_res_par'),
                'mle': (likelihood_fit, 'likelihood_mle', 'fit_mle')}
-    func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
+    func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr_chi', 'chisq_res_par'))
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
 

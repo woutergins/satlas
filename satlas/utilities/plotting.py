@@ -577,16 +577,16 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         Influences the uncertainty estimates from the parabola."""
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr'),
-               'chisquare': (fitting.chisquare_fit, 'chisqr'),
+    mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr_chi'),
+               'chisquare': (fitting.chisquare_fit, 'chisqr_chi'),
                'mle': (fitting.likelihood_fit, 'mle_likelihood')}
-    func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr'))
+    func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr_chi'))
     title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
 
     to_save = {'mle': ('mle_fit', 'mle_result')}
-    to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof', 'redchi'))
+    to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof_chi', 'redchi_chi'))
     saved = [copy.deepcopy(getattr(f, attr)) for attr in to_save]
 
     func(f, x_data, y_data, *fit_args, **fit_kws)
