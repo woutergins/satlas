@@ -1,0 +1,33 @@
+ORGANiSATION OF THE PROGRAM
+---------------------------
+The SATLAS program consists of several subfolders and .py files. In the different folders, the files are:
+    MODELS:
+        basemodel.py        --  Implements the BaseModel class used throughout SATLAS
+        hfsmodel.py         --  Implements the HFSModel class used for laser spectroscopy
+        linkedmodel.py      --  Implements the LinkedModel class, used to fit different datasets at the same time
+        models.py           --  Implements the general MiscModel for user-defined functions and PolynomialModel for polynomial fits
+        summodel.py         --  Implements the SumModel, used to fit several models on the same data at the same time
+        transformmodel.py   --  Implements the TransformHFSModel, which uses a transformation function on both in- and output
+    STATS
+        EMCEE
+            External library written by Dan Foreman-Mackey, copied here for compatibility purposes
+        fitting.py          --  gathers all the chisquare and likelihood code
+    STYLES
+        Collection of cosmetical changes that can be applied to MatPlotLib
+    TQDM
+        Package written by several authors (see https://pypi.python.org/pypi/tqdm), copied here for compatibility purposes.
+    UTILITIES
+        plotting.py      --     Collection of visualisation routines
+        utilities.py     --     Collection of miscellaneous functions used in other scripts
+    loglikelihood.py     --     Collection of functions used to calcualte and define log-likelihood calculations
+    profiles.py          --     Implementation of different lineshapes used in HFSModel
+    style.py             --     Routines copied from MatPlotLib to make stlye changes by SATLAS possible
+    version.py           --     Describes the current version of SATLAS
+
+INSTALLATION INSTRUCTIONS
+-------------------------
+If the required packages are already installed, installation is done by copying the entire satlas folder somewhere the Python can access it. Preferentially, the Anaconda Python distribution is used to install NumPy, SciPy and h5py, after which satlas is installed via the command "pip install satlas", which should always be up to date.
+
+USAGE INSTRUCTIONS & MANUAL
+---------------------------
+See http://woutergins.github.io/satlas/
