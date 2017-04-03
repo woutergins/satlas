@@ -632,7 +632,6 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         stderr = orig_params[param_names[i]].stderr
         stderr = stderr if stderr is not None else 0.01 * np.abs(value)
         stderr = stderr if stderr != 0 else 0.01 * np.abs(value)
-
         result_left, success_left = fitting._find_boundary(-stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
         result_right, success_right = fitting._find_boundary(stderr, param_names[i], boundary, f, x_data, y_data, function_kwargs=function_kws)
         success = success_left * success_right

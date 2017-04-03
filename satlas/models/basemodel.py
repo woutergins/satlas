@@ -163,13 +163,11 @@ class BaseModel(object):
         valueDict: dictionary
             Dictionary containing the values for the parameters
             with the parameter names as keys."""
-        p = self.params
         for key in valueDict:
             try:
-                p[key].value = valueDict[key]
+                self.params[key].value = valueDict[key]
             except KeyError:
                 pass
-        self.params = p
 
     def set_expr(self, exprDict):
         """Sets the expression of the selected parameters

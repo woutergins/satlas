@@ -729,6 +729,7 @@ def _find_boundary(step, param_name, bound, f, x, y, function_kwargs={'method': 
             except:
                 pass
             result = boundary
+            success = True
             break
         new_value = calculate_updated_statistic(search_value, param_name, f, x, y, **function_kwargs)
         try:
@@ -814,10 +815,10 @@ def calculate_analytical_uncertainty(f, x, y, method='chisquare_spectroscopic', 
     from a local minimum!"""
 
     # Save the original goodness-of-fit and parameters for later use
-    mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr_chi', 'chisq_res_par'),
+    mapping = {'chisquare_spectroscopic': (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'),
                'chisquare': (chisquare_fit, 'chisqr', 'chisq_res_par'),
                'mle': (likelihood_fit, 'likelihood_mle', 'fit_mle')}
-    func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr_chi', 'chisq_res_par'))
+    func, attr, save_attr = mapping.pop(method.lower(), (chisquare_spectroscopic_fit, 'chisqr', 'chisq_res_par'))
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
 
