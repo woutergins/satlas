@@ -441,8 +441,8 @@ def likelihood_fit(f, x, y, xerr=None, func=llh.poisson_llh, method='nelder-mead
         f.chisqr_mle = np.sum(-2 * likelihood_loglikelihood(f, x, y, xerr, func) + 2 * likelihood_loglikelihood(lambda i: y, x, y, xerr, func))
     except AttributeError:
         f.chisqr_mle = np.nan
-    if np.isnan(f.chisqr_mle):
-        print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
+    # if np.isnan(f.chisqr_mle):
+    #     print('Used loglikelihood does not allow calculation of reduced chisquare for these data points! Does it contain 0 or negative numbers?')
     try:
         f.redchi_mle = f.chisqr_mle / f.ndof_mle
     except:
@@ -682,7 +682,12 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
     success = False
     counter = 0
     while not success:
-        success, message = func(f, x, y, *func_args, **func_kwargs)
+        try:
+            success, message = func(f, x, y, *func_args, **func_kwargs)
+        except ValueError:
+            f.params.pretty_print()
+            print(value, f.params['Background0'].value)
+            raise
         counter += 1
         if counter > 10:
             return np.nan

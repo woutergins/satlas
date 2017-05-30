@@ -10,11 +10,14 @@ from satlas.models.linkedmodel import *
 from satlas.models import summodel
 from satlas.models.summodel import *
 from satlas.models import *
-from satlas import utilities
+from satlas.utilities import utilities
 from satlas.utilities import *
 from satlas.stats import fitting
 from satlas.stats.fitting import *
-from satlas import loglikelihood
+try:
+    from satlas import loglikelihood
+except:
+    from . import loglikelihood
 from satlas.loglikelihood import *
 
 from satlas import style

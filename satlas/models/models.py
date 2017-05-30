@@ -96,7 +96,8 @@ class MiscModel(BaseModel):
             to *args[0]*."""
         super(MiscModel, self).__init__()
         self.func = func
-        self._populate_params(*args, name_list=name_list)
+        self.name_list = name_list
+        self._populate_params(*args)
 
     @property
     def params(self):
@@ -112,16 +113,16 @@ class MiscModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populate_params(self, *args, name_list=None):
+    def _populate_params(self, *args):
         # Prepares the params attribute with the initial values
         par = SATLASParameters()
         names = []
-        if name_list is None:
+        if self.name_list is None:
             for i, val in enumerate(args):
                 par.add('Param' + str(i + 1), value=val, vary=True)
                 names.append('Param' + str(i + 1))
         else:
-            for name, val in zip(name_list, args):
+            for name, val in zip(self.name_list, args):
                 par.add(name, value=val, vary=True)
                 names.append(name)
 

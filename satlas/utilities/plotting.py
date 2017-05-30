@@ -6,6 +6,7 @@ import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import uncertainties as u
 from scipy import optimize
 from scipy.stats import chi2
 
@@ -579,13 +580,14 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
     # Save the original goodness-of-fit and parameters for later use
     mapping = {'chisquare_spectroscopic': (fitting.chisquare_spectroscopic_fit, 'chisqr_chi'),
                'chisquare': (fitting.chisquare_fit, 'chisqr_chi'),
-               'mle': (fitting.likelihood_fit, 'mle_likelihood')}
+               'mle': (fitting.likelihood_fit, 'likelihood_mle')}
     func, attr = mapping.pop(method.lower(), (fitting.chisquare_spectroscopic_fit, 'chisqr_chi'))
-    title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
+    title = '{}\n${}_{{-{}}}^{{+{}}}$'
+    title_e = '{}\n$({}_{{-{}}}^{{+{}}})e{}$'
     fit_kws['verbose'] = False
     fit_kws['hessian'] = False
 
-    to_save = {'mle': ('mle_fit', 'mle_result')}
+    to_save = {'mle': ('fit_mle', 'result_mle')}
     to_save = to_save.pop(method.lower(), ('chisq_res_par', 'ndof_chi', 'redchi_chi'))
     saved = [copy.deepcopy(getattr(f, attr)) for attr in to_save]
 
@@ -621,11 +623,11 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         # Set the y-ticklabels.
         ax = axes[i, i]
         ax.set_title(param_names[i])
-        plt.setp(ax.get_yticklabels(), visible=True)
-        if method.lower().startswith('chisquare'):
-            ax.set_ylabel(r'$\Delta\chi^2$')
-        else:
-            ax.set_ylabel(r'$\Delta\mathcal{L}$')
+        if i == no_params-1:
+            if method.lower().startswith('chisquare'):
+                ax.set_ylabel(r'$\Delta\chi^2$')
+            else:
+                ax.set_ylabel(r'$\Delta\mathcal{L}$')
 
         # Select starting point to determine error widths.
         value = orig_params[param_names[i]].value
@@ -648,12 +650,13 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         ranges[param_names[i]]['right_val'] = right_val
         ranges[param_names[i]]['left_val'] = left_val
         value_range = np.linspace(left_val, right_val, resolution_diag)
-        value_range = np.sort(np.append(value_range, np.array([value - left, value + right])))
+        value_range = np.sort(np.append(value_range, np.array([value - left, value + right, value])))
         chisquare = np.zeros(len(value_range))
         # Calculate the new value, and store it in the array. Update the progressbar.
         with tqdm.tqdm(value_range, desc=param_names[i], leave=True) as pbar:
             for j, v in enumerate(value_range):
                 chisquare[j] = fitting.calculate_updated_statistic(v, param_names[i], f, x_data, y_data, **function_kws)
+                fitting._set_state(f, state, method=method.lower())
                 pbar.update(1)
         # Plot the result
         ax.plot(value_range, chisquare, color='k')
@@ -664,7 +667,16 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         ax.axvline(value - left, ls="dashed", color=c)
         ax.axvline(value, ls="dashed", color=c)
         ax.axhline(boundary, color=c)
-        ax.set_title(title.format(param_names[i], value, left, right))
+        up = '{:.2ug}'.format(u.ufloat(value, right))
+        down = '{:.2ug}'.format(u.ufloat(value, left))
+        val = up.split('+')[0].split('(')[-1]
+        r = up.split('-')[1].split(')')[0]
+        l = down.split('-')[1].split(')')[0]
+        if 'e' in up or 'e' in down:
+            ex = up.split('e')[-1]
+            ax.set_title(title_e.format(param_names[i], val, l, r, ex))
+        else:
+            ax.set_title(title.format(param_names[i], val, l, r))
         # Restore the parameters.
         fitting._set_state(f, state, method=method.lower())
 
@@ -679,11 +691,13 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
             ax.set_xlabel(x_name)
         right = ranges[x_name]['right_val']
         left = ranges[x_name]['left_val']
-        x_range = np.linspace(left, right, resolution_map)
+        x_range = np.append(np.linspace(left, right, resolution_map), orig_params[x_name].value)
+        x_range = np.sort(x_range)
 
         right = ranges[y_name]['right_val']
         left = ranges[y_name]['left_val']
-        y_range = np.linspace(left, right, resolution_map)
+        y_range = np.append(np.linspace(left, right, resolution_map), orig_params[y_name].value)
+        y_range = np.sort(y_range)
 
         X, Y = np.meshgrid(x_range, y_range)
         Z = np.zeros(X.shape)
@@ -692,7 +706,10 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
             for k, l in zip(i_indices.flatten(), j_indices.flatten()):
                 x = X[k, l]
                 y = Y[k, l]
+                print(x, y, f.params['Background0'].value)
                 Z[k, l] = fitting.calculate_updated_statistic([x, y], [x_name, y_name], f, x_data, y_data, **function_kws)
+                fitting._set_state(f, state, method=method.lower())
+
                 pbar.update(1)
         Z = -Z
         npar = 1
@@ -711,13 +728,13 @@ def generate_correlation_map(f, x_data, y_data, method='chisquare_spectroscopic'
         # raise ValueError
         f.params = copy.deepcopy(orig_params)
     if method.lower() == 'mle':
-        f.mle_fit = copy.deepcopy(orig_params)
+        f.fit_mle = copy.deepcopy(orig_params)
     else:
         f.chisq_res_par
     try:
         cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
-        cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
-        cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+        # cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+        # cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
     except:
         pass
     setattr(f, attr, orig_value)
@@ -785,8 +802,19 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                 q = [16.0, 50.0, 84.0]
                 q16, q50, q84 = np.percentile(x, q)
 
-                title = title = '{}\n${:.3f}_{{-{:.3f}}}^{{+{:.3f}}}$'
-                ax.set_title(title.format(val, q50, q50-q16, q84-q50))
+                title = '{}\n${}_{{-{}}}^{{+{}}}$'
+                title_e = '{}\n$({}_{{-{}}}^{{+{}}})e{}$'
+                up = '{:.2ug}'.format(u.ufloat(q50, q84-q50))
+                down = '{:.2ug}'.format(u.ufloat(q50, q50-q16))
+                param_val = up.split('+')[0].split('(')[-1]
+                r = up.split('-')[1].split(')')[0]
+                l = down.split('-')[1].split(')')[0]
+                if 'e' in up or 'e' in down:
+                    ex = up.split('e')[-1]
+                    ax.set_title(title_e.format(val, param_val, l, r, ex))
+                else:
+                    ax.set_title(title.format(val, param_val, l, r))
+
                 qvalues = [q16, q50, q84]
                 c = '#0093e6'
                 for q in qvalues:
