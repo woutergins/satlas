@@ -36,9 +36,10 @@ class HFSModel(BaseModel):
                   'lorentzian': p.Lorentzian,
                   'crystalball': p.Crystalball,
                   'voigt': p.Voigt,
-                  'pseudovoigt': p.PseudoVoigt}
+                  'pseudovoigt': p.PseudoVoigt,
+                  'asymmlorentzian': p.AsymmLorentzian}
 
-    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalballparams={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigtparams={'Eta': 0.5, 'A': 0}):
+    def __init__(self, I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'N': 0, 'Poisson': 0.68, 'Offset': 0}, crystalballparams={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigtparams={'Eta': 0.5, 'A': 0}, asymmetryparams={'a': 0}):
         """Builds the HFS with the given atomic and nuclear information.
 
         Parameters
@@ -179,7 +180,8 @@ class HFSModel(BaseModel):
                               background_params,
                               sidepeak_params,
                               crystalballparams,
-                              pseudovoigtparams)
+                              pseudovoigtparams,
+                              asymmetryparams)
 
     @property
     def locations(self):
@@ -254,10 +256,16 @@ class HFSModel(BaseModel):
             for label, part in zip(self.ftof, self.parts):
                 if self.shared_fwhm:
                     part.n = self.params['Eta'].value
-                    part.a = self.params['A'].value
+                    part.a = self.params['Asym'].value
                 else:
                     part.n = self.params['Eta'+label].value
-                    part.a = self.params['A'+label].value
+                    part.a = self.params['Asym'+label].value
+        elif self.shape.lower() == 'asymmlorentzian':
+            for label, part in zip(self.ftof, self.parts):
+                if self.shared_fwhm:
+                    part.asymm = self.params['Asym'].value
+                else:
+                    part.asymm = self.params['Asym'+label].value
 
     def _set_transitional_amplitudes(self):
         values = self._calculate_transitional_intensities(self.params['Saturation'].value)
@@ -340,7 +348,7 @@ class HFSModel(BaseModel):
     #      INITIALIZATION METHODS      #
     ####################################
 
-    def _populateparams(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalballparams, pseudovoigtparams):
+    def _populateparams(self, ABC, centroid, fwhm, scale, saturation, background_params, sidepeak_params, crystalballparams, pseudovoigtparams, asymmetryparams):
         # Prepares the params attribute with the initial values
         par = SATLASParameters()
         if not self.shape.lower() == 'voigt':
@@ -351,6 +359,8 @@ class HFSModel(BaseModel):
                     A = pseudovoigtparams['A']
                     par.add('Eta', value=Eta, vary=True, min=0, max=1)
                     par.add('Asym', value=A, vary=True)
+                if self.shape.lower() == 'asymmlorentzian':
+                    par.add('Asym', value=asymmetryparams['a'], vary=True)
             else:
                 fwhm = [fwhm for _ in range(len(self.ftof))]
                 for label, val in zip(self.ftof, fwhm):
@@ -360,6 +370,8 @@ class HFSModel(BaseModel):
                         A = pseudovoigtparams['A']
                         par.add('Eta' + label, value=Eta, vary=True, min=0, max=1)
                         par.add('Asym' + label, value=A, vary=True)
+                    if self.shape.lower() == 'asymmlorentzian':
+                        par.add('Asym' + label, value=asymmetryparams['a'], vary=True)
         else:
             if self.shared_fwhm:
                 par.add('FWHMG', value=fwhm[0], vary=True, min=1)

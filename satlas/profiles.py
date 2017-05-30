@@ -222,6 +222,80 @@ class Lorentzian(Profile):
         bottomPart = (x ** 2 + self.gamma ** 2) * np.pi
         return super(Lorentzian, self).__call__(topPart / bottomPart)
 
+class AsymmLorentzian(Profile):
+
+    """A callable normalized Lorentzian profile with builtin asymmetry."""
+
+    def __init__(self, fwhm=None, mu=None, amp=None, ampIsArea=False, asymm=0):
+        """Creates a callable object storing the fwhm, amplitude and location
+        of a Lorentzian lineshape.
+
+        Parameters
+        ----------
+        fwhm: float
+            Full Width At Half Maximum, defaults to 1.
+        mu: float
+            Location of the center, defaults to 0.
+        amp: float
+            Amplitude of the profile, defaults to 1.
+        ampIsArea: boolean
+            Sets if the amplitude is the integral or the peakheight. Defaults
+            to False.
+        asymm: float
+            Asymmetry parameter, default to 0.
+
+        Returns
+        -------
+        AsymmLorentzian
+            Callable instance, evaluates the profile in the arguments supplied."""
+        self.asymm = asymm
+        super(AsymmLorentzian, self).__init__(fwhm=fwhm, mu=mu,
+                                              amp=amp, ampIsArea=ampIsArea)
+
+    @property
+    def fwhm(self):
+        """FWHM of the peak."""
+        return self._fwhm
+
+    @fwhm.setter
+    def fwhm(self, value):
+        self._fwhm = value
+        self.gamma = 0.5 * self.fwhm
+        if not self.ampIsArea:
+            self._normFactor = 1.0 / (self.gamma * np.pi)
+
+    def linewidth_function(self, x):
+        return 2 * self.gamma / (1 + np.exp(self.asymm*x))
+
+    def __call__(self, x):
+        r"""Evaluates the lineshape in the given values.
+
+        Parameters
+        ----------
+        vals: array_like
+            Array of values to evaluate the lineshape in.
+
+        Returns
+        -------
+        array_like
+            Array of seperate response values of the lineshape.
+
+        Note
+        ----
+        The formula used is taken from the MathWorld webpage
+        http://mathworld.wolfram.com/LorentzianFunction.html:
+
+            .. math::
+                \mathcal{L}\left(x; \mu, \gamma\right) &= \frac{\gamma}
+                {\pi\left(\left(x-\mu\right)^2+\gamma^2\right)}
+
+                FWHM &= 2\gamma"""
+        x = x - self.mu
+        gamma = self.linewidth_function(x)
+        topPart = gamma
+        bottomPart = (x ** 2 + gamma ** 2) * np.pi
+        return super(AsymmLorentzian, self).__call__(topPart / bottomPart)
+
 class PseudoVoigt(Profile):
 
     r"""A callable normalized PseudoVoigt profile.
