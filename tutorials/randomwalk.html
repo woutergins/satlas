@@ -238,8 +238,10 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
 <img alt="../_images/output_6_3.png" src="../_images/output_6_3.png" />
 <p>We see that the correlation plots show the same behaviour as in the
 analytical case. A small one-bin peak is also still evident in most of
-the plots. This might be the result of burnin (see the <em>emcee</em>
-documentation for more information on this).</p>
+the plots. This might be the result of burn-in (see the <em>emcee</em>
+documentation for more information on this). To remove this, the <em>selection</em> keyword is available to use only the selected
+percentage of the data. Plotting the trajectory of the random walks using the <em>generate_walk_plot</em> command
+will show how long the burn-in is, and how much data has to be removed. The <em>emcee</em> documentation has more information on thie phenomenon and how to deal with it.</p>
 </div>
 <div class="section" id="comparison-of-the-two-methods">
 <h2>Comparison of the two methods<a class="headerlink" href="#comparison-of-the-two-methods" title="Permalink to this headline">¶</a></h2>
