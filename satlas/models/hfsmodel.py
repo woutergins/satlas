@@ -12,7 +12,6 @@ from satlas.models.basemodel import BaseModel, SATLASParameters
 from satlas.models.summodel import SumModel
 from satlas.loglikelihood import poisson_llh
 from satlas.utilities import poisson_interval
-from satlas.utilities import plot_line_ids
 import satlas.profiles as p
 import matplotlib.pyplot as plt
 import numpy as np
@@ -766,20 +765,6 @@ class HFSModel(BaseModel):
         ax.set_xlim(superx.min(), superx.max())
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
-        if indicate:
-            if background:
-                Y = self(self.locations)
-            else:
-                background_params = [self.params[par_name].value for par_name in self.params if par_name.startswith('Background')]
-                Y = self(self.locations) - np.polyval(background_params, self.locations)
-            labels = []
-            for l in self.ftof:
-                lab = l.split('__')
-                lableft = '/'.join(lab[0].split('_'))
-                labright = '/'.join(lab[1].split('_'))
-                lab = '$' + lableft + '\\rightarrow' + labright + '$'
-                labels.append(lab)
-            plot_line_ids(self.locations, Y, self.locations, labels, ax=ax)
         if show:
             plt.show()
         return toReturn
