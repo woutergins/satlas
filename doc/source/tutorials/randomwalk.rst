@@ -217,7 +217,7 @@ on arguments for the walk algorithm can be found there.
 We see that the correlation plots show the same behaviour as in the
 analytical case. A small one-bin peak is also still evident in most of
 the plots. This might be the result of burnin (see the *emcee*
-documentation for more information on this).
+documentation for more information on this). To remove this, the selection keyword is available to use only the selected percentage of the data. Plotting the trajectory of the random walks using the *generate_walk_plot* command will show how long the burn-in is, and how much data has to be removed. The *emcee* documentation has more information on thie phenomenon and how to deal with it.
 
 Comparison of the two methods
 -----------------------------
