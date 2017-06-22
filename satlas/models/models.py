@@ -36,12 +36,13 @@ class PolynomialModel(BaseModel):
 
     @property
     def params(self):
-        self._params = self._check_variation(self._params)
-        return self._params
+        return self._parameters
 
     @params.setter
     def params(self, params):
-        self._params = params
+        p = params.copy()
+        p._prefix = self._prefix
+        self._parameters = self._check_variation(p)
 
     ####################################
     #      INITIALIZATION METHODS      #
