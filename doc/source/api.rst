@@ -74,6 +74,7 @@ Lineshapes
       satlas.profiles.Crystalball
       satlas.profiles.Gaussian
       satlas.profiles.Lorentzian
+      satlas.profiles.AsymmLorentzian
       satlas.profiles.Voigt
       satlas.profiles.PseudoVoigt
 
@@ -94,15 +95,6 @@ Utilities
 
 Visualisations
 --------------
-
-.. automodule:: satlas.style
-
-    .. autosummary::
-      :toctree: style/
-
-      satlas.style.set
-      satlas.style.get_available_styles
-      satlas.style.set_font
 
 .. automodule:: satlas.utilities.plotting
 

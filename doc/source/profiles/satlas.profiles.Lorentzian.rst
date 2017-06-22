@@ -5,27 +5,28 @@ satlas.profiles.Lorentzian
 
 .. autoclass:: Lorentzian
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
-      ~Lorentzian.__init__
-   
-   
 
-   
-   
+      ~Lorentzian.__init__
+
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~Lorentzian.amp
       ~Lorentzian.ampIsArea
       ~Lorentzian.fwhm
       ~Lorentzian.mu
-   
-   
+
+

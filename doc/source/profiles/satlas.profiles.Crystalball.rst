@@ -5,29 +5,30 @@ satlas.profiles.Crystalball
 
 .. autoclass:: Crystalball
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
-      ~Crystalball.__init__
-   
-   
 
-   
-   
+      ~Crystalball.__init__
+
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~Crystalball.alpha
       ~Crystalball.amp
       ~Crystalball.ampIsArea
       ~Crystalball.fwhm
       ~Crystalball.mu
       ~Crystalball.n
-   
-   
+
+

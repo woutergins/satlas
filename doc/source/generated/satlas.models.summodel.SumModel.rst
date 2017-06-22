@@ -5,15 +5,17 @@ satlas.models.summodel.SumModel
 
 .. autoclass:: SumModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~SumModel.__init__
+      ~SumModel.__call__
       ~SumModel.display_chisquare_fit
       ~SumModel.display_mle_fit
       ~SumModel.get_chisquare_mapping
@@ -32,16 +34,16 @@ satlas.models.summodel.SumModel
       ~SumModel.set_lnprior_mapping
       ~SumModel.set_value
       ~SumModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~SumModel.params
       ~SumModel.shared
-   
-   
+
+

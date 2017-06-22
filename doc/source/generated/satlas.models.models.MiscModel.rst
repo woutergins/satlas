@@ -5,15 +5,17 @@ satlas.models.models.MiscModel
 
 .. autoclass:: MiscModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~MiscModel.__init__
+      ~MiscModel.__call__
       ~MiscModel.display_chisquare_fit
       ~MiscModel.display_mle_fit
       ~MiscModel.get_chisquare_mapping
@@ -30,15 +32,15 @@ satlas.models.models.MiscModel
       ~MiscModel.set_lnprior_mapping
       ~MiscModel.set_value
       ~MiscModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~MiscModel.params
-   
-   
+
+

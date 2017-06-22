@@ -21,7 +21,6 @@ The SATLAS program consists of several subfolders and .py files. In the differen
         utilities.py     --     Collection of miscellaneous functions used in other scripts
     loglikelihood.py     --     Collection of functions used to calcualte and define log-likelihood calculations
     profiles.py          --     Implementation of different lineshapes used in HFSModel
-    style.py             --     Routines copied from MatPlotLib to make stlye changes by SATLAS possible
     version.py           --     Describes the current version of SATLAS
 
 INSTALLATION INSTRUCTIONS

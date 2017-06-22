@@ -10,7 +10,7 @@ SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
     :alt: License
     :scale: 100%
 
-.. image:: https://img.shields.io/badge/Python-3.5-green.svg
+.. image:: https://img.shields.io/badge/Python-3.x-green.svg
     :alt: Python version
     :scale: 100%
 
@@ -54,6 +54,7 @@ The following packages are distributed as part of SATLAS:
     * `emcee <http://dan.iel.fm/emcee/current/>`_
     * `tqdm <https://github.com/tqdm/tqdm>`_
 
+Only Python 3.x is supported!
 Code can be downloaded `here <https://github.com/woutergins/satlas>`_. Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al. :cite:`Foreman-Mackey2014`, for the correlation plot code.
 
 Contents

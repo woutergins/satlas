@@ -5,15 +5,17 @@ satlas.models.linkedmodel.LinkedModel
 
 .. autoclass:: LinkedModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~LinkedModel.__init__
+      ~LinkedModel.__call__
       ~LinkedModel.display_chisquare_fit
       ~LinkedModel.display_mle_fit
       ~LinkedModel.get_chisquare_mapping
@@ -32,16 +34,16 @@ satlas.models.linkedmodel.LinkedModel
       ~LinkedModel.set_lnprior_mapping
       ~LinkedModel.set_value
       ~LinkedModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~LinkedModel.params
       ~LinkedModel.shared
-   
-   
+
+

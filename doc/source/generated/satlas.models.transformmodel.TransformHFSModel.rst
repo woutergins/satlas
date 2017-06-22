@@ -5,15 +5,17 @@ satlas.models.transformmodel.TransformHFSModel
 
 .. autoclass:: TransformHFSModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~TransformHFSModel.__init__
+      ~TransformHFSModel.__call__
       ~TransformHFSModel.display_chisquare_fit
       ~TransformHFSModel.display_mle_fit
       ~TransformHFSModel.fix_ratio
@@ -34,15 +36,15 @@ satlas.models.transformmodel.TransformHFSModel
       ~TransformHFSModel.set_lnprior_mapping
       ~TransformHFSModel.set_value
       ~TransformHFSModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~TransformHFSModel.ftof
       ~TransformHFSModel.locations
       ~TransformHFSModel.params
@@ -51,5 +53,5 @@ satlas.models.transformmodel.TransformHFSModel
       ~TransformHFSModel.roi
       ~TransformHFSModel.use_racah
       ~TransformHFSModel.use_saturation
-   
-   
+
+

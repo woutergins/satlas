@@ -5,14 +5,21 @@ satlas.models.basemodel.BaseModel
 
 .. autoclass:: BaseModel
 
-   
+
    .. automethod:: __init__
 
-   
+   .. automethod:: get_result
+
+   .. automethod:: get_result_dict
+
+   .. automethod:: get_result_frame
+
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~BaseModel.__init__
       ~BaseModel.display_chisquare_fit
       ~BaseModel.display_mle_fit
@@ -30,9 +37,9 @@ satlas.models.basemodel.BaseModel
       ~BaseModel.set_lnprior_mapping
       ~BaseModel.set_value
       ~BaseModel.set_variation
-   
-   
 
-   
-   
-   
+
+
+
+
+

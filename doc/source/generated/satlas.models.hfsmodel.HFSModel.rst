@@ -5,15 +5,17 @@ satlas.models.hfsmodel.HFSModel
 
 .. autoclass:: HFSModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~HFSModel.__init__
+      ~HFSModel.__call__
       ~HFSModel.display_chisquare_fit
       ~HFSModel.display_mle_fit
       ~HFSModel.fix_ratio
@@ -34,20 +36,20 @@ satlas.models.hfsmodel.HFSModel
       ~HFSModel.set_lnprior_mapping
       ~HFSModel.set_value
       ~HFSModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~HFSModel.ftof
       ~HFSModel.locations
       ~HFSModel.params
       ~HFSModel.roi
       ~HFSModel.use_racah
       ~HFSModel.use_saturation
-   
-   
+
+

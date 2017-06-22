@@ -5,15 +5,17 @@ satlas.models.models.PolynomialModel
 
 .. autoclass:: PolynomialModel
 
-   
-   .. automethod:: __init__
 
-   
+   .. automethod:: __init__
+   .. automethod:: __call__
+
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~PolynomialModel.__init__
+      ~PolynomialModel.__call__
       ~PolynomialModel.display_chisquare_fit
       ~PolynomialModel.display_mle_fit
       ~PolynomialModel.get_chisquare_mapping
@@ -30,15 +32,15 @@ satlas.models.models.PolynomialModel
       ~PolynomialModel.set_lnprior_mapping
       ~PolynomialModel.set_value
       ~PolynomialModel.set_variation
-   
-   
 
-   
-   
+
+
+
+
    .. rubric:: Attributes
 
    .. autosummary::
-   
+
       ~PolynomialModel.params
-   
-   
+
+

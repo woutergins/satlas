@@ -8,7 +8,7 @@ Implementation of classes for different lineshapes, creating callables for easy 
 import numpy as np
 from scipy.special import wofz
 
-__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt', 'Crystalball']
+__all__ = ['Gaussian', 'Lorentzian', 'Voigt', 'PseudoVoigt', 'Crystalball', 'AsymmLorentzian']
 sqrt2 = 2 ** 0.5
 sqrt2pi = (2 * np.pi) ** 0.5
 sqrt2log2t2 = 2 * np.sqrt(2 * np.log(2))
@@ -227,8 +227,8 @@ class AsymmLorentzian(Profile):
     """A callable normalized Lorentzian profile with builtin asymmetry."""
 
     def __init__(self, fwhm=None, mu=None, amp=None, ampIsArea=False, asymm=0):
-        """Creates a callable object storing the fwhm, amplitude and location
-        of a Lorentzian lineshape.
+        """Creates a callable object storing the fwhm, amplitude, location and asymmetry
+        of a asymmetric Lorentzian lineshape.
 
         Parameters
         ----------
@@ -264,7 +264,17 @@ class AsymmLorentzian(Profile):
         if not self.ampIsArea:
             self._normFactor = 1.0 / (self.gamma * np.pi)
 
+    @property
+    def asymm(self):
+        """Asymmetry of the profile."""
+        return self._asymm
+
+    @asymm.setter
+    def asymm(self, value):
+        self._asymm = value
+
     def linewidth_function(self, x):
+        r"""Calculates the FWHM."""
         return 2 * self.gamma / (1 + np.exp(self.asymm*x))
 
     def __call__(self, x):
@@ -283,13 +293,14 @@ class AsymmLorentzian(Profile):
         Note
         ----
         The formula used is taken from the MathWorld webpage
-        http://mathworld.wolfram.com/LorentzianFunction.html:
+        http://mathworld.wolfram.com/LorentzianFunction.html and an empirical
+        linewidth function:
 
             .. math::
                 \mathcal{L}\left(x; \mu, \gamma\right) &= \frac{\gamma}
                 {\pi\left(\left(x-\mu\right)^2+\gamma^2\right)}
 
-                FWHM &= 2\gamma"""
+                FWHM &= \frac{2\gamma}{1+\exp\left(asymm \left(x-\mu\right)\right)}"""
         x = x - self.mu
         gamma = self.linewidth_function(x)
         topPart = gamma

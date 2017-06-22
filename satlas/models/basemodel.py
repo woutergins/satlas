@@ -372,7 +372,7 @@ class BaseModel(object):
                     varerr.append(None)
         return var_names, var, varerr
 
-    def get_result_frame(self, method='chisquare', selected=False, bounds=False, vary=False, scaled=True):
+    def get_result_frame(self, method='chisquare', selected=False, bounds=False, vary=False, scaled=False):
         """Returns the data from the fit in a pandas DataFrame.
 
         Parameters
@@ -391,7 +391,7 @@ class BaseModel(object):
             Selects if only the parameters that have been varied have to
             be supplied. Defaults to *False*.
         scaled: boolean, optional
-            Sets the uncertainty scaling with the reduced chisquare value. Default to *True*.
+            Sets the uncertainty scaling with the reduced chisquare value. Default to *False*.
 
         Returns
         -------
@@ -440,7 +440,7 @@ class BaseModel(object):
             result.loc[:, 'NDoF'] = pd.Series(np.array([self.ndof_mle]), index=result.index)
         return result
 
-    def get_result_dict(self, method='chisquare', scaled=True):
+    def get_result_dict(self, method='chisquare', scaled=False):
         """Returns the fitted parameters in a dictionary of the form {name: [value, uncertainty]}.
 
         Parameters
@@ -449,7 +449,7 @@ class BaseModel(object):
             Selects which parameters have to be returned.
         scaled: boolean
             Selects if, in case of chisquare parameters, the uncertainty
-            has to be scaled by sqrt(reduced_chisquare). Defaults to *True*.
+            has to be scaled by sqrt(reduced_chisquare). Defaults to *False*.
 
         Returns
         -------

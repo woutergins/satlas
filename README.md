@@ -2,7 +2,7 @@ SATLAS -- Statistical Analysis Toolbox for Laser Spectroscopy
 =============================================================
 ![alt text](https://zenodo.org/badge/10132/woutergins/satlas.svg 'DOI Identifier')
 ![alt text](https://img.shields.io/badge/License-MIT-blue.svg 'License')
-![alt text](https://img.shields.io/badge/Python-3.4-green.svg 'Python version')
+![alt text](https://img.shields.io/badge/Python-3.x-green.svg 'Python version')
 ![alt text](https://img.shields.io/badge/Tested_on-Windows-green.svg 'Supported platform')
 ![alt text](https://img.shields.io/badge/Not_tested_on-Linux/Mac-red.svg 'Unsupported platform')
 [![Build Status](https://travis-ci.org/woutergins/satlas.svg?branch=master)](https://travis-ci.org/woutergins/satlas)
@@ -30,7 +30,7 @@ This package makes use of the following packages:
 * [tqdm](https://github.com/tqdm/tqdm)
 * [numdifftools](http://numdifftools.readthedocs.io/en/latest/)
 
-Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al., for the correlation plot code.
+Only Python 3.x is supported! Parts of the code have been based on other resources; this is signaled in the documentation when this is the case. Inspiration has been drawn from the `triangle.py` script, written by Dan Foreman-Mackey et al., for the correlation plot code.
 
 A detailed documentation of the code can be found [here](http://woutergins.github.io/satlas/).
 
