@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.loglikelihood &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.loglikelihood &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../../index.html" >
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../../index.html" >
     <link rel="up" title="Module code" href="../index.html" > 
   </head>
   <body>
@@ -44,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../index.html" accesskey="U">Module code</a></li> 
     </ul>
@@ -78,8 +80,8 @@
 
 <span class="sd">.. moduleauthor:: Wouter Gins &lt;wouter.gins@kuleuven.be&gt;</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">scipy</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy</span> <span class="k">as</span> <span class="nn">sp</span>
 
 <span class="n">sqrt2pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;poisson_llh&#39;</span><span class="p">,</span> <span class="s1">&#39;create_gaussian_llh&#39;</span> <span class="p">,</span> <span class="s1">&#39;create_gaussian_priormap&#39;</span><span class="p">]</span>
@@ -103,9 +105,9 @@
 <span class="sd">    array_like</span>
 <span class="sd">        Array with loglikelihoods for the data.&quot;&quot;&quot;</span>
     <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">-</span> <span class="n">l</span>
-</div>
-<div class="viewcode-block" id="create_gaussian_llh"><a class="viewcode-back" href="../../loglikelihood/satlas.loglikelihood.create_gaussian_llh.html#satlas.loglikelihood.create_gaussian_llh">[docs]</a><span class="k">def</span> <span class="nf">create_gaussian_llh</span><span class="p">(</span><span class="n">yerr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">-</span> <span class="n">l</span></div>
+
+<div class="viewcode-block" id="create_gaussian_llh"><a class="viewcode-back" href="../../loglikelihood/satlas.loglikelihood.create_gaussian_llh.html#satlas.loglikelihood.create_gaussian_llh">[docs]</a><span class="k">def</span> <span class="nf">create_gaussian_llh</span><span class="p">(</span><span class="n">yerr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the loglikelihood-function for a Gaussian distribution,</span>
 <span class="sd">    with the given uncertainty on the data points. The input parameters</span>
 <span class="sd">    will be (in order) the data to be fitted and the model response.</span>
@@ -120,12 +122,12 @@
 <span class="sd">    function</span>
 <span class="sd">        Function that calculates the loglikelihood for the given data and model values.&quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">def</span> <span class="nf">gaussian_llh</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">xerr</span><span class="p">):</span>
                 <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)]))</span>
                 <span class="n">yerr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
-                <span class="n">xerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">sp</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">1E-6</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)]))</span>
+                <span class="n">xerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">sp</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="n">E</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)]))</span>
                 <span class="n">bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">yerr</span> <span class="o">*</span> <span class="n">yerr</span> <span class="o">+</span> <span class="n">xerr</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)</span>
                 <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span> <span class="o">/</span> <span class="n">bottom</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
             <span class="k">return</span> <span class="n">gaussian_llh</span>
@@ -136,10 +138,10 @@
                 <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span> <span class="o">/</span> <span class="n">bottom</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
             <span class="k">return</span> <span class="n">gaussian_llh</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">xerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">def</span> <span class="nf">gaussian_llh</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">xerr</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">):</span>
                 <span class="n">l</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="n">xerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">sp</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mf">1E-6</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)]))</span>
+                <span class="n">xerr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">sp</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">derivative</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">1</span><span class="n">E</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)]))</span>
                 <span class="n">bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">yerr</span> <span class="o">*</span> <span class="n">yerr</span> <span class="o">+</span> <span class="n">xerr</span> <span class="o">*</span> <span class="n">xerr</span><span class="p">)</span>
                 <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span> <span class="o">/</span> <span class="n">bottom</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
             <span class="k">return</span> <span class="n">gaussian_llh</span>
@@ -147,8 +149,8 @@
             <span class="k">def</span> <span class="nf">gaussian_llh</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">yerr</span><span class="p">):</span>
                 <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)]))</span>
                 <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span> <span class="o">/</span> <span class="n">yerr</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
-            <span class="k">return</span> <span class="n">gaussian_llh</span>
-</div>
+            <span class="k">return</span> <span class="n">gaussian_llh</span></div>
+
 <div class="viewcode-block" id="create_gaussian_priormap"><a class="viewcode-back" href="../../loglikelihood/satlas.loglikelihood.create_gaussian_priormap.html#satlas.loglikelihood.create_gaussian_priormap">[docs]</a><span class="k">def</span> <span class="nf">create_gaussian_priormap</span><span class="p">(</span><span class="n">literature_value</span><span class="p">,</span> <span class="n">uncertainty</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generates a function that describes a Gaussian prior mapping around</span>
 <span class="sd">    the given literature value with the given uncertainty.</span>
@@ -207,7 +209,7 @@
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>Estimating correlation through analytical calculations and random walk &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>Estimating correlation through analytical calculations and random walk &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="Tutorials" href="../tutorial.html" >
     <link rel="next" title="References" href="../references.html" >
     <link rel="prev" title="Plotting routines" href="plottingroutines.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../tutorial.html" accesskey="U">Tutorials</a></li> 
     </ul>
@@ -99,26 +101,26 @@ beforehand.</p>
 <p>Another advantage of the random walk is that the correlation between
 parameters is automatically calculated as well.</p>
 <p>For the example dataset:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span>%matplotlib inline
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
 
-import satlas as s
-import numpy as np
-s.set([&#39;standard&#39;, &#39;online&#39;])
-np.random.seed(0)
+<span class="kn">import</span> <span class="nn">satlas</span> <span class="k">as</span> <span class="nn">s</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;online&#39;</span><span class="p">])</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-I = 0
-J = [1.0, 2.0]
+<span class="n">I</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
 
-ABC = [0, 0, 0, 0, 0, 0]
-df = 3000
-scale = 100
-background = [100]
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">df</span> <span class="o">=</span> <span class="mi">3000</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">background</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">]</span>
 
-base = s.HFSModel(I, J, ABC, df, scale=scale, background_params=background)
+<span class="n">base</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
 
-frequency = np.linspace(2700, 3300, 40)
-response = base(frequency) + 0.5*np.random.randn(frequency.size) * base(frequency)**0.5
-base.plot(x=frequency, y=response)
+<span class="n">frequency</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">2700</span><span class="p">,</span> <span class="mi">3300</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">base</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">frequency</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">base</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+<span class="n">base</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -128,8 +130,8 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
   warnings.warn(&quot;This figure includes Axes that are not &quot;
 </pre>
 <img alt="../_images/output_1_1r.png" src="../_images/output_1_1r.png" />
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xbc46278&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0xbd75ef0&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0xbc46278</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_subplots</span><span class="o">.</span><span class="n">AxesSubplot</span> <span class="n">at</span> <span class="mh">0xbd75ef0</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -137,11 +139,11 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
 <h2>Analytical correlation maps<a class="headerlink" href="#analytical-correlation-maps" title="Permalink to this headline">¶</a></h2>
 <p>To make analytical correlation maps and 1D likelihood parabola&#8217;s, the
 command is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
 <span class="n">s</span><span class="o">.</span><span class="n">generate_correlation_map</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">,</span> <span class="n">resolution_diag</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">resolution_map</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;FWHML&#39;</span><span class="p">,</span> <span class="s1">&#39;Background0&#39;</span><span class="p">,</span> <span class="s1">&#39;Centroid&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>Likelihood fitting done: 3454it [00:01, 2459.97it/s]
+<div class="highlight-default"><div class="highlight"><pre><span></span>Likelihood fitting done: 3454it [00:01, 2459.97it/s]
 Finished Hessian calculation: 7it [00:00, 30.57it/s]
 FWHML (root found: 74.9711582267242): 4it [00:27,  8.26s/it]
 FWHML (left limit reached): 1it [00:01,  1.81s/it]
@@ -157,15 +159,15 @@ FWHML Background0: 100%|██████████████████�
 Centroid Background0: 100%|██████████████████| 400/400 [03:02&lt;00:00,  2.39it/s]
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xc730080&gt;,
- array([[&lt;matplotlib.axes._axes.Axes object at 0x000000000C79D860&gt;, None,
-         None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x000000000C16F9B0&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x000000000D837D30&gt;, None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x000000000D94FBE0&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x000000000D8FDBA8&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x000000000D888E10&gt;]], dtype=object),
- &lt;matplotlib.colorbar.Colorbar at 0xd8167f0&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0xc730080</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="n">array</span><span class="p">([[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000C79D860</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000C16F9B0</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000D837D30</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000D94FBE0</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000D8FDBA8</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000000D888E10</span><span class="o">&gt;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">Colorbar</span> <span class="n">at</span> <span class="mh">0xd8167f0</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -192,43 +194,43 @@ file in either the current directory if only the filename is given, or
 in another directory if that location is also given.</p>
 <p>The random walk algorithm employs the <em>emcee</em> package, and more details
 on arguments for the walk algorithm can be found there.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">walking</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">walk_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s1">&#39;demonstration.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;nsteps&#39;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">})</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">walking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">walk_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s1">&#39;demonstration.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;nsteps&#39;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">})</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>Likelihood fitting done: 2529it [00:01, 2326.45it/s]
+<div class="highlight-default"><div class="highlight"><pre><span></span>Likelihood fitting done: 2529it [00:01, 2326.45it/s]
 Finished Hessian calculation: 7it [00:00, 29.29it/s]
 Walk: 100%|█████████████████████████████| 10000/10000 [01:00&lt;00:00, 164.71it/s]
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="s1">&#39;Converged (|f_n-f_(n-1)| ~= 0)&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;Converged (|f_n-f_(n-1)| ~= 0)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">generate_correlation_plot</span><span class="p">(</span><span class="s1">&#39;demonstration.h5&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">generate_correlation_plot</span><span class="p">(</span><span class="s1">&#39;demonstration.h5&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>Centroid Background0: 100%|██████████████████| 15/15.0 [00:02&lt;00:00,  7.12it/s]
+<div class="highlight-default"><div class="highlight"><pre><span></span>Centroid Background0: 100%|██████████████████| 15/15.0 [00:02&lt;00:00,  7.12it/s]
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0x105bf828&gt;,
- array([[&lt;matplotlib.axes._axes.Axes object at 0x00000000105289B0&gt;, None,
-         None, None, None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x000000001514E898&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x000000001514E400&gt;, None,
-         None, None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x000000001523AC88&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000015198D68&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000015168470&gt;, None,
-         None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x000000001574EAC8&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000015445438&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x00000000154BBBA8&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x000000001515CF28&gt;, None],
-        [&lt;matplotlib.axes._axes.Axes object at 0x0000000015834BA8&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000010612C88&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000015754D30&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x00000000157E1B38&gt;,
-         &lt;matplotlib.axes._axes.Axes object at 0x0000000015475908&gt;]], dtype=object),
- &lt;matplotlib.colorbar.Colorbar at 0x10683278&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0x105bf828</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="n">array</span><span class="p">([[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x00000000105289B0</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000001514E898</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000001514E400</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000001523AC88</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015198D68</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015168470</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+         <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000001574EAC8</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015445438</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x00000000154BBBA8</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x000000001515CF28</span><span class="o">&gt;</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015834BA8</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000010612C88</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015754D30</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x00000000157E1B38</span><span class="o">&gt;</span><span class="p">,</span>
+         <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">Axes</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0000000015475908</span><span class="o">&gt;</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">Colorbar</span> <span class="n">at</span> <span class="mh">0x10683278</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -238,10 +240,8 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
 <img alt="../_images/output_6_3.png" src="../_images/output_6_3.png" />
 <p>We see that the correlation plots show the same behaviour as in the
 analytical case. A small one-bin peak is also still evident in most of
-the plots. This might be the result of burn-in (see the <em>emcee</em>
-documentation for more information on this). To remove this, the <em>selection</em> keyword is available to use only the selected
-percentage of the data. Plotting the trajectory of the random walks using the <em>generate_walk_plot</em> command
-will show how long the burn-in is, and how much data has to be removed. The <em>emcee</em> documentation has more information on thie phenomenon and how to deal with it.</p>
+the plots. This might be the result of burnin (see the <em>emcee</em>
+documentation for more information on this). To remove this, the selection keyword is available to use only the selected percentage of the data. Plotting the trajectory of the random walks using the <em>generate_walk_plot</em> command will show how long the burn-in is, and how much data has to be removed. The <em>emcee</em> documentation has more information on thie phenomenon and how to deal with it.</p>
 </div>
 <div class="section" id="comparison-of-the-two-methods">
 <h2>Comparison of the two methods<a class="headerlink" href="#comparison-of-the-two-methods" title="Permalink to this headline">¶</a></h2>
@@ -282,7 +282,7 @@ taken in selecting which method is to be used.</p>
                         title="next chapter">References</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/tutorials/randomwalk.txt"
+    <a href="../_sources/tutorials/randomwalk.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -304,7 +304,7 @@ taken in selecting which method is to be used.</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

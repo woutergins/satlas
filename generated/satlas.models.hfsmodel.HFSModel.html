@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.models.hfsmodel.HFSModel &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.models.hfsmodel.HFSModel &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.models.transformmodel.TransformHFSModel" href="satlas.models.transformmodel.TransformHFSModel.html" >
     <link rel="prev" title="satlas.models.models.PolynomialModel" href="satlas.models.models.PolynomialModel.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -86,13 +88,13 @@
 <h1>satlas.models.hfsmodel.HFSModel<a class="headerlink" href="#satlas-models-hfsmodel-hfsmodel" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="satlas.models.hfsmodel.HFSModel">
-<em class="property">class </em><code class="descclassname">satlas.models.hfsmodel.</code><code class="descname">HFSModel</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'Poisson': 0.68, 'Offset': 0, 'N': 0}, crystalball_params={'Tailamplitude': 1, 'Taillocation': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/hfsmodel.html#HFSModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.hfsmodel.HFSModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">satlas.models.hfsmodel.</code><code class="descname">HFSModel</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'Offset': 0, 'N': 0, 'Poisson': 0.68}, crystalballparams={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigtparams={'Eta': 0.5, 'A': 0}, asymmetryparams={'a': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/hfsmodel.html#HFSModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.hfsmodel.HFSModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs a HFS spectrum, consisting of different
 peaks described by a certain profile. The number of peaks is governed by
 the nuclear spin and the atomic spins of the levels.</p>
 <dl class="method">
 <dt id="satlas.models.hfsmodel.HFSModel.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'Poisson': 0.68, 'Offset': 0, 'N': 0}, crystalball_params={'Tailamplitude': 1, 'Taillocation': 1}, pseudovoigt_params={'Eta': 0.5, 'A': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>I, J, ABC, centroid, fwhm=[50.0, 50.0], scale=1.0, background_params=[0.001], shape='voigt', use_racah=False, use_saturation=False, saturation=0.001, shared_fwhm=True, sidepeak_params={'Offset': 0, 'N': 0, 'Poisson': 0.68}, crystalballparams={'Taillocation': 1, 'Tailamplitude': 1}, pseudovoigtparams={'Eta': 0.5, 'A': 0}, asymmetryparams={'a': 0}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/hfsmodel.html#HFSModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.hfsmodel.HFSModel.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds the HFS with the given atomic and nuclear information.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -111,43 +113,34 @@ C <sub>lower</sub>].</li>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last">
-<li><p class="first"><strong>fwhm</strong> (<em>float or list of 2 floats, optional</em>) &#8211;
-Depending on the used shape, the FWHM is defined by one or two floats.
+<li><p class="first"><strong>fwhm</strong> (<em>float or list of 2 floats, optional</em>) &#8211; Depending on the used shape, the FWHM is defined by one or two floats.
 Defaults to [50.0, 50.0]</p>
 </li>
-<li><p class="first"><strong>scale</strong> (<em>float, optional</em>) &#8211;
-Sets the strength of the spectrum, defaults to 1.0. Comparable to the
+<li><p class="first"><strong>scale</strong> (<em>float, optional</em>) &#8211; Sets the strength of the spectrum, defaults to 1.0. Comparable to the
 amplitude of the spectrum.</p>
 </li>
-<li><p class="first"><strong>background_params</strong> (<em>list of float, optional</em>) &#8211;
-Sets the coefficients of the polynomial background to the given values.
+<li><p class="first"><strong>background_params</strong> (<em>list of float, optional</em>) &#8211; Sets the coefficients of the polynomial background to the given values.
 Order of polynomial is equal to the number of parameters given minus one.
 Highest order coefficient is the first element, etc.</p>
 </li>
-<li><p class="first"><strong>shape</strong> (<em>string, optional</em>) &#8211;
-Sets the transition shape. String is converted to lowercase. For
+<li><p class="first"><strong>shape</strong> (<em>string, optional</em>) &#8211; Sets the transition shape. String is converted to lowercase. For
 possible values, see <em>HFSModel__shapes__</em>.keys()`.
 Defaults to Voigt if an incorrect value is supplied.</p>
 </li>
-<li><p class="first"><strong>use_racah</strong> (<em>boolean, optional</em>) &#8211;
-If True, fixes the relative peak intensities to the Racah intensities.
+<li><p class="first"><strong>use_racah</strong> (<em>boolean, optional</em>) &#8211; If True, fixes the relative peak intensities to the Racah intensities.
 Otherwise, gives them equal intensities and allows them to vary during
 fitting.</p>
 </li>
-<li><p class="first"><strong>use_saturation</strong> (<em>boolean, optional</em>) &#8211;
-If True, uses the saturation parameter to calculate relative intensities.</p>
+<li><p class="first"><strong>use_saturation</strong> (<em>boolean, optional</em>) &#8211; If True, uses the saturation parameter to calculate relative intensities.</p>
 </li>
-<li><p class="first"><strong>saturation</strong> (<em>float, optional</em>) &#8211;
-If different than 0, calculate the saturation effect on the intensity of
+<li><p class="first"><strong>saturation</strong> (<em>float, optional</em>) &#8211; If different than 0, calculate the saturation effect on the intensity of
 transition intensity. This is done by an exponential transition between
 Racah intensities and the saturated intensities.</p>
 </li>
-<li><p class="first"><strong>shared_fwhm</strong> (<em>boolean, optional</em>) &#8211;
-If True, the same FWHM is used for all peaks. Otherwise, give them all
+<li><p class="first"><strong>shared_fwhm</strong> (<em>boolean, optional</em>) &#8211; If True, the same FWHM is used for all peaks. Otherwise, give them all
 the same initial FWHM and let them vary during the fitting.</p>
 </li>
-<li><p class="first"><strong>sidepeak_params</strong> (<em>dict</em>) &#8211;
-A dictionary with the following keys and values:</p>
+<li><p class="first"><strong>sidepeak_params</strong> (<em>dict</em>) &#8211; A dictionary with the following keys and values:</p>
 <dl class="docutils">
 <dt>n: int</dt>
 <dd><p class="first last">Sets the number of sidepeaks that are present in the spectrum.
@@ -162,8 +155,7 @@ other sidepeaks is calculated from the Poisson-factor.</p>
 </dd>
 </dl>
 </li>
-<li><p class="first"><strong>crystalball_params</strong> (<em>dict</em>) &#8211;
-A dictionary with the following keys and values:</p>
+<li><p class="first"><strong>crystalballparams</strong> (<em>dict</em>) &#8211; A dictionary with the following keys and values:</p>
 <dl class="docutils">
 <dt>tailamp: float</dt>
 <dd><p class="first last">Sets the relative amplitude of the tail for the Crystalball shape function.</p>
@@ -173,8 +165,7 @@ A dictionary with the following keys and values:</p>
 </dd>
 </dl>
 </li>
-<li><p class="first"><strong>pseudovoigt_params</strong> (<em>dict</em>) &#8211;
-A dictionary with the following keys and values:</p>
+<li><p class="first"><strong>pseudovoigtparams</strong> (<em>dict</em>) &#8211; A dictionary with the following keys and values:</p>
 <dl class="docutils">
 <dt>Eta: float between 0 and 1</dt>
 <dd><p class="first last">Describes the mixing percentage of the Gaussian and Lorentzian shapes</p>
@@ -215,6 +206,24 @@ A dictionary with the following keys and values:</p>
 </div>
 </dd></dl>
 
+<dl class="method">
+<dt id="satlas.models.hfsmodel.HFSModel.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/hfsmodel.html#HFSModel.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.hfsmodel.HFSModel.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the response for frequency <em>x</em> (in MHz) of the spectrum.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>float</em><em> or </em><em>array_like</em>) &#8211; Frequency in MHz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Response of the spectrum for each value of <em>x</em>.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">float or NumPy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -225,20 +234,68 @@ A dictionary with the following keys and values:</p>
 <tr class="row-odd"><td><a class="reference internal" href="#satlas.models.hfsmodel.HFSModel.__init__" title="satlas.models.hfsmodel.HFSModel.__init__"><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code></a>(I,&nbsp;J,&nbsp;ABC,&nbsp;centroid[,&nbsp;fwhm,&nbsp;scale,&nbsp;...])</td>
 <td>Builds the HFS with the given atomic and nuclear information.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">fix_ratio</span></code>(value[,&nbsp;target,&nbsp;parameter])</td>
+<tr class="row-even"><td><a class="reference internal" href="#satlas.models.hfsmodel.HFSModel.__call__" title="satlas.models.hfsmodel.HFSModel.__call__"><code class="xref py py-obj docutils literal"><span class="pre">__call__</span></code></a>(x)</td>
+<td>Get the response for frequency <em>x</em> (in MHz) of the spectrum.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">display_chisquare_fit</span></code>([scaled])</td>
+<td>Display all relevent info of the least-squares fitting routine, if this has been performed.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">display_mle_fit</span></code>([scaled])</td>
+<td>Give a readable overview of the result of the MLE fitting routine.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">fix_ratio</span></code>(value[,&nbsp;target,&nbsp;parameter])</td>
 <td>Fixes the ratio for a given hyperfine parameter to the given value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_chisquare_mapping</span></code>()</td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_lnprior_mapping</span></code>(params)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">plot</span></code>([x,&nbsp;y,&nbsp;yerr,&nbsp;no_of_points,&nbsp;ax,&nbsp;show,&nbsp;...])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result</span></code>([selection])</td>
+<td>Return the variable names, values and estimated error bars for the parameters as seperate lists.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result_dict</span></code>([method,&nbsp;scaled])</td>
+<td>Returns the fitted parameters in a dictionary of the form {name: [value, uncertainty]}.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result_frame</span></code>([method,&nbsp;selected,&nbsp;bounds,&nbsp;...])</td>
+<td>Returns the data from the fit in a pandas DataFrame.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">plot</span></code>([x,&nbsp;y,&nbsp;yerr,&nbsp;no_of_points,&nbsp;ax,&nbsp;show,&nbsp;...])</td>
 <td>Plot the hfs, possibly on top of experimental data.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">plot_scheme</span></code>([show,&nbsp;upper_color,&nbsp;...])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">plot_scheme</span></code>([show,&nbsp;upper_color,&nbsp;...])</td>
 <td>Create a figure where both the splitting of the upper and lower state is drawn, and the hfs associated with this.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">plot_spectroscopic</span></code>(**kwargs)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">plot_spectroscopic</span></code>(\*\*kwargs)</td>
 <td>Plots the hfs on top of experimental data with errorbar given by the square root of the data.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">save</span></code>(path)</td>
+<td>Saves the current spectrum, including the results of the fitting and the parameters, to the specified file.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">seperate_response</span></code>(x)</td>
+<td>Wraps the output of the <a class="reference internal" href="#satlas.models.hfsmodel.HFSModel.__call__" title="satlas.models.hfsmodel.HFSModel.__call__"><code class="xref py py-meth docutils literal"><span class="pre">__call__</span></code></a> in a list, for ease of coding in the fitting routines.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_boundaries</span></code>(boundaryDict)</td>
+<td>Sets the boundaries of the fitparameters as supplied in the dictionary.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">set_chisquare_mapping</span></code>(mappingDict)</td>
+<td>Sets the prior mapping for the different parameters.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_expr</span></code>(exprDict)</td>
+<td>Sets the expression of the selected parameters to the given expressions.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">set_literature_values</span></code>(literatureDict)</td>
+<td>Sets the lnprior and chisquare mapping to handle the given literature values and uncertainties.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_lnprior_mapping</span></code>(mappingDict)</td>
+<td>Sets the prior mapping for the different parameters.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">set_value</span></code>(valueDict)</td>
+<td>Sets the value of the given parameters to the given values.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_variation</span></code>(varyDict)</td>
+<td>Sets the variation of the fitparameters as supplied in the dictionary.</td>
 </tr>
 </tbody>
 </table>
@@ -258,8 +315,8 @@ A dictionary with the following keys and values:</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">params</span></code></td>
 <td>Instance of lmfit.Parameters object characterizing the shape of the HFS.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">roi</span></code></td>
-<td>Tuple of (left, right)-limits between which at least one of the peaks has to be located.</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">HFSModel.roi</span></code></td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">use_racah</span></code></td>
 <td>Boolean to set the behaviour to Racah intensities (True) or to individual amplitudes (False).</td>
@@ -287,7 +344,7 @@ A dictionary with the following keys and values:</p>
                         title="next chapter">satlas.models.transformmodel.TransformHFSModel</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/generated/satlas.models.hfsmodel.HFSModel.txt"
+    <a href="../_sources/generated/satlas.models.hfsmodel.HFSModel.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -309,7 +366,7 @@ A dictionary with the following keys and values:</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

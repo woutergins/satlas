@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.profiles.PseudoVoigt &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.profiles.PseudoVoigt &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.utilities.utilities.generate_spectrum" href="../utilities/satlas.utilities.utilities.generate_spectrum.html" >
     <link rel="prev" title="satlas.profiles.Voigt" href="satlas.profiles.Voigt.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -115,7 +117,7 @@ supplied.</p>
 supplied FWHM is appropriately transformed for the Gaussian and Lorentzian
 lineshapes:</p>
 <div class="math">
-<p><img src="../_images/math/6abc69ae699eabef3847cd9fbea5eac03c5311ef.png" alt="\mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
+<p><img src="../_images/math/4ac4f16120d046d4d4d8ccae347d987107fefda3.png" alt="\mathcal{V}\left(x; \mu, \eta, \sigma, \gamma\right) = \eta \mathcal{L}
 (x; \sigma, \mu) + (1-\eta) G(x; \sigma, \mu)"/></p>
 </div><p class="last">The formula is also adapted to incorporate an asymmetry in the lineshape. This
 is done by varying the used fwhm with a sigmoid function over the frequency range.</p>
@@ -123,6 +125,11 @@ is done by varying the used fwhm with a sigmoid function over the frequency rang
 <dl class="method">
 <dt id="satlas.profiles.PseudoVoigt.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>eta=None</em>, <em>fwhm=None</em>, <em>mu=None</em>, <em>amp=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/profiles.html#PseudoVoigt.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.profiles.PseudoVoigt.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="satlas.profiles.PseudoVoigt.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/profiles.html#PseudoVoigt.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.profiles.PseudoVoigt.__call__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods</p>
@@ -182,7 +189,7 @@ is done by varying the used fwhm with a sigmoid function over the frequency rang
                         title="next chapter">satlas.utilities.utilities.generate_spectrum</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/profiles/satlas.profiles.PseudoVoigt.txt"
+    <a href="../_sources/profiles/satlas.profiles.PseudoVoigt.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -204,7 +211,7 @@ is done by varying the used fwhm with a sigmoid function over the frequency rang
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

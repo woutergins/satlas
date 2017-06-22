@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>Fitting routines &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>Fitting routines &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="Tutorials" href="../tutorial.html" >
     <link rel="next" title="Plotting routines" href="plottingroutines.html" >
     <link rel="prev" title="BaseModelCreation and evaluation" href="spectrumcreation.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../tutorial.html" accesskey="U">Tutorials</a></li> 
     </ul>
@@ -92,7 +94,7 @@ SciPy.</p>
 <p>When fitting with the chisquare method, the costfunction to be minimized
 is</p>
 <div class="math">
-<p><img src="../_images/math/e47e50a7c3dfc0d990f2e514245e4f3a3b5c31cd.png" alt="\chi^2 = \left(\frac{y_i-HFS(x_i)}{\sigma_i}\right)^2"/></p>
+<p><img src="../_images/math/ad766a7016581c59ace625b9e67422befde99edc.png" alt="\chi^2 = \left(\frac{y_i-HFS(x_i)}{\sigma_i}\right)^2"/></p>
 </div><p>with the subscript <em>i</em> referring to the datapoint, and <em>HFS</em> to the
 response of the <a class="reference internal" href="../generated/satlas.models.hfsmodel.HFSModel.html#satlas.models.hfsmodel.HFSModel" title="satlas.models.hfsmodel.HFSModel"><code class="xref py py-class docutils literal"><span class="pre">HFSModel</span></code></a> class. The algorithm used is the
 Levenberg-Marquardt algorithm, which gives quick results in a reliable
@@ -110,33 +112,33 @@ Gaussian distribution for the uncertainty calculation.</p>
 <p>In order to demonstrate the fit functions, toy data is needed. This is
 created by assuming some parameters for the basemodel, calculating the
 response, and then adding random noise.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span>%matplotlib inline
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
 
-import satlas as s
-import numpy as np
-s.set()
-np.random.seed(0)  #Ensure the same random numbers each time
+<span class="kn">import</span> <span class="nn">satlas</span> <span class="k">as</span> <span class="nn">s</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1">#Ensure the same random numbers each time</span>
 
-I = 1.0
-J = [1.0, 2.0]
+<span class="n">I</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
 
-ABC = [100, 200, 100, 200, 0, 0]
-fwhm = [10, 10]
-centroid = 500
-scale = 100
+<span class="n">ABC</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">fwhm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<span class="n">centroid</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="mi">100</span>
 
-basemodel = s.HFSModel(I, J, ABC, centroid, fwhm=fwhm, scale=scale, background_params=[10], use_racah=True)
+<span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-frequency_range = (min(basemodel.locations) - 100, max(basemodel.locations) + 100)
-frequency_range = np.linspace(frequency_range[0], frequency_range[1], 200)
+<span class="n">frequency_range</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">basemodel</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">-</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">basemodel</span><span class="o">.</span><span class="n">locations</span><span class="p">)</span> <span class="o">+</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">frequency_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequency_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">200</span><span class="p">)</span>
 
-data = np.floor(basemodel(frequency_range) + basemodel(frequency_range)**0.5 * np.random.randn(len(frequency_range)))
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">basemodel</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span> <span class="o">+</span> <span class="n">basemodel</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frequency_range</span><span class="p">)))</span>
 
-success, message = s.chisquare_spectroscopic_fit(basemodel, frequency_range, data)
-print(success)
-print(message)
-basemodel.display_chisquare_fit(show_correl=False)
-basemodel.plot(x=frequency_range, y=data)
+<span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency_range</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -144,31 +146,31 @@ C:Anaconda3libsite-packagesIPythonhtml.py:14: ShimWarning: The <cite>IPython.htm
   &quot;<cite>IPython.html.widgets</cite> has moved to <cite>ipywidgets</cite>.&quot;, ShimWarning)
 Chisquare fitting done: 126it [00:00, 807.65it/s]
 </pre>
-<div class="highlight-python"><div class="highlight"><pre><span></span>True
-Tolerance seems to be too small.
-NDoF: 191, Chisquare: 204.74572, Reduced Chisquare: 1.0719671
-Errors not scaled with reduced chisquare.
-[[Variables]]
-    FWHMG:         11.4052934 +/- 2.725367 (23.90%) (init= 11.40556)
-    FWHML:         8.04020593 +/- 2.450075 (30.47%) (init= 8.040088)
-    TotalFWHM:     16.3017438 +/- 1.350493 (8.28%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
-    Scale:         97.0923207 +/- 6.671103 (6.87%) (init= 97.09158)
-    Saturation:    0 (fixed)
-    Amp0__1:       0.2380726 (fixed)
-    Amp1__1:       0.1786341 (fixed)
-    Amp1__2:       0.535743 (fixed)
-    Amp2__1:       0.01191064 (fixed)
-    Amp2__2:       0.1786448 (fixed)
-    Amp2__3:       1 (fixed)
-    Al:            98.4456970 +/- 0.927711 (0.94%) (init= 98.44472)
-    Au:            199.024103 +/- 0.568696 (0.29%) (init= 199.0234)
-    Bl:            101.250852 +/- 0.636955 (0.63%) (init= 101.2501)
-    Bu:            200.908034 +/- 0.963296 (0.48%) (init= 200.9071)
-    Cl:            0 (fixed)
-    Cu:            0 (fixed)
-    Centroid:      499.893420 +/- 0.473148 (0.09%) (init= 499.8938)
-    Background0:   10.5068608 +/- 0.311596 (2.97%) (init= 10.50687)
-    N:             0 (fixed)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kc">True</span>
+<span class="n">Tolerance</span> <span class="n">seems</span> <span class="n">to</span> <span class="n">be</span> <span class="n">too</span> <span class="n">small</span><span class="o">.</span>
+<span class="n">NDoF</span><span class="p">:</span> <span class="mi">191</span><span class="p">,</span> <span class="n">Chisquare</span><span class="p">:</span> <span class="mf">204.74572</span><span class="p">,</span> <span class="n">Reduced</span> <span class="n">Chisquare</span><span class="p">:</span> <span class="mf">1.0719671</span>
+<span class="n">Errors</span> <span class="ow">not</span> <span class="n">scaled</span> <span class="k">with</span> <span class="n">reduced</span> <span class="n">chisquare</span><span class="o">.</span>
+<span class="p">[[</span><span class="n">Variables</span><span class="p">]]</span>
+    <span class="n">FWHMG</span><span class="p">:</span>         <span class="mf">11.4052934</span> <span class="o">+/-</span> <span class="mf">2.725367</span> <span class="p">(</span><span class="mf">23.90</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">11.40556</span><span class="p">)</span>
+    <span class="n">FWHML</span><span class="p">:</span>         <span class="mf">8.04020593</span> <span class="o">+/-</span> <span class="mf">2.450075</span> <span class="p">(</span><span class="mf">30.47</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">8.040088</span><span class="p">)</span>
+    <span class="n">TotalFWHM</span><span class="p">:</span>     <span class="mf">16.3017438</span> <span class="o">+/-</span> <span class="mf">1.350493</span> <span class="p">(</span><span class="mf">8.28</span><span class="o">%</span><span class="p">)</span>  <span class="o">==</span> <span class="s1">&#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;</span>
+    <span class="n">Scale</span><span class="p">:</span>         <span class="mf">97.0923207</span> <span class="o">+/-</span> <span class="mf">6.671103</span> <span class="p">(</span><span class="mf">6.87</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">97.09158</span><span class="p">)</span>
+    <span class="n">Saturation</span><span class="p">:</span>    <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp0__1</span><span class="p">:</span>       <span class="mf">0.2380726</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__1</span><span class="p">:</span>       <span class="mf">0.1786341</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__2</span><span class="p">:</span>       <span class="mf">0.535743</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__1</span><span class="p">:</span>       <span class="mf">0.01191064</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__2</span><span class="p">:</span>       <span class="mf">0.1786448</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__3</span><span class="p">:</span>       <span class="mi">1</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Al</span><span class="p">:</span>            <span class="mf">98.4456970</span> <span class="o">+/-</span> <span class="mf">0.927711</span> <span class="p">(</span><span class="mf">0.94</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">98.44472</span><span class="p">)</span>
+    <span class="n">Au</span><span class="p">:</span>            <span class="mf">199.024103</span> <span class="o">+/-</span> <span class="mf">0.568696</span> <span class="p">(</span><span class="mf">0.29</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">199.0234</span><span class="p">)</span>
+    <span class="n">Bl</span><span class="p">:</span>            <span class="mf">101.250852</span> <span class="o">+/-</span> <span class="mf">0.636955</span> <span class="p">(</span><span class="mf">0.63</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">101.2501</span><span class="p">)</span>
+    <span class="n">Bu</span><span class="p">:</span>            <span class="mf">200.908034</span> <span class="o">+/-</span> <span class="mf">0.963296</span> <span class="p">(</span><span class="mf">0.48</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">200.9071</span><span class="p">)</span>
+    <span class="n">Cl</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Cu</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Centroid</span><span class="p">:</span>      <span class="mf">499.893420</span> <span class="o">+/-</span> <span class="mf">0.473148</span> <span class="p">(</span><span class="mf">0.09</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">499.8938</span><span class="p">)</span>
+    <span class="n">Background0</span><span class="p">:</span>   <span class="mf">10.5068608</span> <span class="o">+/-</span> <span class="mf">0.311596</span> <span class="p">(</span><span class="mf">2.97</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">10.50687</span><span class="p">)</span>
+    <span class="n">N</span><span class="p">:</span>             <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -176,47 +178,47 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
   warnings.warn(&quot;This figure includes Axes that are not &quot;
 </pre>
 <img alt="../_images/output_1_3.png" src="../_images/output_1_3.png" />
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xbd83710&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0xbdaad30&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0xbd83710</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_subplots</span><span class="o">.</span><span class="n">AxesSubplot</span> <span class="n">at</span> <span class="mh">0xbdaad30</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>If <em>func=np.sqrt</em> is given to the fitfunction, the result is</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">chisquare_spectroscopic_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-<span class="n">basemodel</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">display_chisquare_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">basemodel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency_range</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>Chisquare fitting in progress (204.745716227): 169it [00:00, 842.93it/s]
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Chisquare</span> <span class="n">fitting</span> <span class="ow">in</span> <span class="n">progress</span> <span class="p">(</span><span class="mf">204.745716227</span><span class="p">):</span> <span class="mi">169</span><span class="n">it</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">,</span> <span class="mf">842.93</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>True
-Tolerance seems to be too small.
-NDoF: 191, Chisquare: 204.74572, Reduced Chisquare: 1.0719671
-Errors not scaled with reduced chisquare.
-[[Variables]]
-    FWHMG:         11.4046727 +/- 2.725470 (23.90%) (init= 11.40435)
-    FWHML:         8.04079698 +/- 2.450016 (30.47%) (init= 8.040947)
-    TotalFWHM:     16.3015558 +/- 1.350555 (8.28%)  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
-    Scale:         97.0921180 +/- 6.671372 (6.87%) (init= 97.09294)
-    Saturation:    0 (fixed)
-    Amp0__1:       0.2380726 (fixed)
-    Amp1__1:       0.1786341 (fixed)
-    Amp1__2:       0.535743 (fixed)
-    Amp2__1:       0.01191064 (fixed)
-    Amp2__2:       0.1786448 (fixed)
-    Amp2__3:       1 (fixed)
-    Al:            98.4445375 +/- 0.927717 (0.94%) (init= 98.4456)
-    Au:            199.023681 +/- 0.568704 (0.29%) (init= 199.0244)
-    Bl:            101.251172 +/- 0.636961 (0.63%) (init= 101.252)
-    Bu:            200.907484 +/- 0.963299 (0.48%) (init= 200.9086)
-    Cl:            0 (fixed)
-    Cu:            0 (fixed)
-    Centroid:      499.893321 +/- 0.473148 (0.09%) (init= 499.8928)
-    Background0:   10.5068522 +/- 0.311595 (2.97%) (init= 10.50684)
-    N:             0 (fixed)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kc">True</span>
+<span class="n">Tolerance</span> <span class="n">seems</span> <span class="n">to</span> <span class="n">be</span> <span class="n">too</span> <span class="n">small</span><span class="o">.</span>
+<span class="n">NDoF</span><span class="p">:</span> <span class="mi">191</span><span class="p">,</span> <span class="n">Chisquare</span><span class="p">:</span> <span class="mf">204.74572</span><span class="p">,</span> <span class="n">Reduced</span> <span class="n">Chisquare</span><span class="p">:</span> <span class="mf">1.0719671</span>
+<span class="n">Errors</span> <span class="ow">not</span> <span class="n">scaled</span> <span class="k">with</span> <span class="n">reduced</span> <span class="n">chisquare</span><span class="o">.</span>
+<span class="p">[[</span><span class="n">Variables</span><span class="p">]]</span>
+    <span class="n">FWHMG</span><span class="p">:</span>         <span class="mf">11.4046727</span> <span class="o">+/-</span> <span class="mf">2.725470</span> <span class="p">(</span><span class="mf">23.90</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">11.40435</span><span class="p">)</span>
+    <span class="n">FWHML</span><span class="p">:</span>         <span class="mf">8.04079698</span> <span class="o">+/-</span> <span class="mf">2.450016</span> <span class="p">(</span><span class="mf">30.47</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">8.040947</span><span class="p">)</span>
+    <span class="n">TotalFWHM</span><span class="p">:</span>     <span class="mf">16.3015558</span> <span class="o">+/-</span> <span class="mf">1.350555</span> <span class="p">(</span><span class="mf">8.28</span><span class="o">%</span><span class="p">)</span>  <span class="o">==</span> <span class="s1">&#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;</span>
+    <span class="n">Scale</span><span class="p">:</span>         <span class="mf">97.0921180</span> <span class="o">+/-</span> <span class="mf">6.671372</span> <span class="p">(</span><span class="mf">6.87</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">97.09294</span><span class="p">)</span>
+    <span class="n">Saturation</span><span class="p">:</span>    <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp0__1</span><span class="p">:</span>       <span class="mf">0.2380726</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__1</span><span class="p">:</span>       <span class="mf">0.1786341</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__2</span><span class="p">:</span>       <span class="mf">0.535743</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__1</span><span class="p">:</span>       <span class="mf">0.01191064</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__2</span><span class="p">:</span>       <span class="mf">0.1786448</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__3</span><span class="p">:</span>       <span class="mi">1</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Al</span><span class="p">:</span>            <span class="mf">98.4445375</span> <span class="o">+/-</span> <span class="mf">0.927717</span> <span class="p">(</span><span class="mf">0.94</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">98.4456</span><span class="p">)</span>
+    <span class="n">Au</span><span class="p">:</span>            <span class="mf">199.023681</span> <span class="o">+/-</span> <span class="mf">0.568704</span> <span class="p">(</span><span class="mf">0.29</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">199.0244</span><span class="p">)</span>
+    <span class="n">Bl</span><span class="p">:</span>            <span class="mf">101.251172</span> <span class="o">+/-</span> <span class="mf">0.636961</span> <span class="p">(</span><span class="mf">0.63</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">101.252</span><span class="p">)</span>
+    <span class="n">Bu</span><span class="p">:</span>            <span class="mf">200.907484</span> <span class="o">+/-</span> <span class="mf">0.963299</span> <span class="p">(</span><span class="mf">0.48</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">200.9086</span><span class="p">)</span>
+    <span class="n">Cl</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Cu</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Centroid</span><span class="p">:</span>      <span class="mf">499.893321</span> <span class="o">+/-</span> <span class="mf">0.473148</span> <span class="p">(</span><span class="mf">0.09</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">499.8928</span><span class="p">)</span>
+    <span class="n">Background0</span><span class="p">:</span>   <span class="mf">10.5068522</span> <span class="o">+/-</span> <span class="mf">0.311595</span> <span class="p">(</span><span class="mf">2.97</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">10.50684</span><span class="p">)</span>
+    <span class="n">N</span><span class="p">:</span>             <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -224,8 +226,8 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
   warnings.warn(&quot;This figure includes Axes that are not &quot;
 </pre>
 <img alt="../_images/output_3_3.png" src="../_images/output_3_3.png" />
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xc63d5f8&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0xc7c5160&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0xc63d5f8</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_subplots</span><span class="o">.</span><span class="n">AxesSubplot</span> <span class="n">at</span> <span class="mh">0xc7c5160</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>which is slightly different.</p>
@@ -239,47 +241,47 @@ a less simplified method has to be used.</p>
 <p>The MLE method works by minimizing the negative loglikelihood. This is
 calculated as</p>
 <div class="math">
-<p><img src="../_images/math/68eaefa655c0e8ab3b6970e2644f56a5a02dc9cd.png" alt="-\mathcal{L}\left(\vec{\theta}\middle|x, y, \sigma\right) = \sum_i logp\left(\vec{\theta}\middle|x_i, y_i, \sigma_i\right)"/></p>
+<p><img src="../_images/math/ec6e4d55ff47466f48f31a21b99f4d00b689e820.png" alt="-\mathcal{L}\left(\vec{\theta}\middle|x, y, \sigma\right) = \sum_i logp\left(\vec{\theta}\middle|x_i, y_i, \sigma_i\right)"/></p>
 </div><p>For the function <em>logp</em>, the standard choice is the loglikelihood
 derived from the Poisson distribution.</p>
 <p>To use this method, the fitting routine code has to be changed to</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">basemodel</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">HFSModel</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="n">fwhm</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">background_params</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">use_racah</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">success</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">likelihood_fit</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-<span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">basemodel</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">frequency_range</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>Likelihood fitting done: 7196it [00:08, 864.65it/s]
-Finished Hessian calculation: 7it [00:02,  2.81it/s]
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Likelihood</span> <span class="n">fitting</span> <span class="n">done</span><span class="p">:</span> <span class="mi">7196</span><span class="n">it</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">08</span><span class="p">,</span> <span class="mf">864.65</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+<span class="n">Finished</span> <span class="n">Hessian</span> <span class="n">calculation</span><span class="p">:</span> <span class="mi">7</span><span class="n">it</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">02</span><span class="p">,</span>  <span class="mf">2.81</span><span class="n">it</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>True
-Converged (|f_n-f_(n-1)| ~= 0)
-Chisquare: 215.42358, Reduced Chisquare: 1.1278721
-Errors not scaled with reduced chisquare.
-[[Variables]]
-    FWHMG:         10.0256994 +/- 2.832646 (28.25%) (init= 10.02534)
-    FWHML:         9.11423613 +/- 2.316078 (25.41%) (init= 9.125287)
-    TotalFWHM:     15.7585838  == &#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;
-    Scale:         99.9610437 +/- 6.736418 (6.74%) (init= 99.99098)
-    Saturation:    0 (fixed)
-    Amp0__1:       0.2380726 (fixed)
-    Amp1__1:       0.1786341 (fixed)
-    Amp1__2:       0.535743 (fixed)
-    Amp2__1:       0.01191064 (fixed)
-    Amp2__2:       0.1786448 (fixed)
-    Amp2__3:       1 (fixed)
-    Al:            98.4627333 +/- 0.835447 (0.85%) (init= 98.46572)
-    Au:            199.006802 +/- 0.515486 (0.26%) (init= 198.9938)
-    Bl:            101.344440 +/- 0.680162 (0.67%) (init= 101.2718)
-    Bu:            200.970619 +/- 0.891733 (0.44%) (init= 200.8642)
-    Cl:            0 (fixed)
-    Cu:            0 (fixed)
-    Centroid:      499.887536 +/- 0.468680 (0.09%) (init= 499.9266)
-    Background0:   9.90564578 +/- 0.290065 (2.93%) (init= 9.918109)
-    N:             0 (fixed)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kc">True</span>
+<span class="n">Converged</span> <span class="p">(</span><span class="o">|</span><span class="n">f_n</span><span class="o">-</span><span class="n">f_</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">|</span> <span class="o">~=</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">Chisquare</span><span class="p">:</span> <span class="mf">215.42358</span><span class="p">,</span> <span class="n">Reduced</span> <span class="n">Chisquare</span><span class="p">:</span> <span class="mf">1.1278721</span>
+<span class="n">Errors</span> <span class="ow">not</span> <span class="n">scaled</span> <span class="k">with</span> <span class="n">reduced</span> <span class="n">chisquare</span><span class="o">.</span>
+<span class="p">[[</span><span class="n">Variables</span><span class="p">]]</span>
+    <span class="n">FWHMG</span><span class="p">:</span>         <span class="mf">10.0256994</span> <span class="o">+/-</span> <span class="mf">2.832646</span> <span class="p">(</span><span class="mf">28.25</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">10.02534</span><span class="p">)</span>
+    <span class="n">FWHML</span><span class="p">:</span>         <span class="mf">9.11423613</span> <span class="o">+/-</span> <span class="mf">2.316078</span> <span class="p">(</span><span class="mf">25.41</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">9.125287</span><span class="p">)</span>
+    <span class="n">TotalFWHM</span><span class="p">:</span>     <span class="mf">15.7585838</span>  <span class="o">==</span> <span class="s1">&#39;0.5346*FWHML+(0.2166*FWHML**2+FWHMG**2)**0.5&#39;</span>
+    <span class="n">Scale</span><span class="p">:</span>         <span class="mf">99.9610437</span> <span class="o">+/-</span> <span class="mf">6.736418</span> <span class="p">(</span><span class="mf">6.74</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">99.99098</span><span class="p">)</span>
+    <span class="n">Saturation</span><span class="p">:</span>    <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp0__1</span><span class="p">:</span>       <span class="mf">0.2380726</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__1</span><span class="p">:</span>       <span class="mf">0.1786341</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp1__2</span><span class="p">:</span>       <span class="mf">0.535743</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__1</span><span class="p">:</span>       <span class="mf">0.01191064</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__2</span><span class="p">:</span>       <span class="mf">0.1786448</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Amp2__3</span><span class="p">:</span>       <span class="mi">1</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Al</span><span class="p">:</span>            <span class="mf">98.4627333</span> <span class="o">+/-</span> <span class="mf">0.835447</span> <span class="p">(</span><span class="mf">0.85</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">98.46572</span><span class="p">)</span>
+    <span class="n">Au</span><span class="p">:</span>            <span class="mf">199.006802</span> <span class="o">+/-</span> <span class="mf">0.515486</span> <span class="p">(</span><span class="mf">0.26</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">198.9938</span><span class="p">)</span>
+    <span class="n">Bl</span><span class="p">:</span>            <span class="mf">101.344440</span> <span class="o">+/-</span> <span class="mf">0.680162</span> <span class="p">(</span><span class="mf">0.67</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">101.2718</span><span class="p">)</span>
+    <span class="n">Bu</span><span class="p">:</span>            <span class="mf">200.970619</span> <span class="o">+/-</span> <span class="mf">0.891733</span> <span class="p">(</span><span class="mf">0.44</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">200.8642</span><span class="p">)</span>
+    <span class="n">Cl</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Cu</span><span class="p">:</span>            <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+    <span class="n">Centroid</span><span class="p">:</span>      <span class="mf">499.887536</span> <span class="o">+/-</span> <span class="mf">0.468680</span> <span class="p">(</span><span class="mf">0.09</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">499.9266</span><span class="p">)</span>
+    <span class="n">Background0</span><span class="p">:</span>   <span class="mf">9.90564578</span> <span class="o">+/-</span> <span class="mf">0.290065</span> <span class="p">(</span><span class="mf">2.93</span><span class="o">%</span><span class="p">)</span> <span class="p">(</span><span class="n">init</span><span class="o">=</span> <span class="mf">9.918109</span><span class="p">)</span>
+    <span class="n">N</span><span class="p">:</span>             <span class="mi">0</span> <span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
 </pre></div>
 </div>
 <pre class="literal-block">
@@ -287,19 +289,19 @@ C:Anaconda3libsite-packagesmatplotlibfigure.py:1744: UserWarning: This figure in
   warnings.warn(&quot;This figure includes Axes that are not &quot;
 </pre>
 <img alt="../_images/output_5_3.png" src="../_images/output_5_3.png" />
-<div class="highlight-python"><div class="highlight"><pre><span></span>(&lt;matplotlib.figure.Figure at 0xc791908&gt;,
- &lt;matplotlib.axes._subplots.AxesSubplot at 0xc7ad1d0&gt;)
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="n">at</span> <span class="mh">0xc791908</span><span class="o">&gt;</span><span class="p">,</span>
+ <span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">_subplots</span><span class="o">.</span><span class="n">AxesSubplot</span> <span class="n">at</span> <span class="mh">0xc7ad1d0</span><span class="o">&gt;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The uncertainties on the parameters can be estimated using a random walk
 through parameter space, or the analytical boundaries can be calculated.
 The random walk is explained in another tutorial. To estimate the
 analytical bounds:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">calculate_analytical_uncertainty</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">)</span>
-<span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">s</span><span class="o">.</span><span class="n">calculate_analytical_uncertainty</span><span class="p">(</span><span class="n">basemodel</span><span class="p">,</span> <span class="n">frequency_range</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">)</span>
+<span class="n">basemodel</span><span class="o">.</span><span class="n">display_mle_fit</span><span class="p">(</span><span class="n">show_correl</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span></span>FWHMG (finding root): 4it [00:19,  4.26s/it]
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">FWHMG</span> <span class="p">(</span><span class="n">finding</span> <span class="n">root</span><span class="p">):</span> <span class="mi">4</span><span class="n">it</span> <span class="p">[</span><span class="mi">00</span><span class="p">:</span><span class="mi">19</span><span class="p">,</span>  <span class="mf">4.26</span><span class="n">s</span><span class="o">/</span><span class="n">it</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>By supplying a list of names under the <em>filter</em> keyword, the uncertainty
@@ -320,7 +322,7 @@ automatically adds the literature value as an extra datapoint, correctly
 incorporating this in the calculation of the degrees of freedom. The new
 chisquare formula is</p>
 <div class="math">
-<p><img src="../_images/math/566550f66799b8417dcd0e0871149be41dc3aaf5.png" alt="\chi^2 = \sum_i \left(\frac{y_i-f\left(x_i\right)}{\sigma_i}\right)^2 + \sum_{params} \left(\frac{p_{lit}-p_{fit}}{\sigma_{lit}}\right)^2"/></p>
+<p><img src="../_images/math/7b2cd8638c9fbdc7e0e59da2bf2238886a08085c.png" alt="\chi^2 = \sum_i \left(\frac{y_i-f\left(x_i\right)}{\sigma_i}\right)^2 + \sum_{params} \left(\frac{p_{lit}-p_{fit}}{\sigma_{lit}}\right)^2"/></p>
 </div><p>2. In the likelihood calculation, a Gaussian prior for the specified
 parameters is used instead of a uniform one.</p>
 <p>These methods are equivalent in the case of Gaussian distributions on
@@ -332,7 +334,7 @@ the datapoints for the likelihood calculation.</p>
 the <img class="math" src="../_images/math/3259e90f8f4b091dee1e9ca38456453963731f2d.png" alt="\chi^2_{red}"/> is not as straightforward. One possibility is
 using</p>
 <div class="math">
-<p><img src="../_images/math/64e02747355dcaf6cff43840ba9ee56ed41ab696.png" alt="\chi^2_{\mathcal{L}} = -2\mathcal{L}\left(y_i, f\left(x_i\right)\right)+2\mathcal{L}\left(y_i, y_i\right)"/></p>
+<p><img src="../_images/math/6febb12952aaf9dfa3a34a7130d33419678442dd.png" alt="\chi^2_{\mathcal{L}} = -2\mathcal{L}\left(y_i, f\left(x_i\right)\right)+2\mathcal{L}\left(y_i, y_i\right)"/></p>
 </div><p>and this is also what is implemented in SATLAS</p>
 </div>
 
@@ -361,7 +363,7 @@ using</p>
                         title="next chapter">Plotting routines</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/tutorials/fittingroutines.txt"
+    <a href="../_sources/tutorials/fittingroutines.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -383,7 +385,7 @@ using</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

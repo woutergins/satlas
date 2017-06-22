@@ -1,0 +1,8 @@
+numpy>=1.5
+scipy>=0.13
+lmfit
+sympy
+matplotlib
+pandas
+h5py
+numdifftools

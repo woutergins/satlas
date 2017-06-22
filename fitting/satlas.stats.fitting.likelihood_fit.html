@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.stats.fitting.likelihood_fit &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.stats.fitting.likelihood_fit &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.stats.fitting.likelihood_walk" href="satlas.stats.fitting.likelihood_walk.html" >
     <link rel="prev" title="satlas.stats.fitting.chisquare_spectroscopic_fit" href="satlas.stats.fitting.chisquare_spectroscopic_fit.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -86,7 +88,7 @@
 <h1>satlas.stats.fitting.likelihood_fit<a class="headerlink" href="#satlas-stats-fitting-likelihood-fit" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.stats.fitting.likelihood_fit">
-<code class="descclassname">satlas.stats.fitting.</code><code class="descname">likelihood_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>func=&lt;function poisson_llh at 0x0000000008AB98C8&gt;</em>, <em>method='nelder-mead'</em>, <em>method_kws={}</em>, <em>walking=False</em>, <em>walk_kws={}</em>, <em>verbose=True</em>, <em>hessian=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/stats/fitting.html#likelihood_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.stats.fitting.likelihood_fit" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">satlas.stats.fitting.</code><code class="descname">likelihood_fit</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>y</em>, <em>xerr=None</em>, <em>func=&lt;function poisson_llh at 0x0000000008DF2D08&gt;</em>, <em>method='nelder-mead'</em>, <em>method_kws={}</em>, <em>walking=False</em>, <em>walk_kws={}</em>, <em>verbose=True</em>, <em>hessian=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/stats/fitting.html#likelihood_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.stats.fitting.likelihood_fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits the given model to the given data using the Maximum Likelihood Estimation technique.
 The given function is used to calculate the loglikelihood. After the fit, the message
 from the optimizer is printed and returned.</p>
@@ -103,38 +105,29 @@ from the optimizer is printed and returned.</p>
 </tr>
 <tr class="field-even field"><th class="field-name" colspan="2">Other Parameters:</th></tr>
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
-<li><strong>xerr</strong> (<em>array_like, optional</em>) &#8211;
-Estimated value for the uncertainty on the x-values.
+<li><strong>xerr</strong> (<em>array_like, optional</em>) &#8211; Estimated value for the uncertainty on the x-values.
 Set to <em>None</em> to ignore this uncertainty. Defaults to <em>None</em>.</li>
-<li><strong>func</strong> (<em>function, optional</em>) &#8211;
-Used to calculate the loglikelihood that the data is drawn
+<li><strong>func</strong> (<em>function, optional</em>) &#8211; Used to calculate the loglikelihood that the data is drawn
 from a distribution given a model value. Should accept
 input as (y_data, y_model). Defaults to the Poisson
 loglikelihood.</li>
-<li><strong>method</strong> (<em>str, optional</em>) &#8211;
-Selects the algorithm to be used by the minimizer used by LMFIT.
+<li><strong>method</strong> (<em>str, optional</em>) &#8211; Selects the algorithm to be used by the minimizer used by LMFIT.
 See LMFIT documentation for possible values. Defaults to &#8216;nelder-mead&#8217;.</li>
-<li><strong>method_kws</strong> (<em>dict, optional</em>) &#8211;
-Dictionary containing the keywords to be passed to the
+<li><strong>method_kws</strong> (<em>dict, optional</em>) &#8211; Dictionary containing the keywords to be passed to the
 minimizer.</li>
-<li><strong>walking</strong> (<em>boolean, optional</em>) &#8211;
-If True, the uncertainty on the parameters is estimated
+<li><strong>walking</strong> (<em>boolean, optional</em>) &#8211; If True, the uncertainty on the parameters is estimated
 by performing a random walk in parameter space and
 evaluating the loglikelihood. Defaults to False.</li>
-<li><strong>walk_kws</strong> (<em>dictionary</em>) &#8211;
-Contains the keywords for the <a class="reference internal" href="satlas.stats.fitting.likelihood_walk.html#satlas.stats.fitting.likelihood_walk" title="satlas.stats.fitting.likelihood_walk"><code class="xref py py-func docutils literal"><span class="pre">likelihood_walk</span></code></a>
+<li><strong>walk_kws</strong> (<em>dictionary</em>) &#8211; Contains the keywords for the <a class="reference internal" href="satlas.stats.fitting.likelihood_walk.html#satlas.stats.fitting.likelihood_walk" title="satlas.stats.fitting.likelihood_walk"><code class="xref py py-func docutils literal"><span class="pre">likelihood_walk</span></code></a>
 function, used if walking is set to True.</li>
-<li><strong>verbose</strong> (<em>boolean, optional</em>) &#8211;
-When set to <em>True</em>, a tqdm-progressbar in the terminal is maintained.
+<li><strong>verbose</strong> (<em>boolean, optional</em>) &#8211; When set to <em>True</em>, a tqdm-progressbar in the terminal is maintained.
 Defaults to <em>True</em>.</li>
-<li><strong>hessian</strong> (<em>boolean, optional</em>) &#8211;
-When set to <em>True</em>, the Hessian estimate of the uncertainty will be
+<li><strong>hessian</strong> (<em>boolean, optional</em>) &#8211; When set to <em>True</em>, the Hessian estimate of the uncertainty will be
 calculated.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>success, message</strong> &#8211;
-Boolean indicating the success of the optimization and
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>success, message</strong> &#8211; Boolean indicating the success of the optimization and
 the message from the optimizer.</p>
 </td>
 </tr>
@@ -161,7 +154,7 @@ the message from the optimizer.</p>
                         title="next chapter">satlas.stats.fitting.likelihood_walk</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/fitting/satlas.stats.fitting.likelihood_fit.txt"
+    <a href="../_sources/fitting/satlas.stats.fitting.likelihood_fit.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -183,7 +176,7 @@ the message from the optimizer.</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

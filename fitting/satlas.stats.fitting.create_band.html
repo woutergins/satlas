@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.stats.fitting.create_band &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.stats.fitting.create_band &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.stats.fitting.assign_hessian_estimate" href="satlas.stats.fitting.assign_hessian_estimate.html" >
     <link rel="prev" title="satlas.stats.fitting.likelihood_loglikelihood" href="satlas.stats.fitting.likelihood_loglikelihood.html" > 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -86,11 +88,11 @@
 <h1>satlas.stats.fitting.create_band<a class="headerlink" href="#satlas-stats-fitting-create-band" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="satlas.stats.fitting.create_band">
-<code class="descclassname">satlas.stats.fitting.</code><code class="descname">create_band</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>x_data</em>, <em>y_data</em>, <em>yerr</em>, <em>xerr=None</em>, <em>method='chisquare'</em>, <em>func_chi=None</em>, <em>func_llh=&lt;function poisson_llh at 0x0000000008AB98C8&gt;</em>, <em>kind='prediction'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/stats/fitting.html#create_band"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.stats.fitting.create_band" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">satlas.stats.fitting.</code><code class="descname">create_band</code><span class="sig-paren">(</span><em>f</em>, <em>x</em>, <em>x_data</em>, <em>y_data</em>, <em>yerr</em>, <em>xerr=None</em>, <em>method='chisquare'</em>, <em>func_chi=None</em>, <em>func_llh=&lt;function poisson_llh at 0x0000000008DF2D08&gt;</em>, <em>kind='prediction'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/stats/fitting.html#create_band"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.stats.fitting.create_band" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates prediction or confidence bounds at the 1 <img class="math" src="../_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> level.
 The method used is based on the Delta Method: at the requested prediction points <em>x</em>, the bound is calculated as</p>
 <div class="math">
-<p><img src="../_images/math/60ec3ed75201a735d97ed696acd866526178cd29.png" alt="\sqrt{G'(\beta, x)^T H^{-1}(\beta) G'(\beta, x)}"/></p>
+<p><img src="../_images/math/ee01d157a643687083d8f5915e5c6b7113835167.png" alt="\sqrt{G'(\beta, x)^T H^{-1}(\beta) G'(\beta, x)}"/></p>
 </div><p>with G the cost function, H the Hessian matrix and <img class="math" src="../_images/math/8ce03f78ed945f2ef3dac87c8799b55b393527e7.png" alt="\beta"/> the vector of parameters.
 The resulting bound needs to be subtracted and added to the value given by the model to get the confidence interval.</p>
 <p>For a prediction interval, the value before taking the square root is increased by 1</p>
@@ -105,18 +107,17 @@ The resulting bound needs to be subtracted and added to the value given by the m
 <li><strong>y_data</strong> (<em>array_like</em>) &#8211; Experimental data for the y-axis.</li>
 <li><strong>yerr</strong> (<em>array_like</em>) &#8211; Experimental uncertainty for the y-axis.</li>
 <li><strong>xerr</strong> (<em>array_like</em>) &#8211; Experimental uncertainty for the x-axis. Defaults to <em>None</em>.</li>
-<li><strong>method</strong> (<em>{&#8216;mle&#8217;, &#8216;chisquare&#8217;}</em>) &#8211; Selected method for which the cost function is selected.</li>
-<li><strong>func_chi</strong> (<em>function, optional</em>) &#8211; Is passed on to the chisquare methods in order to calculate the
+<li><strong>method</strong> (<em>{'mle'</em><em>, </em><em>'chisquare'}</em>) &#8211; Selected method for which the cost function is selected.</li>
+<li><strong>func_chi</strong> (<em>function</em><em>, </em><em>optional</em>) &#8211; Is passed on to the chisquare methods in order to calculate the
 experimental uncertainty from the modelvalue. Defaults to <em>None</em>,
 which uses <em>yerr</em>.</li>
 <li><strong>func_llh</strong> (<em>function</em>) &#8211; Is passed on to the likelihood fitting method to define the
 likelihood function. Defaults to <a class="reference internal" href="../loglikelihood/satlas.loglikelihood.poisson_llh.html#satlas.loglikelihood.poisson_llh" title="satlas.loglikelihood.poisson_llh"><code class="xref py py-func docutils literal"><span class="pre">satlas.loglikelihood.poisson_llh</span></code></a>.</li>
-<li><strong>kind</strong> (<em>{&#8216;prediction&#8217;, &#8216;confidence&#8217;}</em>) &#8211; Selects which type of bound is calculated.</li>
+<li><strong>kind</strong> (<em>{'prediction'</em><em>, </em><em>'confidence'}</em>) &#8211; Selects which type of bound is calculated.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bound</strong> &#8211;
-Array describing the deviation from the model value as can be expected
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bound</strong> &#8211; Array describing the deviation from the model value as can be expected
 for the selected parameters at the 1:math:<cite>sigma</cite> level.</p>
 </td>
 </tr>
@@ -143,7 +144,7 @@ for the selected parameters at the 1:math:<cite>sigma</cite> level.</p>
                         title="next chapter">satlas.stats.fitting.assign_hessian_estimate</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/fitting/satlas.stats.fitting.create_band.txt"
+    <a href="../_sources/fitting/satlas.stats.fitting.create_band.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -165,7 +166,7 @@ for the selected parameters at the 1:math:<cite>sigma</cite> level.</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.models.basemodel.BaseModel &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.models.basemodel.BaseModel &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +24,12 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
     <link rel="next" title="satlas.models.summodel.SumModel" href="satlas.models.summodel.SumModel.html" >
-    <link rel="prev" title="satlas.utilities.plotting.generate_correlation_plot" href="../plotting/satlas.utilities.plotting.generate_correlation_plot.html" > 
+    <link rel="prev" title="API reference" href="../api.html" > 
   </head>
   <body>
 
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -66,7 +68,7 @@
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="../plotting/satlas.utilities.plotting.generate_correlation_plot.html" title="satlas.utilities.plotting.generate_correlation_plot"
+        <a href="../api.html" title="API reference"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -94,6 +96,86 @@ classes.</p>
 <code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/basemodel.html#BaseModel.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.basemodel.BaseModel.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="satlas.models.basemodel.BaseModel.get_result">
+<code class="descname">get_result</code><span class="sig-paren">(</span><em>selection='any'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/basemodel.html#BaseModel.get_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.basemodel.BaseModel.get_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the variable names, values and estimated error bars for the
+parameters as seperate lists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>selection</strong> (<em>string</em><em>, </em><em>optional</em>) &#8211; Selects if the chisquare (&#8216;chisquare&#8217; or &#8216;any&#8217;) or MLE values are
+used. Defaults to &#8216;any&#8217;.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>names, values, uncertainties</strong> &#8211; Returns a 3-tuple of lists containing the names of the parameters,
+the values and the estimated uncertainties.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple of lists</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.models.basemodel.BaseModel.get_result_dict">
+<code class="descname">get_result_dict</code><span class="sig-paren">(</span><em>method='chisquare'</em>, <em>scaled=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/basemodel.html#BaseModel.get_result_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.basemodel.BaseModel.get_result_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the fitted parameters in a dictionary of the form {name: [value, uncertainty]}.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>method</strong> (<em>{'chisquare'</em><em>, </em><em>'mle'}</em>) &#8211; Selects which parameters have to be returned.</li>
+<li><strong>scaled</strong> (<em>boolean</em>) &#8211; Selects if, in case of chisquare parameters, the uncertainty
+has to be scaled by sqrt(reduced_chisquare). Defaults to <em>False</em>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Dictionary of the form described above.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="satlas.models.basemodel.BaseModel.get_result_frame">
+<code class="descname">get_result_frame</code><span class="sig-paren">(</span><em>method='chisquare'</em>, <em>selected=False</em>, <em>bounds=False</em>, <em>vary=False</em>, <em>scaled=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/models/basemodel.html#BaseModel.get_result_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.models.basemodel.BaseModel.get_result_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the data from the fit in a pandas DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Selects which fitresults have to be loaded. Can be &#8216;chisquare&#8217; or
+&#8216;mle&#8217;. Defaults to &#8216;chisquare&#8217;.</li>
+<li><strong>selected</strong> (<em>list of strings</em><em>, </em><em>optional</em>) &#8211; Selects the parameters that have any string in the list
+as a substring in their name. Set to <em>None</em> to select
+all parameters. Defaults to <em>None</em>.</li>
+<li><strong>bounds</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Selects if the boundary also has to be given. Defaults to
+<em>False</em>.</li>
+<li><strong>vary</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Selects if only the parameters that have been varied have to
+be supplied. Defaults to <em>False</em>.</li>
+<li><strong>scaled</strong> (<em>boolean</em><em>, </em><em>optional</em>) &#8211; Sets the uncertainty scaling with the reduced chisquare value. Default to <em>False</em>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>resultframe</strong> &#8211; Dateframe with MultiIndex, using the variable names as main column names
+and either two subcolumns for the value and the uncertainty, or
+four subcolumns for the value, uncertainty and bounds.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -116,13 +198,13 @@ classes.</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_lnprior_mapping</span></code>(params)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result</span></code>([selection])</td>
+<tr class="row-even"><td><a class="reference internal" href="#satlas.models.basemodel.BaseModel.get_result" title="satlas.models.basemodel.BaseModel.get_result"><code class="xref py py-obj docutils literal"><span class="pre">get_result</span></code></a>([selection])</td>
 <td>Return the variable names, values and estimated error bars for the parameters as seperate lists.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result_dict</span></code>([method,&nbsp;scaled])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#satlas.models.basemodel.BaseModel.get_result_dict" title="satlas.models.basemodel.BaseModel.get_result_dict"><code class="xref py py-obj docutils literal"><span class="pre">get_result_dict</span></code></a>([method,&nbsp;scaled])</td>
 <td>Returns the fitted parameters in a dictionary of the form {name: [value, uncertainty]}.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_result_frame</span></code>([method,&nbsp;selected,&nbsp;bounds,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#satlas.models.basemodel.BaseModel.get_result_frame" title="satlas.models.basemodel.BaseModel.get_result_frame"><code class="xref py py-obj docutils literal"><span class="pre">get_result_frame</span></code></a>([method,&nbsp;selected,&nbsp;bounds,&nbsp;...])</td>
 <td>Returns the data from the fit in a pandas DataFrame.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">save</span></code>(path)</td>
@@ -165,14 +247,14 @@ classes.</p>
       <div class="spc-rightsidebar span3">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../plotting/satlas.utilities.plotting.generate_correlation_plot.html"
-                        title="previous chapter">satlas.utilities.plotting.generate_correlation_plot</a></p>
+  <p class="topless"><a href="../api.html"
+                        title="previous chapter">API reference</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="satlas.models.summodel.SumModel.html"
                         title="next chapter">satlas.models.summodel.SumModel</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/generated/satlas.models.basemodel.BaseModel.txt"
+    <a href="../_sources/generated/satlas.models.basemodel.BaseModel.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -194,7 +276,7 @@ classes.</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

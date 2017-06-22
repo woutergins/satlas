@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.profiles.Lorentzian &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.profiles.Lorentzian &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +24,11 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../index.html" >
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../index.html" >
     <link rel="up" title="API reference" href="../api.html" >
-    <link rel="next" title="satlas.profiles.Voigt" href="satlas.profiles.Voigt.html" >
+    <link rel="next" title="satlas.profiles.AsymmLorentzian" href="satlas.profiles.AsymmLorentzian.html" >
     <link rel="prev" title="satlas.profiles.Gaussian" href="satlas.profiles.Gaussian.html" > 
   </head>
   <body>
@@ -46,7 +48,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../api.html" accesskey="U">API reference</a></li> 
     </ul>
@@ -62,7 +64,7 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="satlas.profiles.Voigt.html" title="satlas.profiles.Voigt"
+        <a href="satlas.profiles.AsymmLorentzian.html" title="satlas.profiles.AsymmLorentzian"
            accesskey="N">next</a>
       </li>
       <li class="active">
@@ -117,6 +119,36 @@ supplied.</p>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="satlas.profiles.Lorentzian.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/satlas/profiles.html#Lorentzian.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#satlas.profiles.Lorentzian.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the lineshape in the given values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>vals</strong> (<em>array_like</em>) &#8211; Array of values to evaluate the lineshape in.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Array of seperate response values of the lineshape.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">array_like</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The formula used is taken from the MathWorld webpage
+<a class="reference external" href="http://mathworld.wolfram.com/LorentzianFunction.html">http://mathworld.wolfram.com/LorentzianFunction.html</a>:</p>
+<blockquote class="last">
+<div><div class="math">
+<p><img src="../_images/math/59437e7e0ce70cba76d8728d4069e81b0f2dc639.png" alt="\mathcal{L}\left(x; \mu, \gamma\right) &amp;= \frac{\gamma}
+{\pi\left(\left(x-\mu\right)^2+\gamma^2\right)}
+
+FWHM &amp;= 2\gamma"/></p>
+</div></div></blockquote>
+</div>
+</dd></dl>
+
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -164,11 +196,11 @@ supplied.</p>
   <p class="topless"><a href="satlas.profiles.Gaussian.html"
                         title="previous chapter">satlas.profiles.Gaussian</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="satlas.profiles.Voigt.html"
-                        title="next chapter">satlas.profiles.Voigt</a></p>
+  <p class="topless"><a href="satlas.profiles.AsymmLorentzian.html"
+                        title="next chapter">satlas.profiles.AsymmLorentzian</a></p>
   <h3>This Page</h3>
   <div>
-    <a href="../_sources/profiles/satlas.profiles.Lorentzian.txt"
+    <a href="../_sources/profiles/satlas.profiles.Lorentzian.rst.txt"
        rel="nofollow">Show Source</a>
   </div>
         </div>
@@ -190,7 +222,7 @@ supplied.</p>
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>

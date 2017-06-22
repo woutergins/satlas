@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>satlas.models.transformmodel &mdash; SATLAS 0.1.0b26 documentation</title>
+    <title>satlas.models.transformmodel &mdash; SATLAS 0.1.0b35 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../../../_static/css/spc-extend.css">
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.1.0b26',
+        VERSION:     '0.1.0b35',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,9 @@
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
-    <link rel="top" title="SATLAS 0.1.0b26 documentation" href="../../../index.html" >
+    <link rel="index" title="Index" href="../../../genindex.html" >
+    <link rel="search" title="Search" href="../../../search.html" >
+    <link rel="top" title="SATLAS 0.1.0b35 documentation" href="../../../index.html" >
     <link rel="up" title="Module code" href="../../index.html" > 
   </head>
   <body>
@@ -44,7 +46,7 @@
               
     <ul class="nav nav-pills pull-left">
 	
-        <li class="active"><a href="../../../index.html">SATLAS 0.1.0b26 documentation</a></li>
+        <li class="active"><a href="../../../index.html">SATLAS 0.1.0b35 documentation</a></li>
 	
           <li class="active"><a href="../../index.html" accesskey="U">Module code</a></li> 
     </ul>
@@ -81,7 +83,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 
-<span class="kn">from</span> <span class="nn">satlas.models.hfsmodel</span> <span class="kn">import</span> <span class="n">HFSModel</span>
+<span class="kn">from</span> <span class="nn">satlas.models.hfsmodel</span> <span class="k">import</span> <span class="n">HFSModel</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TransformHFSModel&#39;</span><span class="p">]</span>
 
@@ -104,8 +106,8 @@
 <span class="sd">        See :class:`.HFSModel` for input information.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TransformHFSModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span> <span class="o">=</span> <span class="n">identity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span> <span class="o">=</span> <span class="n">identity</span>
-</div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span> <span class="o">=</span> <span class="n">identity</span></div>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">pre_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The transformation function to be applied to the input data. Wrapping</span>
@@ -113,12 +115,12 @@
 <span class="sd">        objects raise an error when assigned to :attr:`.pre_transform`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span>
 
-    <span class="nd">@pre_transform.setter</span>
+    <span class="nd">@pre_transform</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">pre_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="kn">from</span> <span class="nn">functool</span> <span class="kn">import</span> <span class="n">lru_cache</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">typed</span><span class="o">=</span><span class="bp">True</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
+                <span class="kn">from</span> <span class="nn">functool</span> <span class="k">import</span> <span class="n">lru_cache</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">typed</span><span class="o">=</span><span class="kc">True</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
             <span class="k">except</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">else</span><span class="p">:</span>
@@ -131,14 +133,14 @@
 <span class="sd">        :attr:`.post_transform`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span>
 
-    <span class="nd">@post_transform.setter</span>
+    <span class="nd">@post_transform</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">post_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;supplied value must be a callable!&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TransformHFSModel.plot"><a class="viewcode-back" href="../../../generated/transformmodel/satlas.models.transformmodel.TransformHFSModel.plot.html#satlas.models.transformmodel.TransformHFSModel.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Grants access to the :meth:`.HFSModel.plot` method, passing all</span>
 <span class="sd">        arguments. The transformation used is temporarily changed to the</span>
 <span class="sd">        identity transform.&quot;&quot;&quot;</span>
@@ -148,9 +150,9 @@
         <span class="n">to_return</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TransformHFSModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># self._pre_transform = remember_pre</span>
         <span class="k">return</span> <span class="n">to_return</span>
-</div>
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">TransformHFSModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransformHFSModel.__call__"><a class="viewcode-back" href="../../../generated/satlas.models.transformmodel.TransformHFSModel.html#satlas.models.transformmodel.TransformHFSModel.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_transform</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">TransformHFSModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pre_transform</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -177,7 +179,7 @@
         &copy; Copyright 2015, Wouter Gins.
       </li>
       <li>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.
       </li>
     </ul>
     </div>
