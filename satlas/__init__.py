@@ -20,9 +20,6 @@ except:
     from . import loglikelihood
 from satlas.loglikelihood import *
 
-from satlas import style
-from satlas.style import *
-
 __all__ = []
 
 __all__.extend(hfsmodel.__all__)
