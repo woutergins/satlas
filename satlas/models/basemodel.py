@@ -163,11 +163,13 @@ class BaseModel(object):
         valueDict: dictionary
             Dictionary containing the values for the parameters
             with the parameter names as keys."""
+        p = self.params.copy()
         for key in valueDict:
             try:
-                self.params[key].value = valueDict[key]
+                p[key].value = valueDict[key]
             except KeyError:
                 pass
+        self.params = p.copy()
 
     def set_expr(self, exprDict):
         """Sets the expression of the selected parameters
@@ -178,12 +180,14 @@ class BaseModel(object):
         exprDict: dictionary
             Dictionary containing the expressions for the parameters
             with the parameter names as keys."""
+        p = self.params.copy()
         for k in exprDict.keys():
             self._expr[k] = copy.deepcopy(exprDict[k])
             try:
-                self.params[k].expr = self._expr[k]
+                p[k].expr = self._expr[k]
             except KeyError:
                 pass
+        self.params = p.copy()
 
     def set_variation(self, varyDict):
         """Sets the variation of the fitparameters as supplied in the
