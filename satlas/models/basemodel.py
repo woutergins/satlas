@@ -185,6 +185,7 @@ class BaseModel(object):
             self._expr[k] = copy.deepcopy(exprDict[k])
             try:
                 p[k].expr = self._expr[k]
+                p[k].vary = False
             except KeyError:
                 pass
         self.params = p.copy()

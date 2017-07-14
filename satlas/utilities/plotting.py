@@ -367,14 +367,18 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
                     width = 3.5*np.std(x)/x.size**(1/3) #Scott's rule for binwidth
                     bins[bin_index] = np.arange(x.min(), x.max()+width, width)
                 try:
-                    ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
+                    n, b, p, = ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
                 except TypeError:
                     bins[bin_index] = 50
-                    ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
+                    n, b, p, = ax.hist(x, int(bins[bin_index]), histtype='step', color='k')
+                center = n.argmax()
+                q50 = (b[center] + b[center+1])/2
+                # q16 = np.percentile(x[x<q50], 84)
+                # q84 = np.percentile(x[x>q50], 16)
                 metadata[val] = {'bins': bins[bin_index], 'min': x.min(), 'max': x.max()}
 
-                q = [16.0, 50.0, 84.0]
-                q16, q50, q84 = np.percentile(x, q)
+                q = [16.0, 84.0]
+                q16, q84 = np.percentile(x, q)
 
                 title = '{}\n${}_{{-{}}}^{{+{}}}$'
                 title_e = '{}\n$({}_{{-{}}}^{{+{}}})e{}$'
