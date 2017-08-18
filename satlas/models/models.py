@@ -53,15 +53,16 @@ class PolynomialModel(BaseModel):
         par = SATLASParameters()
         for i, val in reversed(list(enumerate(args))):
             par.add('Order' + str(i) + 'Coeff', value=val, vary=True)
-
         self.params = self._check_variation(par)
+
+        self.names = [p for p in self.params.keys()]
 
     ###########################
     #      MAGIC METHODS      #
     ###########################
 
     def __call__(self, x):
-        return np.polyval([self.params[p].value for p in self.params.keys()], x)
+        return np.polyval([self.params[p].value for p in self.names], x)
 
 class MiscModel(BaseModel):
 
