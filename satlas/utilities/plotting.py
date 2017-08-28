@@ -442,9 +442,12 @@ def generate_correlation_plot(filename, filter=None, bins=None, selection=(0, 10
 
                 contourset = ax.contourf(X1, Y1, H.T, bounds, cmap=invcmap, norm=norm)
                 pbar.update(1)
-            cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
-            cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
-            cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+            try:
+                cbar = plt.colorbar(contourset, cax=cbar, orientation='vertical')
+                cbar.ax.yaxis.set_ticks([0, 1/6, 0.5, 5/6])
+                cbar.ax.set_yticklabels(['', r'3$\sigma$', r'2$\sigma$', r'1$\sigma$'])
+            except:
+                cbar = None
     return fig, axes, cbar
 
 def generate_walk_plot(filename, filter=None, selection=(0, 100), walkers=20):

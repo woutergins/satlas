@@ -686,7 +686,6 @@ def calculate_updated_statistic(value, params_name, f, x, y, method='chisquare',
             success, message = func(f, x, y, *func_args, **func_kwargs)
         except ValueError:
             f.params.pretty_print()
-            print(value, f.params['Background0'].value)
             raise
         counter += 1
         if counter > 10:
