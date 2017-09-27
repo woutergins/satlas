@@ -928,7 +928,7 @@ class HFSModel(BaseModel):
             lower = energies[np.where(self.F[:self.num_lower]==lower)[0]]
             upper = energies[np.where(self.F[self.num_lower:]==upper)[0] + self.num_lower]
             y = np.array([lower + lower_state_height, upper + upper_state_height]).flatten()
-            ax2.arrow(x[0], y[0], x[1] - x[0], y[1] - y[0], fc=arrow_color, ec=arrow_color, length_includes_head=True, overhang=0.5, zorder=10)
+            ax2.arrow(x[0], y[0], x[1] - x[0], y[1] - y[0], fc=arrow_color, ec=arrow_color, length_includes_head=True, head_width=0.02, overhang=0.5, zorder=10)
 
         ax2.text(0.15, lower_state_height + 0.015, 'J=' + str(Fraction.from_float(self.J[0])), fontsize=20, fontdict={'horizontalalignment': 'center'})
         ax2.text(0.15, upper_state_height + 0.015, 'J=' + str(Fraction.from_float(self.J[-1])), fontsize=20, fontdict={'horizontalalignment': 'center'})
