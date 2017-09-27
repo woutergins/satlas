@@ -1,4 +1,5 @@
 *.pyc
+*.pypirc
 build/
 dist/
 satlas.egg-info/
