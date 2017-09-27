@@ -4,3 +4,4 @@ build/
 dist/
 satlas.egg-info/
 *.pypirc
+.pypirc
