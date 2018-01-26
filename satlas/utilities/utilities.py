@@ -4,12 +4,14 @@ Implementation of various functions that ease the work, but do not belong in one
 .. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 import numpy as np
+import h5py
 
 __all__ = ['weighted_average',
            'generate_spectrum',
            'poisson_interval',
            'beta',
-           'dopplerfactor']
+           'dopplerfactor',
+           'extract_result']
 
 def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated
@@ -184,3 +186,36 @@ def dopplerfactor(mass, V):
     betaFactor = beta(mass, V)
     dopplerFactor = np.sqrt((1.0 - betaFactor) / (1.0 + betaFactor))
     return dopplerFactor
+
+def extract_result(filename, filter=None, bins=None, selection=(0, 100)):
+    with h5py.File(filename, 'r') as store:
+        columns = store['data'].attrs['format']
+        columns = [f.decode('utf-8') for f in columns]
+        if filter is not None:
+            filter = [c for f in filter for c in columns if f in c]
+        else:
+            filter = columns
+        metadata = {}
+        if not isinstance(bins, list):
+            bins = [bins for _ in filter]
+        dataset_length = store['data'].shape[0]
+        first, last = int(np.floor(dataset_length/100*selection[0])), int(np.ceil(dataset_length/100*selection[1]))
+        for i, val in enumerate(filter):
+            bin_index = i
+            i = columns.index(val)
+            x = store['data'][first:last, i]
+            if bins[bin_index] is None:
+                width = 3.5*np.std(x)/x.size**(1/3)
+                bins[bin_index] = np.arange(x.min(), x.max()+width, width)
+            try:
+                n, b, = np.histogram(x, int(bins[bin_index]))
+            except TypeError:
+                bins[bin_index] = 50
+                n, b, = np.histogram(x, int(bins[bin_index]))
+            center = n.argmax()
+            q50 = (b[center] + b[center+1])/2
+
+            q = [16.0, 84.0]
+            q16, q84 = np.percentile(x, q)
+            metadata[val] = {'50': q50, 'up': q84-q50, 'down': q50-q16}
+    return metadata
