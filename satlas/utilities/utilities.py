@@ -4,14 +4,12 @@ Implementation of various functions that ease the work, but do not belong in one
 .. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
 import numpy as np
-import h5py
 
 __all__ = ['weighted_average',
            'generate_spectrum',
            'poisson_interval',
            'beta',
-           'dopplerfactor',
-           'extract_result']
+           'dopplerfactor']
 
 def weighted_average(x, sigma, axis=None):
     r"""Takes the weighted average of an array of values and the associated

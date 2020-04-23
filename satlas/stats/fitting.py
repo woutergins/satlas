@@ -932,6 +932,7 @@ def likelihood_walk(f, x, y, xerr=None, func=llh.poisson_llh, nsteps=2000, walke
     for i in range(pos.shape[1]):
         pos[:, i] = np.where(pos[:, i] < params[var_names[i]].min, params[var_names[i]].min+(1E-5), pos[:, i])
         pos[:, i] = np.where(pos[:, i] > params[var_names[i]].max, params[var_names[i]].max-(1E-5), pos[:, i])
+
     def lnprobList(fvars, groupParams, f, x, y, xerr, func):
         for val, n in zip(fvars, var_names):
             groupParams[n].value = val
