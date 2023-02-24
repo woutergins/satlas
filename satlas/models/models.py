@@ -6,11 +6,7 @@ Implementation of a class for the analysis of linear data.
 
 import lmfit as lm
 from satlas.models.basemodel import BaseModel, SATLASParameters
-from satlas.models.summodel import SumModel
-from satlas.loglikelihood import poisson_llh
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 __all__ = ['PolynomialModel', 'MiscModel']
 

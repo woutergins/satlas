@@ -5,7 +5,6 @@ Implementation of a class for the analysis of hyperfine structure spectra with i
 .. moduleauthor:: Ruben de Groote <ruben.degroote@kuleuven.be>
 """
 import copy
-import lmfit as lm
 from satlas.models.basemodel import BaseModel
 from satlas.utilities import poisson_interval
 import matplotlib.pyplot as plt

@@ -4,8 +4,6 @@ to the higher class. Currently only supports HFSModel.
 
 .. moduleauthor:: Wouter Gins <wouter.gins@kuleuven.be>
 """
-import copy
-
 from satlas.models.hfsmodel import HFSModel
 
 __all__ = ['TransformHFSModel']

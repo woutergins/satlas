@@ -31,7 +31,7 @@ class SATLASParameters(lm.Parameters):
         """Parameters deepcopy needs to make sure that
         asteval is available and that all individula
         parameter objects are copied"""
-        _pars = SATLASParameters(asteval=None)
+        _pars = SATLASParameters()
 
         # find the symbols that were added by users, not during construction
         sym_unique = self._asteval.user_defined_symbols()
@@ -74,25 +74,16 @@ class BaseModel(object):
         self._prefix = ''
 
     def _set_prefix(self, value):
-        later_params = []
         for p in self._parameters:
             if len(self._prefix) > 0:
                 if self._parameters[p].expr is not None:
                     self._parameters[p].expr = self._parameters[p].expr.replace(self._prefix, value)
-                    later_params.append(self._parameters[p].name)
             else:
                 if self._parameters[p].expr is not None:
                     for P in self._parameters:
                         if P in self._parameters[p].expr:
                             self._parameters[p].expr = self._parameters[p].expr.replace(P, value + P)
-                    later_params.append(self._parameters[p].name)
         for p in list(self._parameters.keys()):
-            if p not in later_params:
-                if len(self._prefix) > 0:
-                    self._parameters[p].name = self._parameters[p].name[len(self._prefix):]
-                self._parameters[p].name = value + self._parameters[p].name
-                self._parameters[value + p] = self._parameters.pop(p)
-        for p in later_params:
             if len(self._prefix) > 0:
                 self._parameters[p].name = self._parameters[p].name[len(self._prefix):]
             self._parameters[p].name = value + self._parameters[p].name
@@ -101,7 +92,6 @@ class BaseModel(object):
         self._prefix = value
 
     def _add_prefix(self, value):
-        later_params = []
         for p in self._parameters:
             if self._parameters[p].expr is not None:
                 if len(self._prefix) > 0:
@@ -110,13 +100,7 @@ class BaseModel(object):
                     for P in self._parameters:
                         if P in self._parameters[p].expr:
                             self._parameters[p].expr = self._parameters[p].expr.replace(P, value + P)
-                later_params.append(self._parameters[p].name)
         for p in list(self._parameters.keys()):
-            if p not in later_params:
-                self._parameters[p].name = value + self._parameters[p].name
-                self._parameters[value + p] = self._parameters.pop(p)
-
-        for p in later_params:
             self._parameters[p].name = value + self._parameters[p].name
             self._parameters[value + p] = self._parameters.pop(p)
         self._parameters._prefix = value + self._parameters._prefix

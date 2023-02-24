@@ -9,8 +9,6 @@ from fractions import Fraction
 
 import lmfit as lm
 from satlas.models.basemodel import BaseModel, SATLASParameters
-from satlas.models.summodel import SumModel
-from satlas.loglikelihood import poisson_llh
 from satlas.utilities import poisson_interval
 import satlas.profiles as p
 import matplotlib.pyplot as plt
